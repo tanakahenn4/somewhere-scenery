@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全国猫図鑑Nekomap</title>
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: "Segoe UI", sans-serif;
+  }
+
+  #app {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: #000;
+  }
+
+  #app:fullscreen {
+    width: 100vw;
+    height: 100vh;
+  }
+
+  #map {
+    flex: 1;
+    min-height: 0;
+  }
+
+  #fullscreenButton {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1001;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 2px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-size: 22px;
+    line-height: 40px;
+    cursor: pointer;
+  }
+
+  #fullscreenButton:hover {
+    background: rgba(0,0,0,0.75);
+  }
+
+ #controls {
+    padding: 1px;
+    background: #444444;  /* 黒系ダーク */
+    border-top: 2px solid #ff44ef; /* 黒に近い境界線 */
+    color: #ffffff;  /* 文字を白に */
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+}
+
+#compass-container {
+  position: absolute;
+  bottom: 80px;
+  left: 10px;
+  z-index: 1000;
+  width: 50px;
+  height: 50px;
+}
+
+#controls input,
+#controls textarea,
+#controls button {
+    background: #333;  /* 入力欄やボタンも暗めに */
+    color: #fff;       /* 文字白 */
+    border: 1px solid #a7a5a5; /* 薄い境界線 */
+}
+
+#controls button:hover {
+    background: #555;  /* ホバーで少し明るく */
+}
+
+  button, input {
+    padding: 6px 10px;
+    margin-right: 5px;
+    font-size: 14px;
+  }
+  textarea {
+    width: 100%;
+    height: 80px;
+    margin-top: 5px;
+    font-family: monospace;
+  }
+
+  #controls > strong,
+#jsonInput,
+#searchJsonButton {
+  display: none;
+}
+
+@font-face {
+  font-family: 'PopRumCute';
+  src: url('PopRumCute.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+#footer-label {
+  position: fixed;
+  left: 220px;
+  top: 11px;
+  color: #fff;               /* 文字色 */
+  background: rgba(0,0,0,0.5); /* 半透明黒背景 */
+  padding: 4px 8px;
+  border-radius: 8px;        /* 角丸 */
+  font-size: 20px;
+  
+  z-index: 1000;    
+  letter-spacing: 3px;         /* 地図やcontrolsより前面に表示 */
+}
+
+@media (max-width: 700px) {
+  #fullscreenButton {
+    width: 34px;
+    height: 34px;
+    font-size: 20px;
+    line-height: 34px;
+  }
+
+  #footer-label {
+    left: 50%;
+    top: 10px;
+    transform: translateX(-50%);
+    font-size: clamp(16px, 5vw, 24px);
+    letter-spacing: 2px;
+    white-space: nowrap;
+  }
+
+  #controls {
+    padding: 2px;
+    gap: 3px;
+    font-size: 12px;
+  }
+
+  #controls input,
+  #controls button {
+    height: 32px;
+    padding: 4px 8px;
+    margin-right: 0;
+    font-size: clamp(12px, 3.4vw, 16px);
+    box-sizing: border-box;
+  }
+
+  #addressInput {
+    flex: 1 1 180px;
+    min-width: 0;
+    width: auto !important;
+  }
+
+  #controls button {
+    flex: 0 0 auto;
+  }
+
+  #compass-container {
+    bottom: 92px;
+    width: 42px;
+    height: 42px;
+  }
+
+  #compass {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+@media (max-width: 700px) and (orientation: portrait) {
+  #controls {
+    align-items: stretch;
+  }
+
+  #controls > div:first-child {
+    flex: 0 0 auto;
+  }
+
+  #addressInput {
+    flex-basis: calc(100% - 120px);
+  }
+}
+
+@media (max-width: 700px) and (orientation: landscape) {
+  #controls input,
+  #controls button {
+    height: 30px;
+    font-size: clamp(12px, 2vw, 15px);
+  }
+
+  #footer-label {
+    font-size: clamp(16px, 3vw, 22px);
+  }
+}
+
+
+</style>
+</head>
+
+<body>
+
+<div id="app">
+<div id="map"></div>
+<button id="fullscreenButton" type="button" title="全画面表示" aria-label="全画面表示">⛶</button>
+
+<div id="controls">
+  <div id="footer-label">全国猫図鑑  </div> 
+  <!-- JSON系を上に -->
+  <strong>登録データ(JSON):</strong>
+  <textarea id="jsonInput" placeholder='{"lat":35.681167,"lng":139.767052,"heading":120,"pitch":5,"zoom":1,"pano":"panoid"}'></textarea>
+  <button id="searchJsonButton">JSONから再現</button>
+  <!-- <br><br> -->
+  <!-- 住所入力系を下に -->
+  <input id="addressInput" type="text" placeholder="住所または pano ID を入力" style="width:40%">
+  <button id="searchAddressButton">住所 / Pano ID 検索</button>
+  <button id="getPosButton">現在位置を登録</button>
+  
+  <button id="loadDataButton">ページ更新</button>
+</div>
+
+<div id="compass-container">
+  <svg id="compass" width="50" height="50" viewBox="0 0 50 50">
+    <!-- 外円 -->
+    <circle cx="25" cy="25" r="24" stroke="#fff" stroke-width="2" fill="rgba(0,0,0,0.5)" />
+    <!-- 赤い矢印（北） -->
+    <polygon id="compass-arrow" points="25,5 20,25 30,25" fill="red" />
+  </svg>
+</div>
+</div>
+
+
+<script>
+let map, panorama, geocoder;
+let markers = [];
+let resetZoomOnEnter = true;
+const STORAGE_KEY = "catsmap_markers";
+
+
+
+let lastPanoramaPos = { lat: 35.6812, lng: 139.7671 }; // 初期中心（東京駅）
+
+function initMap() {
+  const initialCenter = { lat: 35.6812, lng: 139.7671 };
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: initialCenter,
+    zoom: 7,
+    fullscreenControl: false
+  });
+  panorama = map.getStreetView();
+  panorama.setOptions({ fullscreenControl: false });
+  panorama.setVisible(false);
+  geocoder = new google.maps.Geocoder();
+
+  loadSavedMarkers();
+  setupFullscreenButton();
+
+    panorama.addListener('pov_changed', () => {
+    const heading = panorama.getPov().heading;
+    const arrow = document.getElementById('compass-arrow');
+    if (arrow) {
+      arrow.setAttribute('transform', `rotate(${-heading},25,25)`);
+    }
+    updateMarkerIconSizes();
+  });
+
+  panorama.addListener("visible_changed", () => {
+    if (panorama.getVisible()) {
+   if (resetZoomOnEnter) {
+    panorama.setPov({ heading: 0, pitch: 0, zoom: 1 });
+}
+    } else {
+      const center = lastPanoramaPos;
+      map.setCenter(center);
+      map.setZoom(20);
+      resetZoomOnEnter = true;
+    }
+  });
+
+  panorama.addListener("position_changed", () => {
+    const pos = panorama.getPosition();
+    if (pos) lastPanoramaPos = { lat: pos.lat(), lng: pos.lng() };
+    updateMarkerIconSizes();
+  });
+
+  document.getElementById("getPosButton").addEventListener("click", () => {
+    if (!panorama.getVisible()) return alert("ストリートビューが表示されていません。");
+    const pos = panorama.getPosition();
+    const pov = panorama.getPov();
+    const panoId = panorama.getPano();
+    const jsonData = {
+      lat: pos.lat(),
+      lng: pos.lng(),
+      heading: pov.heading,
+      pitch: pov.pitch,
+      zoom: pov.zoom,
+      pano: panoId
+    };
+    addMarker(jsonData, true);
+    saveMarkers();
+  });
+
+  document.getElementById("searchAddressButton").addEventListener("click", async () => {
+    const input = document.getElementById("addressInput").value.trim();
+    if (!input) return alert("住所または pano ID を入力してください。");
+
+    try {
+      const result = await geocoder.geocode({ address: input });
+      if (result.results && result.results.length > 0) {
+        const loc = result.results[0].geometry.location;
+        map.setCenter(loc);
+        panorama.setPosition(loc);
+        panorama.setPov({ heading: 0, pitch: 0, zoom: 1 });
+        panorama.setVisible(true);
+        return;
+      }
+    } catch (e) {
+      console.warn("住所検索エラー:", e);
+    }
+
+    panorama.setPano(input);
+    panorama.setPov({ heading: 0, pitch: 0, zoom: 1 });
+    panorama.setVisible(true);
+  });
+
+  document.getElementById("searchJsonButton").addEventListener("click", () => {
+    try {
+      const data = JSON.parse(document.getElementById("jsonInput").value);
+      if (!data.lat || !data.lng) return alert("JSONに必要な情報がありません。");
+      showPanorama(data);
+    } catch {
+      alert("正しいJSONを入力してください。");
+    }
+  });
+
+  document.getElementById("loadDataButton").addEventListener("click", () => {
+    markers.forEach(m => m.setMap(null));
+    markers = [];
+    loadSavedMarkers();
+  });
+
+  window.addEventListener("resize", () => {
+    updateMarkerIconSizes();
+  });
+}
+
+function setupFullscreenButton() {
+  const app = document.getElementById("app");
+  const button = document.getElementById("fullscreenButton");
+  if (!app || !button) return;
+
+  button.addEventListener("click", async () => {
+    try {
+      if (document.fullscreenElement === app) {
+        await document.exitFullscreen();
+      } else {
+        await app.requestFullscreen();
+      }
+    } catch (e) {
+      console.warn("全画面表示の切り替えに失敗しました:", e);
+    }
+  });
+
+  document.addEventListener("fullscreenchange", () => {
+    const isFullscreen = document.fullscreenElement === app;
+    button.textContent = isFullscreen ? "×" : "⛶";
+    button.title = isFullscreen ? "全画面を終了" : "全画面表示";
+    button.setAttribute("aria-label", button.title);
+
+    setTimeout(() => {
+      const center = map && map.getCenter ? map.getCenter() : null;
+      if (map) google.maps.event.trigger(map, "resize");
+      if (center) map.setCenter(center);
+      updateMarkerIconSizes();
+    }, 100);
+  });
+}
+
+function getCatMarkerSize(jsonData = {}) {
+  const width = window.innerWidth || document.documentElement.clientWidth || 1024;
+  const baseSize = Math.max(50, Math.min(60, width * 0.1));
+  let zoomScale = 1;
+  let distanceScale = 1;
+
+  if (panorama && panorama.getVisible()) {
+    const currentZoom = Number(panorama.getPov().zoom);
+    const registeredZoom = 1;
+
+    if (Number.isFinite(currentZoom) && Number.isFinite(registeredZoom)) {
+      const zoomDelta = currentZoom - registeredZoom;
+      zoomScale = Math.pow(1.6, zoomDelta);
+    }
+
+    distanceScale = getCatDistanceScale(jsonData);
+  }
+
+  const size = Math.round(Math.max(32, Math.min(220, baseSize * zoomScale * distanceScale)));
+  return new google.maps.Size(size, size);
+}
+
+function getCatDistanceScale(jsonData = {}) {
+  const pos = panorama && panorama.getPosition ? panorama.getPosition() : null;
+  if (!pos) return 1;
+
+  const distance = getDistanceMeters(
+    { lat: pos.lat(), lng: pos.lng() },
+    { lat: jsonData.lat, lng: jsonData.lng }
+  );
+
+  if (!Number.isFinite(distance)) return 1;
+
+  const scale = Math.sqrt(28 / Math.max(distance, 1));
+  return Math.max(0.45, Math.min(5.9, scale));
+}
+
+function getDistanceMeters(a, b) {
+  const latA = Number(a.lat);
+  const lngA = Number(a.lng);
+  const latB = Number(b.lat);
+  const lngB = Number(b.lng);
+  if (![latA, lngA, latB, lngB].every(Number.isFinite)) return NaN;
+
+  const earthRadius = 6371000;
+  const toRad = value => value * Math.PI / 180;
+  const dLat = toRad(latB - latA);
+  const dLng = toRad(lngB - lngA);
+  const rLatA = toRad(latA);
+  const rLatB = toRad(latB);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(rLatA) * Math.cos(rLatB) * Math.sin(dLng / 2) ** 2;
+
+  return 2 * earthRadius * Math.asin(Math.sqrt(h));
+}
+
+function getCatMarkerIcon(jsonData = {}) {
+  const scaledSize = getCatMarkerSize(jsonData);
+
+  return {
+    url: "https://cdn-icons-png.flaticon.com/512/1864/1864514.png",
+    scaledSize,
+   anchor: new google.maps.Point(
+  scaledSize.width / 2,
+  scaledSize.height * 0.95
+)
+  };
+}
+
+function updateMarkerIconSizes() {
+  if (!window.google || !google.maps) return;
+
+  markers.forEach(marker => {
+    marker.setIcon(getCatMarkerIcon(marker.jsonData));
+  });
+}
+
+function addMarker(jsonData, focus = false) {
+  const marker = new google.maps.Marker({
+    position: { lat: jsonData.lat, lng: jsonData.lng },
+    map: map,
+    title: "🐈 猫発見！",
+    icon: getCatMarkerIcon(jsonData)
+  });
+  marker.jsonData = jsonData;
+
+  // 🐾 クリックイベントで判定
+ const meowSound = new Audio('meow.mp3'); // 同じフォルダに置いた音声ファイル
+
+marker.addListener("click", (e) => {
+  if (e.domEvent.shiftKey) {
+    if (confirm("この猫マーカーを削除しますか？🐈")) {
+      if (confirm("本当に削除しますか？🙀")) {
+        marker.setMap(null);
+        markers = markers.filter(m => m !== marker);
+        saveMarkers();
+      }
+    }
+  } else {
+    // 普通のクリック → ストリートビュー
+    showPanorama(jsonData);
+
+    // 猫の鳴き声再生
+    meowSound.currentTime = 0; // 何度もクリックできるように先頭に戻す
+    meowSound.play();
+  }
+});
+
+
+
+  markers.push(marker);
+  if (focus) map.setCenter(marker.getPosition());
+}
+
+function showPanorama(data) {
+  resetZoomOnEnter = false;
+  if (data.pano) panorama.setPano(data.pano);
+  else panorama.setPosition({ lat: data.lat, lng: data.lng });
+  panorama.setPov({
+    heading: data.heading,
+    pitch: data.pitch,
+    zoom: data.zoom
+  });
+  panorama.setVisible(true);
+  updateMarkerIconSizes();
+}
+
+async function saveMarkers() {
+  const data = markers.map(m => m.jsonData);
+
+  await window.firebaseSetDoc(
+    window.firebaseDoc(window.firebaseDB, "catsmap", "markers"),
+    {
+      items: data,
+      updatedAt: new Date().toISOString()
+    }
+  );
+
+  console.log("✅ Firestore保存完了", data);
+}
+
+async function loadSavedMarkers() {
+  // Firebaseの準備待ち
+  while (!window.firebaseDB || !window.firebaseGetDoc || !window.firebaseDoc) {
+    console.log("⏳ Firebase準備待ち...");
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+
+  const snap = await window.firebaseGetDoc(
+    window.firebaseDoc(window.firebaseDB, "catsmap", "markers")
+  );
+
+  if (!snap.exists()) {
+    console.log("🐾 Firestoreに保存データはまだありません");
+    return;
+  }
+
+  const data = snap.data().items || [];
+  data.forEach(d => addMarker(d));
+
+  if (data.length) {
+    console.log(`🐾 ${data.length} 件の猫をFirestoreから復元しました`);
+  }
+}
+
+
+
+</script>
+
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB5kbAl74HZzz9TbQSNakdeG9XMc-8EVeI&callback=initMap">
+</script>
+
+
+
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC_HyYwQMwfODX15o5HXjw7aYSPnuaFTOg",
+  authDomain: "nekocatsmap.firebaseapp.com",
+  projectId: "nekocatsmap",
+  storageBucket: "nekocatsmap.firebasestorage.app",
+  messagingSenderId: "247582443573",
+  appId: "1:247582443573:web:078b7acb7e0bd7ca81897c"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.firebaseDB = db;
+window.firebaseDoc = doc;
+window.firebaseSetDoc = setDoc;
+window.firebaseGetDoc = getDoc;
+
+console.log("🔥 Firebase接続成功");
+</script>
+
+
+</body>
+</html>
