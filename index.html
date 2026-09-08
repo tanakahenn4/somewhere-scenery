@@ -52,6 +52,128 @@
     background: rgba(0,0,0,0.75);
   }
 
+  #layerMenu {
+    position: absolute;
+    top: 58px;
+    right: 10px;
+    z-index: 1001;
+  }
+
+  #layerMenuButton {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    margin: 0 0 4px auto;
+    display: block;
+    border: 0;
+    border-radius: 2px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-size: 22px;
+    line-height: 40px;
+    cursor: pointer;
+  }
+
+  #layerMenuButton:hover {
+    background: rgba(0,0,0,0.75);
+  }
+
+  #layerMenuPanel {
+    min-width: 220px;
+    padding: 10px;
+    color: #fff;
+    background: rgba(51,51,51,0.95);
+    border: 1px solid #a7a5a5;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  }
+
+  #layerMenuPanel[hidden] {
+    display: none;
+  }
+
+  #layerMenuPanel strong {
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  #layerMenuPanel label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 0;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  #layerMenuPanel input {
+    margin: 0;
+  }
+
+  #registrationModal {
+    position: absolute;
+    inset: 0;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+    background: rgba(0,0,0,0.45);
+  }
+
+  #registrationModal[hidden] {
+    display: none;
+  }
+
+  #registrationDialog {
+    width: min(360px, 100%);
+    padding: 16px;
+    box-sizing: border-box;
+    color: #fff;
+    background: #333;
+    border: 1px solid #a7a5a5;
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.45);
+  }
+
+  #registrationDialog strong {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 18px;
+  }
+
+  #registrationDialog label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    cursor: pointer;
+  }
+
+  #registrationDialog input {
+    margin: 0;
+  }
+
+  #registrationActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  #registrationActions button {
+    margin: 0;
+    color: #fff;
+    background: #444;
+    border: 1px solid #a7a5a5;
+    cursor: pointer;
+  }
+
+  #registrationActions button:hover {
+    background: #555;
+  }
+
  #controls {
     padding: 1px;
     background: #444444;  /* 黒系ダーク */
@@ -159,6 +281,17 @@
     line-height: 34px;
   }
 
+  #layerMenu {
+    top: 52px;
+  }
+
+  #layerMenuButton {
+    width: 34px;
+    height: 34px;
+    font-size: 20px;
+    line-height: 34px;
+  }
+
   #footer-label {
     left: 50%;
     top: 10px;
@@ -240,6 +373,31 @@
 <div id="app">
 <div id="map"></div>
 <button id="fullscreenButton" type="button" title="全画面表示" aria-label="全画面表示">⛶</button>
+<div id="layerMenu">
+  <button id="layerMenuButton" type="button" title="表示レイヤー" aria-label="表示レイヤー" aria-controls="layerMenuPanel" aria-expanded="false">☰</button>
+  <div id="layerMenuPanel" hidden>
+    <strong>表示するもの</strong>
+    <label><input type="checkbox" value="cat" checked>ねこ</label>
+    <label><input type="checkbox" value="interesting_scenery" checked>気になった景色</label>
+    <label><input type="checkbox" value="strange_funny" checked>不思議・おもしろい景色</label>
+    <label><input type="checkbox" value="creepy" checked>不気味</label>
+    <label><input type="checkbox" value="other" checked>その他</label>
+  </div>
+</div>
+<div id="registrationModal" hidden>
+  <form id="registrationDialog" role="dialog" aria-modal="true" aria-labelledby="registrationTitle">
+    <strong id="registrationTitle">この場所のジャンル</strong>
+    <label><input type="radio" name="registrationCategory" value="cat" checked>ねこ</label>
+    <label><input type="radio" name="registrationCategory" value="interesting_scenery">気になった景色</label>
+    <label><input type="radio" name="registrationCategory" value="strange_funny">不思議・おもしろい景色</label>
+    <label><input type="radio" name="registrationCategory" value="creepy">不気味</label>
+    <label><input type="radio" name="registrationCategory" value="other">その他</label>
+    <div id="registrationActions">
+      <button id="confirmRegistrationButton" type="submit">登録</button>
+      <button id="cancelRegistrationButton" type="button">キャンセル</button>
+    </div>
+  </form>
+</div>
 
 <div id="controls">
   <div id="footer-label">全国猫図鑑  </div> 
@@ -272,7 +430,17 @@
 let map, panorama;
 let markers = [];
 let resetZoomOnEnter = true;
+let pendingMarkerData = null;
 const STORAGE_KEY = "catsmap_markers";
+const markerCategories = ["cat", "interesting_scenery", "strange_funny", "creepy", "other"];
+const markerIconUrls = {
+  cat: "https://cdn-icons-png.flaticon.com/512/1864/1864514.png",
+  interesting_scenery: "icons/interesting_scenery.png",
+  strange_funny: "icons/strange_funny.png",
+  creepy: "icons/creepy.png",
+  other: "icons/other.png"
+};
+const visibleMarkerCategories = new Set(markerCategories);
 
 
 
@@ -291,6 +459,8 @@ function initMap() {
 
   loadSavedMarkers();
   setupFullscreenButton();
+  setupLayerMenu();
+  setupRegistrationDialog();
 
     panorama.addListener('pov_changed', () => {
     const heading = panorama.getPov().heading;
@@ -321,36 +491,20 @@ function initMap() {
     updateMarkerIconSizes();
   });
 
-  document.getElementById("getPosButton").addEventListener("click", async () => {
+  document.getElementById("getPosButton").addEventListener("click", () => {
     if (!panorama.getVisible()) return alert("ストリートビューが表示されていません。");
     const pos = panorama.getPosition();
     const pov = panorama.getPov();
     const panoId = panorama.getPano();
-    const jsonData = {
-      category: "cat",
-      title: "",
-      memo: "",
+
+    openRegistrationDialog({
       lat: pos.lat(),
       lng: pos.lng(),
       heading: pov.heading,
       pitch: pov.pitch,
       zoom: pov.zoom,
-      pano: panoId,
-      ownerUid: null,
-      createdAt: window.firebaseServerTimestamp(),
-      migratedAt: null
-    };
-
-    try {
-      const docRef = await window.firebaseAddDoc(
-        window.firebaseCollection(window.firebaseDB, "mapMarkers"),
-        jsonData
-      );
-      addMarker(jsonData, true, docRef.id);
-    } catch (e) {
-      console.error("マーカー保存エラー:", e);
-      alert("マーカーを保存できませんでした。");
-    }
+      pano: panoId
+    });
   });
 
   document.getElementById("searchAddressButton").addEventListener("click", async () => {
@@ -409,6 +563,107 @@ function initMap() {
   window.addEventListener("resize", () => {
     updateMarkerIconSizes();
   });
+}
+
+function setupLayerMenu() {
+  const menu = document.getElementById("layerMenu");
+  const button = document.getElementById("layerMenuButton");
+  const panel = document.getElementById("layerMenuPanel");
+
+  button.addEventListener("click", () => {
+    panel.hidden = !panel.hidden;
+    button.setAttribute("aria-expanded", String(!panel.hidden));
+  });
+
+  panel.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) visibleMarkerCategories.add(checkbox.value);
+      else visibleMarkerCategories.delete(checkbox.value);
+      updateMarkerVisibility();
+    });
+  });
+
+  document.addEventListener("click", event => {
+    if (!panel.hidden && !menu.contains(event.target)) {
+      panel.hidden = true;
+      button.setAttribute("aria-expanded", "false");
+    }
+  });
+}
+
+function openRegistrationDialog(markerData) {
+  const modal = document.getElementById("registrationModal");
+  const form = document.getElementById("registrationDialog");
+  pendingMarkerData = markerData;
+  form.reset();
+  modal.hidden = false;
+  form.querySelector('input[name="registrationCategory"]:checked').focus();
+}
+
+function setupRegistrationDialog() {
+  const modal = document.getElementById("registrationModal");
+  const form = document.getElementById("registrationDialog");
+  const confirmButton = document.getElementById("confirmRegistrationButton");
+  const cancelButton = document.getElementById("cancelRegistrationButton");
+
+  const closeDialog = () => {
+    modal.hidden = true;
+    pendingMarkerData = null;
+  };
+
+  cancelButton.addEventListener("click", closeDialog);
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!pendingMarkerData) return;
+
+    const selectedCategory = form.querySelector(
+      'input[name="registrationCategory"]:checked'
+    )?.value;
+    if (!markerCategories.includes(selectedCategory)) {
+      alert("ジャンルを選択してください。");
+      return;
+    }
+
+    const jsonData = {
+      category: selectedCategory,
+      title: "",
+      memo: "",
+      ...pendingMarkerData,
+      ownerUid: null,
+      createdAt: window.firebaseServerTimestamp(),
+      migratedAt: null
+    };
+
+    confirmButton.disabled = true;
+    cancelButton.disabled = true;
+    try {
+      const docRef = await window.firebaseAddDoc(
+        window.firebaseCollection(window.firebaseDB, "mapMarkers"),
+        jsonData
+      );
+      addMarker(jsonData, true, docRef.id);
+      closeDialog();
+    } catch (e) {
+      console.error("マーカー保存エラー:", e);
+      alert("マーカーを保存できませんでした。");
+    } finally {
+      confirmButton.disabled = false;
+      cancelButton.disabled = false;
+    }
+  });
+}
+
+function getMarkerCategory(marker) {
+  return marker.jsonData.category ?? "cat";
+}
+
+function applyMarkerVisibility(marker) {
+  marker.setMap(visibleMarkerCategories.has(getMarkerCategory(marker)) ? map : null);
+}
+
+function updateMarkerVisibility() {
+  markers.forEach(applyMarkerVisibility);
 }
 
 function clearSearchResults() {
@@ -549,9 +804,10 @@ function getDistanceMeters(a, b) {
 
 function getCatMarkerIcon(jsonData = {}) {
   const scaledSize = getCatMarkerSize(jsonData);
+  const category = jsonData.category || "cat";
 
   return {
-    url: "https://cdn-icons-png.flaticon.com/512/1864/1864514.png",
+    url: markerIconUrls[category] || markerIconUrls.cat,
     scaledSize,
    anchor: new google.maps.Point(
   scaledSize.width / 2,
@@ -615,6 +871,7 @@ marker.addListener("click", async (e) => {
 
 
   markers.push(marker);
+  applyMarkerVisibility(marker);
   if (focus) map.setCenter(marker.getPosition());
 }
 
