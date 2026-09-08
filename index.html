@@ -321,21 +321,36 @@ function initMap() {
     updateMarkerIconSizes();
   });
 
-  document.getElementById("getPosButton").addEventListener("click", () => {
+  document.getElementById("getPosButton").addEventListener("click", async () => {
     if (!panorama.getVisible()) return alert("ストリートビューが表示されていません。");
     const pos = panorama.getPosition();
     const pov = panorama.getPov();
     const panoId = panorama.getPano();
     const jsonData = {
+      category: "cat",
+      title: "",
+      memo: "",
       lat: pos.lat(),
       lng: pos.lng(),
       heading: pov.heading,
       pitch: pov.pitch,
       zoom: pov.zoom,
-      pano: panoId
+      pano: panoId,
+      ownerUid: null,
+      createdAt: window.firebaseServerTimestamp(),
+      migratedAt: null
     };
-    addMarker(jsonData, true);
-    saveMarkers();
+
+    try {
+      const docRef = await window.firebaseAddDoc(
+        window.firebaseCollection(window.firebaseDB, "mapMarkers"),
+        jsonData
+      );
+      addMarker(jsonData, true, docRef.id);
+    } catch (e) {
+      console.error("マーカー保存エラー:", e);
+      alert("マーカーを保存できませんでした。");
+    }
   });
 
   document.getElementById("searchAddressButton").addEventListener("click", async () => {
@@ -553,25 +568,38 @@ function updateMarkerIconSizes() {
   });
 }
 
-function addMarker(jsonData, focus = false) {
+function addMarker(jsonData, focus = false, firestoreId = null) {
   const marker = new google.maps.Marker({
     position: { lat: jsonData.lat, lng: jsonData.lng },
     map: map,
     title: "🐈 猫発見！",
     icon: getCatMarkerIcon(jsonData)
   });
+  marker.firestoreId = firestoreId;
   marker.jsonData = jsonData;
 
   // 🐾 クリックイベントで判定
  const meowSound = new Audio('meow.mp3'); // 同じフォルダに置いた音声ファイル
 
-marker.addListener("click", (e) => {
+marker.addListener("click", async (e) => {
   if (e.domEvent.shiftKey) {
     if (confirm("この猫マーカーを削除しますか？🐈")) {
       if (confirm("本当に削除しますか？🙀")) {
-        marker.setMap(null);
-        markers = markers.filter(m => m !== marker);
-        saveMarkers();
+        if (!marker.firestoreId) {
+          alert("このマーカーのFirestore IDが見つかりません。");
+          return;
+        }
+
+        try {
+          await window.firebaseDeleteDoc(
+            window.firebaseDoc(window.firebaseDB, "mapMarkers", marker.firestoreId)
+          );
+          marker.setMap(null);
+          markers = markers.filter(m => m !== marker);
+        } catch (error) {
+          console.error("マーカー削除エラー:", error);
+          alert("マーカーを削除できませんでした。");
+        }
       }
     }
   } else {
@@ -603,41 +631,27 @@ function showPanorama(data) {
   updateMarkerIconSizes();
 }
 
-async function saveMarkers() {
-  const data = markers.map(m => m.jsonData);
-
-  await window.firebaseSetDoc(
-    window.firebaseDoc(window.firebaseDB, "catsmap", "markers"),
-    {
-      items: data,
-      updatedAt: new Date().toISOString()
-    }
-  );
-
-  console.log("✅ Firestore保存完了", data);
-}
-
 async function loadSavedMarkers() {
   // Firebaseの準備待ち
-  while (!window.firebaseDB || !window.firebaseGetDoc || !window.firebaseDoc) {
+  while (!window.firebaseDB || !window.firebaseGetDocs || !window.firebaseCollection) {
     console.log("⏳ Firebase準備待ち...");
     await new Promise(resolve => setTimeout(resolve, 100));
   }
 
-  const snap = await window.firebaseGetDoc(
-    window.firebaseDoc(window.firebaseDB, "catsmap", "markers")
+  const snap = await window.firebaseGetDocs(
+    window.firebaseCollection(window.firebaseDB, "mapMarkers")
   );
 
-  if (!snap.exists()) {
+  snap.forEach(snapshot => {
+    const jsonData = snapshot.data();
+    jsonData.category ??= "cat";
+    addMarker(jsonData, false, snapshot.id);
+  });
+
+  if (snap.size) {
+    console.log(`🐾 ${snap.size} 件の猫をFirestoreから復元しました`);
+  } else {
     console.log("🐾 Firestoreに保存データはまだありません");
-    return;
-  }
-
-  const data = snap.data().items || [];
-  data.forEach(d => addMarker(d));
-
-  if (data.length) {
-    console.log(`🐾 ${data.length} 件の猫をFirestoreから復元しました`);
   }
 }
 
@@ -654,7 +668,7 @@ async function loadSavedMarkers() {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC_HyYwQMwfODX15o5HXjw7aYSPnuaFTOg",
@@ -669,9 +683,12 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 window.firebaseDB = db;
+window.firebaseCollection = collection;
+window.firebaseGetDocs = getDocs;
+window.firebaseAddDoc = addDoc;
 window.firebaseDoc = doc;
-window.firebaseSetDoc = setDoc;
-window.firebaseGetDoc = getDoc;
+window.firebaseDeleteDoc = deleteDoc;
+window.firebaseServerTimestamp = serverTimestamp;
 
 console.log("🔥 Firebase接続成功");
 </script>
