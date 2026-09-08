@@ -534,6 +534,9 @@ function initMap() {
     if (arrow) {
       arrow.setAttribute('transform', `rotate(${-heading},25,25)`);
     }
+  });
+
+  panorama.addListener("zoom_changed", () => {
     updateMarkerIconSizes();
   });
 
