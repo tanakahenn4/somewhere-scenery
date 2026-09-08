@@ -52,6 +52,31 @@
     background: rgba(0,0,0,0.75);
   }
 
+  #streetViewCoverageButton {
+    display: none;
+    width: 56px;
+    height: 40px;
+    padding: 0 6px;
+    margin: 0 4px 10px 0;
+    box-sizing: border-box;
+    border: 0;
+    border-radius: 2px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-size: 12px;
+    line-height: 40px;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  #streetViewCoverageButton:hover {
+    background: rgba(0,0,0,0.75);
+  }
+
+  #streetViewCoverageButton[aria-pressed="true"] {
+    background: #1a73e8;
+  }
+
   #layerMenu {
     position: absolute;
     top: 58px;
@@ -395,6 +420,7 @@
 <div id="app">
 <div id="map"></div>
 <button id="fullscreenButton" type="button" title="全画面表示" aria-label="全画面表示">⛶</button>
+<button id="streetViewCoverageButton" type="button" title="Street View対応範囲を表示" aria-label="Street View対応範囲を表示" aria-pressed="false">SV OFF</button>
 <div id="layerMenu">
   <button id="layerMenuButton" type="button" title="表示レイヤー" aria-label="表示レイヤー" aria-controls="layerMenuPanel" aria-expanded="false">☰</button>
   <div id="layerMenuPanel" hidden>
@@ -453,7 +479,7 @@
 
 
 <script>
-let map, panorama;
+let map, panorama, coverageLayer;
 let markers = [];
 let resetZoomOnEnter = true;
 let pendingMarkerData = null;
@@ -477,14 +503,19 @@ function initMap() {
   map = new google.maps.Map(document.getElementById("map"), {
     center: initialCenter,
     zoom: 7,
-    fullscreenControl: false
+    fullscreenControl: false,
+    streetViewControlOptions: {
+      position: google.maps.ControlPosition.BOTTOM_RIGHT
+    }
   });
+  coverageLayer = new google.maps.StreetViewCoverageLayer();
   panorama = map.getStreetView();
   panorama.setOptions({ fullscreenControl: false });
   panorama.setVisible(false);
 
   loadSavedMarkers();
   setupFullscreenButton();
+  setupStreetViewCoverageButton();
   setupLayerMenu();
   setupRegistrationDialog();
 
@@ -912,6 +943,51 @@ marker.addListener("click", async (e) => {
   markers.push(marker);
   applyMarkerVisibility(marker);
   if (focus) map.setCenter(marker.getPosition());
+}
+
+function setupStreetViewCoverageButton() {
+  const button = document.getElementById("streetViewCoverageButton");
+  const streetViewService = new google.maps.StreetViewService();
+
+  map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(button);
+  button.style.display = "block";
+
+  button.addEventListener("click", () => {
+    const isVisible = coverageLayer.getMap() === map;
+    coverageLayer.setMap(isVisible ? null : map);
+    map.setOptions({ draggableCursor: isVisible ? null : "pointer" });
+    button.textContent = isVisible ? "SV OFF" : "SV ON";
+    button.setAttribute("aria-pressed", String(!isVisible));
+    button.title = isVisible
+      ? "Street View対応範囲を表示"
+      : "Street View対応範囲を非表示";
+    button.setAttribute("aria-label", button.title);
+  });
+
+  map.addListener("click", async event => {
+    if (coverageLayer.getMap() !== map || !event.latLng) return;
+
+    try {
+      const { data } = await streetViewService.getPanorama({
+        location: event.latLng,
+        radius: 50
+      });
+
+      if (coverageLayer.getMap() !== map) return;
+      if (!data?.location?.pano) throw new Error("Street View panorama not found");
+
+      showPanorama({
+        pano: data.location.pano,
+        heading: 0,
+        pitch: 0,
+        zoom: 1
+      });
+    } catch (e) {
+      if (coverageLayer.getMap() !== map) return;
+      console.warn("Street View検索エラー:", e);
+      alert("この地点の近くにStreet Viewが見つかりませんでした。");
+    }
+  });
 }
 
 function showPanorama(data) {
