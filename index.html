@@ -97,6 +97,28 @@
     margin-bottom: 6px;
   }
 
+  #layerMenuActions {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  #layerMenuActions button {
+    flex: 1;
+    margin: 0;
+    padding: 3px 6px;
+    color: #fff;
+    background: #444;
+    border: 1px solid #a7a5a5;
+    border-radius: 3px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  #layerMenuActions button:hover {
+    background: #555;
+  }
+
   #layerMenuPanel label {
     display: flex;
     align-items: center;
@@ -377,6 +399,10 @@
   <button id="layerMenuButton" type="button" title="表示レイヤー" aria-label="表示レイヤー" aria-controls="layerMenuPanel" aria-expanded="false">☰</button>
   <div id="layerMenuPanel" hidden>
     <strong>表示するもの</strong>
+    <div id="layerMenuActions">
+      <button id="showAllMarkersButton" type="button">すべて表示</button>
+      <button id="hideAllMarkersButton" type="button">すべて非表示</button>
+    </div>
     <label><input type="checkbox" value="cat" checked>ねこ</label>
     <label><input type="checkbox" value="interesting_scenery" checked>気になった景色</label>
     <label><input type="checkbox" value="strange_funny" checked>不思議・おもしろい景色</label>
@@ -569,18 +595,31 @@ function setupLayerMenu() {
   const menu = document.getElementById("layerMenu");
   const button = document.getElementById("layerMenuButton");
   const panel = document.getElementById("layerMenuPanel");
+  const checkboxes = panel.querySelectorAll('input[type="checkbox"]');
 
   button.addEventListener("click", () => {
     panel.hidden = !panel.hidden;
     button.setAttribute("aria-expanded", String(!panel.hidden));
   });
 
-  panel.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+  checkboxes.forEach(checkbox => {
     checkbox.addEventListener("change", () => {
       if (checkbox.checked) visibleMarkerCategories.add(checkbox.value);
       else visibleMarkerCategories.delete(checkbox.value);
       updateMarkerVisibility();
     });
+  });
+
+  document.getElementById("showAllMarkersButton").addEventListener("click", () => {
+    checkboxes.forEach(checkbox => checkbox.checked = true);
+    markerCategories.forEach(category => visibleMarkerCategories.add(category));
+    updateMarkerVisibility();
+  });
+
+  document.getElementById("hideAllMarkersButton").addEventListener("click", () => {
+    checkboxes.forEach(checkbox => checkbox.checked = false);
+    visibleMarkerCategories.clear();
+    updateMarkerVisibility();
   });
 
   document.addEventListener("click", event => {
