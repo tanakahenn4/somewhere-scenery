@@ -25,9 +25,15 @@
     height: 100vh;
   }
 
-  #map {
+  #mapContainer {
     flex: 1;
     min-height: 0;
+    position: relative;
+  }
+
+  #map {
+    width: 100%;
+    height: 100%;
   }
 
   #fullscreenButton {
@@ -53,11 +59,15 @@
   }
 
   #streetViewCoverageButton {
-    display: none;
+    display: block;
+    position: absolute;
+    right: 56px;
+    bottom: 22px;
+    z-index: 1001;
     width: 56px;
     height: 40px;
     padding: 0 6px;
-    margin: 0 4px 10px 0;
+    margin: 0;
     box-sizing: border-box;
     border: 0;
     border-radius: 2px;
@@ -418,9 +428,11 @@
 <body>
 
 <div id="app">
-<div id="map"></div>
+<div id="mapContainer">
+  <div id="map"></div>
+  <button id="streetViewCoverageButton" type="button" title="Street View対応範囲を表示" aria-label="Street View対応範囲を表示" aria-pressed="false">SV OFF</button>
+</div>
 <button id="fullscreenButton" type="button" title="全画面表示" aria-label="全画面表示">⛶</button>
-<button id="streetViewCoverageButton" type="button" title="Street View対応範囲を表示" aria-label="Street View対応範囲を表示" aria-pressed="false">SV OFF</button>
 <div id="layerMenu">
   <button id="layerMenuButton" type="button" title="表示レイヤー" aria-label="表示レイヤー" aria-controls="layerMenuPanel" aria-expanded="false">☰</button>
   <div id="layerMenuPanel" hidden>
@@ -503,10 +515,7 @@ function initMap() {
   map = new google.maps.Map(document.getElementById("map"), {
     center: initialCenter,
     zoom: 7,
-    fullscreenControl: false,
-    streetViewControlOptions: {
-      position: google.maps.ControlPosition.BOTTOM_RIGHT
-    }
+    fullscreenControl: false
   });
   coverageLayer = new google.maps.StreetViewCoverageLayer();
   panorama = map.getStreetView();
@@ -948,9 +957,6 @@ marker.addListener("click", async (e) => {
 function setupStreetViewCoverageButton() {
   const button = document.getElementById("streetViewCoverageButton");
   const streetViewService = new google.maps.StreetViewService();
-
-  map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(button);
-  button.style.display = "block";
 
   button.addEventListener("click", () => {
     const isVisible = coverageLayer.getMap() === map;
