@@ -13,6 +13,9 @@
   }
 
   #app {
+    --side-navigation-width: 46px;
+    --side-panel-width: 350px;
+    --top-bar-height: 40px;
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -25,6 +28,24 @@
     height: 100vh;
   }
 
+  #topBar {
+    flex: 0 0 var(--top-bar-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+    color: #fff;
+    background: #000000;
+  }
+
+  #siteTitle {
+    font-size: 18px;
+    line-height: 1;
+    letter-spacing: 2px;
+    text-align: center;
+  }
+
   #mapContainer {
     flex: 1;
     min-height: 0;
@@ -32,14 +53,14 @@
   }
 
   #map {
-    width: 100%;
+    width: calc(100% - var(--side-navigation-width));
     height: 100%;
   }
 
   #fullscreenButton {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: calc(var(--top-bar-height) + 10px);
+    right: calc(var(--side-navigation-width) + 10px);
     z-index: 1001;
     width: 40px;
     height: 40px;
@@ -60,21 +81,6 @@
 
   #streetViewCoverageButton {
     display: block;
-    position: absolute;
-    right: 56px;
-    bottom: 22px;
-    z-index: 1001;
-    width: 56px;
-    height: 40px;
-    padding: 0 6px;
-    margin: 0;
-    box-sizing: border-box;
-    border: 0;
-    border-radius: 2px;
-    background: rgba(0,0,0,0.55);
-    color: #fff;
-    font-size: 12px;
-    line-height: 40px;
     white-space: nowrap;
     cursor: pointer;
   }
@@ -87,10 +93,115 @@
     background: #1a73e8;
   }
 
+  #sidePanelOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1002;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  #sidePanel {
+    position: absolute;
+    top: 0;
+    right: var(--side-navigation-width);
+    bottom: 0;
+    width: min(var(--side-panel-width), calc(100% - var(--side-navigation-width)));
+    box-sizing: border-box;
+    color: #fff;
+    background: rgba(35,35,35,0.97);
+    box-shadow: -3px 0 12px rgba(0,0,0,0.35);
+    transform: translateX(calc(100% + var(--side-navigation-width)));
+    transition: transform 0.25s ease;
+    pointer-events: none;
+  }
+
+  #sidePanel.is-open {
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  #sidePanelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 48px;
+    padding: 8px 10px 8px 16px;
+    box-sizing: border-box;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+  }
+
+  #sidePanelCloseButton {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 3px;
+    color: #fff;
+    background: transparent;
+    font-size: 24px;
+    line-height: 34px;
+    cursor: pointer;
+  }
+
+  #sidePanelCloseButton:hover {
+    background: rgba(255,255,255,0.12);
+  }
+
+  #sidePanelContent {
+    padding: 16px;
+  }
+
+  #sideNavigationRail {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    width: var(--side-navigation-width);
+    box-sizing: border-box;
+    background: #000000;
+    border-left: 1px solid rgba(255,255,255,0.25);
+    pointer-events: auto;
+  }
+
+  #sidePanelToggleButton {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    width: 100%;
+    height: 100%;
+    padding: 14px 2px 6px;
+    margin: 0;
+    border: 0;
+    color: #fff;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  #sidePanelToggleIcon {
+    font-size: 24px;
+    line-height: 1;
+  }
+
+  #sidePanelToggleLabel {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  #sidePanelToggleButton:hover,
+  #sidePanelToggleButton[aria-expanded="true"] {
+    background: rgba(55,55,55,0.96);
+  }
+
   #layerMenu {
     position: absolute;
-    top: 58px;
-    right: 10px;
+    top: calc(var(--top-bar-height) + 58px);
+    right: calc(var(--side-navigation-width) + 10px);
     z-index: 1001;
   }
 
@@ -233,8 +344,7 @@
 
  #controls {
     padding: 1px;
-    background: #444444;  /* 黒系ダーク */
-    border-top: 2px solid #ff44ef; /* 黒に近い境界線 */
+    background: #000000;
     color: #ffffff;  /* 文字を白に */
     display: flex;
     align-items: center;
@@ -316,21 +426,11 @@
   font-style: normal;
 }
 
-#footer-label {
-  position: fixed;
-  left: 220px;
-  top: 11px;
-  color: #fff;               /* 文字色 */
-  background: rgba(0,0,0,0.5); /* 半透明黒背景 */
-  padding: 4px 8px;
-  border-radius: 8px;        /* 角丸 */
-  font-size: 20px;
-  
-  z-index: 1000;    
-  letter-spacing: 3px;         /* 地図やcontrolsより前面に表示 */
-}
-
 @media (max-width: 700px) {
+  #app {
+    --side-navigation-width: 42px;
+  }
+
   #fullscreenButton {
     width: 34px;
     height: 34px;
@@ -339,7 +439,7 @@
   }
 
   #layerMenu {
-    top: 52px;
+    top: calc(var(--top-bar-height) + 52px);
   }
 
   #layerMenuButton {
@@ -349,12 +449,8 @@
     line-height: 34px;
   }
 
-  #footer-label {
-    left: 50%;
-    top: 10px;
-    transform: translateX(-50%);
-    font-size: clamp(16px, 5vw, 24px);
-    letter-spacing: 2px;
+  #siteTitle {
+    font-size: clamp(14px, 4.5vw, 18px);
     white-space: nowrap;
   }
 
@@ -416,9 +512,6 @@
     font-size: clamp(12px, 2vw, 15px);
   }
 
-  #footer-label {
-    font-size: clamp(16px, 3vw, 22px);
-  }
 }
 
 
@@ -428,9 +521,26 @@
 <body>
 
 <div id="app">
+<header id="topBar">
+  <div id="siteTitle">どこかの風景共有サイト</div>
+</header>
 <div id="mapContainer">
   <div id="map"></div>
-  <button id="streetViewCoverageButton" type="button" title="Street View対応範囲を表示" aria-label="Street View対応範囲を表示" aria-pressed="false">SV OFF</button>
+  <div id="sidePanelOverlay">
+    <aside id="sidePanel" aria-label="サイドパネル" aria-hidden="true">
+      <div id="sidePanelHeader">
+        <strong>メニュー</strong>
+        <button id="sidePanelCloseButton" type="button" aria-label="サイドパネルを閉じる">×</button>
+      </div>
+      <div id="sidePanelContent"></div>
+    </aside>
+    <nav id="sideNavigationRail" aria-label="サイト操作">
+      <button id="sidePanelToggleButton" type="button" aria-label="サイドパネルを開く" aria-controls="sidePanel" aria-expanded="false">
+        <span id="sidePanelToggleIcon" aria-hidden="true">☰</span>
+        <span id="sidePanelToggleLabel">MENU</span>
+      </button>
+    </nav>
+  </div>
 </div>
 <button id="fullscreenButton" type="button" title="全画面表示" aria-label="全画面表示">⛶</button>
 <div id="layerMenu">
@@ -464,7 +574,6 @@
 </div>
 
 <div id="controls">
-  <div id="footer-label">全国猫図鑑  </div> 
   <!-- JSON系を上に -->
   <strong>登録データ(JSON):</strong>
   <textarea id="jsonInput" placeholder='{"lat":35.681167,"lng":139.767052,"heading":120,"pitch":5,"zoom":1,"pano":"panoid"}'></textarea>
@@ -475,7 +584,8 @@
   <button id="searchAddressButton">住所 / Pano ID 検索</button>
   <div id="searchResults" aria-label="検索候補"></div>
   <button id="getPosButton">現在位置を登録</button>
-  
+  <button id="streetViewCoverageButton" type="button" title="Street View対応範囲を表示" aria-label="Street View対応範囲を表示" aria-pressed="false">SV OFF</button>
+
   <button id="loadDataButton">ページ更新</button>
 </div>
 
@@ -527,6 +637,7 @@ function initMap() {
   setupStreetViewCoverageButton();
   setupLayerMenu();
   setupRegistrationDialog();
+  setupSidePanel();
 
     panorama.addListener('pov_changed', () => {
     const heading = panorama.getPov().heading;
@@ -670,6 +781,34 @@ function setupLayerMenu() {
       panel.hidden = true;
       button.setAttribute("aria-expanded", "false");
     }
+  });
+}
+
+function setupSidePanel() {
+  const panel = document.getElementById("sidePanel");
+  const toggleButton = document.getElementById("sidePanelToggleButton");
+  const closeButton = document.getElementById("sidePanelCloseButton");
+
+  const setOpen = isOpen => {
+    panel.classList.toggle("is-open", isOpen);
+    panel.setAttribute("aria-hidden", String(!isOpen));
+    toggleButton.setAttribute("aria-expanded", String(isOpen));
+    toggleButton.setAttribute(
+      "aria-label",
+      isOpen ? "サイドパネルを閉じる" : "サイドパネルを開く"
+    );
+  };
+
+  toggleButton.addEventListener("click", () => {
+    setOpen(!panel.classList.contains("is-open"));
+  });
+
+  closeButton.addEventListener("click", () => {
+    setOpen(false);
+  });
+
+  map.addListener("click", () => {
+    if (panel.classList.contains("is-open")) setOpen(false);
   });
 }
 
