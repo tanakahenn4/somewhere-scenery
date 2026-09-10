@@ -581,7 +581,6 @@
   <!-- <br><br> -->
   <!-- 住所入力系を下に -->
   <input id="addressInput" type="text" placeholder="住所または pano ID を入力" style="width:40%">
-  <button id="searchAddressButton">住所 / Pano ID 検索</button>
   <div id="searchResults" aria-label="検索候補"></div>
   <button id="getPosButton">現在位置を登録</button>
   <button id="streetViewCoverageButton" type="button" title="Street View対応範囲を表示" aria-label="Street View対応範囲を表示" aria-pressed="false">SV OFF</button>
@@ -687,9 +686,38 @@ function initMap() {
     });
   });
 
-  document.getElementById("searchAddressButton").addEventListener("click", async () => {
+  const addressInput = document.getElementById("addressInput");
+  addressInput.addEventListener("keydown", event => {
+    if (event.key !== "Enter" || event.isComposing) return;
+    event.preventDefault();
+    if (!addressInput.value.trim()) return;
+    searchAddressOrPano();
+  });
+
+  document.getElementById("searchJsonButton").addEventListener("click", () => {
+    try {
+      const data = JSON.parse(document.getElementById("jsonInput").value);
+      if (!data.lat || !data.lng) return alert("JSONに必要な情報がありません。");
+      showPanorama(data);
+    } catch {
+      alert("正しいJSONを入力してください。");
+    }
+  });
+
+  document.getElementById("loadDataButton").addEventListener("click", () => {
+    markers.forEach(m => m.setMap(null));
+    markers = [];
+    loadSavedMarkers();
+  });
+
+  window.addEventListener("resize", () => {
+    updateMarkerIconSizes();
+  });
+}
+
+async function searchAddressOrPano() {
     const input = document.getElementById("addressInput").value.trim();
-    if (!input) return alert("住所または pano ID を入力してください。");
+    if (!input) return;
 
     clearSearchResults();
 
@@ -722,27 +750,6 @@ function initMap() {
       console.warn("場所検索エラー:", e);
       alert("場所を検索できませんでした。Places APIの設定を確認してください。");
     }
-  });
-
-  document.getElementById("searchJsonButton").addEventListener("click", () => {
-    try {
-      const data = JSON.parse(document.getElementById("jsonInput").value);
-      if (!data.lat || !data.lng) return alert("JSONに必要な情報がありません。");
-      showPanorama(data);
-    } catch {
-      alert("正しいJSONを入力してください。");
-    }
-  });
-
-  document.getElementById("loadDataButton").addEventListener("click", () => {
-    markers.forEach(m => m.setMap(null));
-    markers = [];
-    loadSavedMarkers();
-  });
-
-  window.addEventListener("resize", () => {
-    updateMarkerIconSizes();
-  });
 }
 
 function setupLayerMenu() {
