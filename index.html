@@ -296,6 +296,8 @@
 
   #registrationDialog {
     width: min(360px, 100%);
+    max-height: 100%;
+    overflow-y: auto;
     padding: 16px;
     box-sizing: border-box;
     color: #fff;
@@ -311,7 +313,18 @@
     font-size: 18px;
   }
 
-  #registrationDialog label {
+  #registrationCategoryOptions {
+    margin: 0 0 12px;
+    padding: 0;
+    border: 0;
+  }
+
+  #registrationCategoryOptions legend {
+    margin-bottom: 3px;
+    font-weight: 600;
+  }
+
+  #registrationCategoryOptions label {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -321,6 +334,41 @@
 
   #registrationDialog input {
     margin: 0;
+  }
+
+  .registrationField {
+    display: block;
+    margin: 0 0 12px;
+  }
+
+  .registrationField > span {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  #registrationDialog .registrationTextInput {
+    width: 100%;
+    box-sizing: border-box;
+    color: #fff;
+    background: #222;
+    border: 1px solid #a7a5a5;
+  }
+
+  #registrationDialog textarea.registrationTextInput {
+    min-height: 80px;
+    resize: vertical;
+  }
+
+  #registrationPasswordHelp,
+  #registrationPasswordNotice {
+    margin: 5px 0 0;
+    line-height: 1.4;
+  }
+
+  #registrationPasswordNotice {
+    color: #ccc;
+    font-size: 12px;
   }
 
   #registrationActions {
@@ -560,12 +608,29 @@
 </div>
 <div id="registrationModal" hidden>
   <form id="registrationDialog" role="dialog" aria-modal="true" aria-labelledby="registrationTitle">
-    <strong id="registrationTitle">この場所のジャンル</strong>
-    <label><input type="radio" name="registrationCategory" value="cat" checked>ねこ</label>
-    <label><input type="radio" name="registrationCategory" value="interesting_scenery">気になった景色</label>
-    <label><input type="radio" name="registrationCategory" value="strange_funny">不思議・おもしろい景色</label>
-    <label><input type="radio" name="registrationCategory" value="creepy">不気味</label>
-    <label><input type="radio" name="registrationCategory" value="other">その他</label>
+    <strong id="registrationTitle">景色を登録</strong>
+    <fieldset id="registrationCategoryOptions">
+      <legend>ジャンル</legend>
+      <label><input type="radio" name="registrationCategory" value="cat" checked>ねこ</label>
+      <label><input type="radio" name="registrationCategory" value="interesting_scenery">気になった景色</label>
+      <label><input type="radio" name="registrationCategory" value="strange_funny">不思議・おもしろい景色</label>
+      <label><input type="radio" name="registrationCategory" value="creepy">不気味</label>
+      <label><input type="radio" name="registrationCategory" value="other">その他</label>
+    </fieldset>
+    <label class="registrationField" for="registrationTitleInput">
+      <span>題名</span>
+      <input id="registrationTitleInput" class="registrationTextInput" type="text" autocomplete="off">
+    </label>
+    <label class="registrationField" for="registrationMemoInput">
+      <span>メモ</span>
+      <textarea id="registrationMemoInput" class="registrationTextInput"></textarea>
+    </label>
+    <label class="registrationField" for="registrationPasswordInput">
+      <span>編集・削除用パスワード</span>
+      <input id="registrationPasswordInput" class="registrationTextInput" type="password" autocomplete="new-password" required>
+      <p id="registrationPasswordHelp">この景色をあとで編集・削除するときに使用します。</p>
+      <p id="registrationPasswordNotice">パスワードを忘れた場合は編集・削除できません。必要な場合は削除依頼を送ってください。</p>
+    </label>
     <div id="registrationActions">
       <button id="confirmRegistrationButton" type="submit">登録</button>
       <button id="cancelRegistrationButton" type="button">キャンセル</button>
@@ -819,24 +884,107 @@ function setupSidePanel() {
   });
 }
 
+async function getCoarseLocationName(lat, lng) {
+  try {
+    const geocoder = new google.maps.Geocoder();
+    const { results } = await geocoder.geocode({
+      location: { lat, lng },
+      region: "jp"
+    });
+    const components = results?.[0]?.address_components || [];
+    const locationTypes = [
+      "administrative_area_level_1",
+      "administrative_area_level_2",
+      "locality",
+      "sublocality_level_1",
+      "sublocality_level_2",
+      "sublocality_level_3",
+      "neighborhood"
+    ];
+    const names = [];
+
+    locationTypes.forEach(type => {
+      const component = components.find(item => item.types.includes(type));
+      if (component?.long_name && !names.includes(component.long_name)) {
+        names.push(component.long_name);
+      }
+    });
+
+    return names.join("") || "名称未設定";
+  } catch (error) {
+    console.warn("地名取得エラー:", error);
+    return "名称未設定";
+  }
+}
+
+function bytesToBase64(bytes) {
+  let binary = "";
+  bytes.forEach(byte => binary += String.fromCharCode(byte));
+  return btoa(binary);
+}
+
+async function hashEditPassword(password) {
+  if (!window.crypto?.subtle) {
+    throw new Error("このブラウザでは安全なパスワード処理を利用できません。");
+  }
+
+  const iterations = 600000;
+  const salt = window.crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await window.crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const hash = await window.crypto.subtle.deriveBits(
+    { name: "PBKDF2", hash: "SHA-256", salt, iterations },
+    keyMaterial,
+    256
+  );
+
+  return `pbkdf2-sha256$${iterations}$${bytesToBase64(salt)}$${bytesToBase64(new Uint8Array(hash))}`;
+}
+
 function openRegistrationDialog(markerData) {
   const modal = document.getElementById("registrationModal");
   const form = document.getElementById("registrationDialog");
-  pendingMarkerData = markerData;
+  const titleInput = document.getElementById("registrationTitleInput");
+  const confirmButton = document.getElementById("confirmRegistrationButton");
+  const registrationData = { ...markerData, locationName: "名称未設定" };
+
+  pendingMarkerData = registrationData;
   form.reset();
+  titleInput.value = "地名を取得中…";
+  titleInput.disabled = true;
+  confirmButton.disabled = true;
   modal.hidden = false;
   form.querySelector('input[name="registrationCategory"]:checked').focus();
+
+  getCoarseLocationName(markerData.lat, markerData.lng).then(locationName => {
+    if (pendingMarkerData !== registrationData) return;
+    registrationData.locationName = locationName;
+    titleInput.value = locationName;
+    titleInput.disabled = false;
+    confirmButton.disabled = false;
+    titleInput.focus();
+  });
 }
 
 function setupRegistrationDialog() {
   const modal = document.getElementById("registrationModal");
   const form = document.getElementById("registrationDialog");
+  const titleInput = document.getElementById("registrationTitleInput");
+  const memoInput = document.getElementById("registrationMemoInput");
+  const passwordInput = document.getElementById("registrationPasswordInput");
   const confirmButton = document.getElementById("confirmRegistrationButton");
   const cancelButton = document.getElementById("cancelRegistrationButton");
 
   const closeDialog = () => {
     modal.hidden = true;
     pendingMarkerData = null;
+    form.reset();
+    titleInput.disabled = false;
   };
 
   cancelButton.addEventListener("click", closeDialog);
@@ -853,19 +1001,29 @@ function setupRegistrationDialog() {
       return;
     }
 
-    const jsonData = {
-      category: selectedCategory,
-      title: "",
-      memo: "",
-      ...pendingMarkerData,
-      ownerUid: null,
-      createdAt: window.firebaseServerTimestamp(),
-      migratedAt: null
-    };
+    const password = passwordInput.value;
+    if (!password) {
+      alert("編集・削除用パスワードを入力してください。");
+      passwordInput.focus();
+      return;
+    }
 
     confirmButton.disabled = true;
     cancelButton.disabled = true;
     try {
+      const locationName = pendingMarkerData.locationName || "名称未設定";
+      const editPasswordHash = await hashEditPassword(password);
+      const jsonData = {
+        category: selectedCategory,
+        ...pendingMarkerData,
+        title: titleInput.value.trim() || locationName,
+        memo: memoInput.value.trim(),
+        locationName,
+        editPasswordHash,
+        ownerUid: null,
+        createdAt: window.firebaseServerTimestamp(),
+        migratedAt: null
+      };
       const docRef = await window.firebaseAddDoc(
         window.firebaseCollection(window.firebaseDB, "mapMarkers"),
         jsonData
