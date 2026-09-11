@@ -1935,6 +1935,7 @@ async function loadSavedMarkers() {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app-check.js";
 import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1947,6 +1948,10 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+initializeAppCheck(app, {
+  provider: new ReCaptchaEnterpriseProvider("6LcywbUtAAAAAK2lzUmVZEhpa8i9oMSR0KnkREaJ"),
+  isTokenAutoRefreshEnabled: true
+});
 const db = getFirestore(app);
 
 window.firebaseDB = db;
