@@ -1191,10 +1191,11 @@ const markerIconUrls = {
 };
 const MARKER_TITLE_LABEL_WIDTH = 320;
 const MARKER_TITLE_LABEL_GAP = 6;
+const MAP_MARKER_MAX_ZOOM = 9;
 const MAP_MARKER_MAX_SIZE = 55;
-const MAP_MARKER_MIN_SIZE = 24;
-const MAP_MARKER_TITLE_MAX_SIZE = 13;
-const MAP_MARKER_TITLE_MIN_SIZE = 8.5;
+const MAP_MARKER_MIN_SIZE = 37;
+const MAP_MARKER_TITLE_MAX_SIZE = 18;
+const MAP_MARKER_TITLE_MIN_SIZE = 11.5;
 const visibleMarkerCategories = new Set(markerCategories);
 
 
@@ -2048,7 +2049,7 @@ function setupFullscreenButton() {
 
 function getCatMarkerSize(jsonData = {}) {
   if (!panorama || !panorama.getVisible()) {
-    const size = getTopDownMapSize(MAP_MARKER_MAX_SIZE, MAP_MARKER_MIN_SIZE, 1.17);
+    const size = getTopDownMapSize(MAP_MARKER_MAX_SIZE, MAP_MARKER_MIN_SIZE, 1.07);
     return new google.maps.Size(size, size);
   }
 
@@ -2074,9 +2075,9 @@ function getCatMarkerSize(jsonData = {}) {
 }
 
 function getTopDownMapSize(maxSize, minSize, scaleBase) {
-  const zoom = Number(map && map.getZoom ? map.getZoom() : 13);
-  if (!Number.isFinite(zoom) || zoom >= 13) return maxSize;
-  return Math.max(minSize, maxSize * Math.pow(scaleBase, zoom - 13));
+  const zoom = Number(map && map.getZoom ? map.getZoom() : MAP_MARKER_MAX_ZOOM);
+  if (!Number.isFinite(zoom) || zoom >= MAP_MARKER_MAX_ZOOM) return maxSize;
+  return Math.max(minSize, maxSize * Math.pow(scaleBase, zoom - MAP_MARKER_MAX_ZOOM));
 }
 
 function getCatDistanceScale(jsonData = {}) {
@@ -2138,7 +2139,7 @@ function getMarkerTitleLabel(jsonData = {}) {
   const fontSize = getTopDownMapSize(
     MAP_MARKER_TITLE_MAX_SIZE,
     MAP_MARKER_TITLE_MIN_SIZE,
-    1.09
+    1.08
   );
 
   return {
