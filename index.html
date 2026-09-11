@@ -1165,6 +1165,7 @@ let markers = [];
 let resetZoomOnEnter = true;
 let pendingMarkerData = null;
 let pendingMarkerAction = null;
+let activeSceneryDetailPano = null;
 const STORAGE_KEY = "catsmap_markers";
 const markerCategories = ["cat", "interesting_scenery", "strange_funny", "creepy", "other"];
 const markerIconUrls = {
@@ -1214,6 +1215,13 @@ function initMap() {
 
   panorama.addListener("zoom_changed", () => {
     updateMarkerIconSizes();
+  });
+
+  panorama.addListener("pano_changed", () => {
+    const currentPano = panorama.getPano();
+    if (activeSceneryDetailPano && currentPano && currentPano !== activeSceneryDetailPano) {
+      hideSceneryDetailCard();
+    }
   });
 
   panorama.addListener("visible_changed", () => {
@@ -1394,6 +1402,9 @@ function showSceneryDetailCard(jsonData = {}, marker = null) {
     : "名称未設定";
   const memo = typeof jsonData.memo === "string" ? jsonData.memo.trim() : "";
   const createdAtMillis = getCreatedAtMillis(jsonData.createdAt);
+  activeSceneryDetailPano = typeof jsonData.pano === "string"
+    ? jsonData.pano.trim() || null
+    : null;
 
   titleElement.textContent = title;
   memoElement.textContent = memo;
@@ -1433,6 +1444,7 @@ function showSceneryDetailCard(jsonData = {}, marker = null) {
 }
 
 function hideSceneryDetailCard() {
+  activeSceneryDetailPano = null;
   document.getElementById("sceneryDetailCard").hidden = true;
 }
 
