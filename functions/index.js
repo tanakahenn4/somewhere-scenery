@@ -79,9 +79,13 @@ exports.createMarker = onCall(callableOptions, async (request) => {
 
 exports.updateMarker = onCall(callableOptions, async (request) => {
   try {
-    const {markerId, password, title, memo} = normalizeUpdateMarkerInput(
-      request.data,
-    );
+    const {
+      markerId,
+      password,
+      category,
+      title,
+      memo,
+    } = normalizeUpdateMarkerInput(request.data);
     const markerRef = db.collection("mapMarkers").doc(markerId);
     const credentialRef = db.collection("markerCredentials").doc(markerId);
 
@@ -96,7 +100,11 @@ exports.updateMarker = onCall(callableOptions, async (request) => {
       if (!markerSnapshot.exists || !credentialSnapshot.exists || !passwordMatches) {
         throw accessDenied();
       }
-      transaction.update(markerRef, {title, memo});
+      const updates = {title, memo};
+      if (category !== undefined) {
+        updates.category = category;
+      }
+      transaction.update(markerRef, updates);
     });
 
     return {markerId};

@@ -78,9 +78,21 @@ test("callable marker lifecycle uses private credentials", async () => {
   );
   assert.notEqual(credential.editPasswordHash, markerInput.password);
 
+  const invalidUpdate = await callFunction("updateMarker", {
+    markerId,
+    password: markerInput.password,
+    category: "not-a-category",
+    title: "変更不可",
+    memo: "変更不可",
+  });
+  assert.equal(invalidUpdate.status, 400);
+  assert.equal(invalidUpdate.body.error.status, "INVALID_ARGUMENT");
+  assert.equal((await markerRef.get()).data().category, markerInput.category);
+
   const wrongUpdate = await callFunction("updateMarker", {
     markerId,
     password: "wrong-password",
+    category: "creepy",
     title: "変更不可",
     memo: "変更不可",
   });
@@ -90,15 +102,31 @@ test("callable marker lifecycle uses private credentials", async () => {
   const updated = await callFunction("updateMarker", {
     markerId,
     password: markerInput.password,
+    category: "creepy",
     title: "変更後の題名",
     memo: "変更後のメモ",
+    lat: 0,
+    lng: 0,
+    pano: "変更不可",
+    heading: 0,
+    pitch: 0,
+    zoom: 0,
+    createdAt: null,
+    locationName: "変更不可",
   });
   assert.equal(updated.status, 200);
   const markerAfterUpdate = (await markerRef.get()).data();
+  assert.equal(markerAfterUpdate.category, "creepy");
   assert.equal(markerAfterUpdate.title, "変更後の題名");
   assert.equal(markerAfterUpdate.memo, "変更後のメモ");
   assert.equal(markerAfterUpdate.lat, markerInput.lat);
+  assert.equal(markerAfterUpdate.lng, markerInput.lng);
   assert.equal(markerAfterUpdate.pano, markerInput.pano);
+  assert.equal(markerAfterUpdate.heading, markerInput.heading);
+  assert.equal(markerAfterUpdate.pitch, markerInput.pitch);
+  assert.equal(markerAfterUpdate.zoom, markerInput.zoom);
+  assert.equal(markerAfterUpdate.locationName, markerInput.locationName);
+  assert.equal(markerAfterUpdate.createdAt.isEqual(marker.createdAt), true);
 
   const legacyRef = db.collection("mapMarkers").doc("legacy-without-credential");
   await legacyRef.set({title: "旧データ"});

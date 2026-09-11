@@ -746,6 +746,30 @@
     resize: vertical;
   }
 
+  #markerManagementCategoryOptions {
+    margin: 0 0 12px;
+    padding: 0;
+    border: 0;
+  }
+
+  #markerManagementCategoryOptions legend {
+    margin-bottom: 3px;
+    font-weight: 600;
+  }
+
+  #markerManagementCategoryOptions label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    cursor: pointer;
+  }
+
+  #markerManagementCategoryOptions input {
+    width: auto;
+    margin: 0;
+  }
+
   #markerManagementActions {
     display: flex;
     justify-content: flex-end;
@@ -1081,6 +1105,14 @@
     <strong id="markerManagementTitle">投稿を編集</strong>
     <p id="markerManagementMessage"></p>
     <div id="markerManagementEditFields">
+      <fieldset id="markerManagementCategoryOptions">
+        <legend>ジャンル</legend>
+        <label><input type="radio" name="markerManagementCategory" value="cat" checked>ねこ</label>
+        <label><input type="radio" name="markerManagementCategory" value="interesting_scenery">気になった景色</label>
+        <label><input type="radio" name="markerManagementCategory" value="strange_funny">不思議・おもしろい景色</label>
+        <label><input type="radio" name="markerManagementCategory" value="creepy">不気味</label>
+        <label><input type="radio" name="markerManagementCategory" value="other">その他</label>
+      </fieldset>
       <label class="markerManagementField" for="markerManagementTitleInput">
         <span>題名</span>
         <input id="markerManagementTitleInput" type="text" maxlength="100" autocomplete="off" required>
@@ -1771,6 +1803,12 @@ function openMarkerManagementDialog(marker, mode) {
     : "この投稿を削除します。登録時に設定したパスワードを入力してください。";
   confirmButton.textContent = isEdit ? "保存" : "削除";
   if (isEdit) {
+    const currentCategory = markerCategories.includes(marker.jsonData.category)
+      ? marker.jsonData.category
+      : "cat";
+    form.querySelector(
+      `input[name="markerManagementCategory"][value="${currentCategory}"]`
+    ).checked = true;
     titleInput.value = typeof marker.jsonData.title === "string" ? marker.jsonData.title : "";
     memoInput.value = typeof marker.jsonData.memo === "string" ? marker.jsonData.memo : "";
   }
@@ -1811,6 +1849,13 @@ function setupMarkerManagementDialog() {
     cancelButton.disabled = true;
     try {
       if (mode === "edit") {
+        const category = form.querySelector(
+          'input[name="markerManagementCategory"]:checked'
+        )?.value;
+        if (!markerCategories.includes(category)) {
+          alert("ジャンルを選択してください。");
+          return;
+        }
         const title = titleInput.value.trim();
         if (!title) {
           alert("題名を入力してください。");
@@ -1823,12 +1868,16 @@ function setupMarkerManagementDialog() {
         await window.firebaseUpdateMarker({
           markerId: marker.firestoreId,
           password,
+          category,
           title,
           memo: memoInput.value.trim()
         });
+        marker.jsonData.category = category;
         marker.jsonData.title = title;
         marker.jsonData.memo = memoInput.value.trim();
+        marker.setIcon(getCatMarkerIcon(marker.jsonData));
         marker.setLabel(getMarkerTitleLabel(marker.jsonData));
+        applyMarkerVisibility(marker);
         renderLatestSceneryList();
         showSceneryDetailCard(marker.jsonData, marker);
       } else {

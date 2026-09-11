@@ -101,6 +101,13 @@ function normalizeCreateMarkerInput(input) {
 
 function normalizeUpdateMarkerInput(input) {
   const data = requireObject(input);
+  let category;
+  if (data.category !== undefined) {
+    if (!MARKER_CATEGORIES.has(data.category)) {
+      throw new ValidationError("ジャンルが正しくありません。");
+    }
+    category = data.category;
+  }
   const title = normalizeText(data.title, "題名", 100);
   if (!title) {
     throw new ValidationError("題名を入力してください。");
@@ -108,6 +115,7 @@ function normalizeUpdateMarkerInput(input) {
   return {
     markerId: normalizeMarkerId(data.markerId),
     password: normalizeAccessPassword(data.password),
+    category,
     title,
     memo: normalizeText(data.memo, "メモ", 2000),
   };
