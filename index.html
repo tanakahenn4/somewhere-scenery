@@ -609,15 +609,18 @@
     resize: vertical;
   }
 
-  #registrationPasswordInputWrapper {
+  #registrationPasswordInputWrapper,
+  #markerManagementPasswordInputWrapper {
     position: relative;
   }
 
-  #registrationPasswordInput {
+  #registrationPasswordInput,
+  #markerManagementPasswordInput {
     padding-right: 42px;
   }
 
-  #registrationPasswordVisibilityButton {
+  #registrationPasswordVisibilityButton,
+  #markerManagementPasswordVisibilityButton {
     position: absolute;
     top: 50%;
     right: 1px;
@@ -632,12 +635,14 @@
     cursor: pointer;
   }
 
-  #registrationPasswordVisibilityButton:hover {
+  #registrationPasswordVisibilityButton:hover,
+  #markerManagementPasswordVisibilityButton:hover {
     color: #fff;
     background: rgba(255,255,255,0.1);
   }
 
-  #registrationPasswordVisibilityButton svg {
+  #registrationPasswordVisibilityButton svg,
+  #markerManagementPasswordVisibilityButton svg {
     width: 19px;
     height: 19px;
     vertical-align: middle;
@@ -726,7 +731,8 @@
     margin: 0 0 12px;
   }
 
-  .markerManagementField > span {
+  .markerManagementField > span,
+  .markerManagementFieldLabel {
     display: block;
     margin-bottom: 4px;
     font-weight: 600;
@@ -1122,10 +1128,18 @@
         <textarea id="markerManagementMemoInput" maxlength="2000"></textarea>
       </label>
     </div>
-    <label class="markerManagementField" for="markerManagementPasswordInput">
-      <span>編集・削除用パスワード</span>
-      <input id="markerManagementPasswordInput" type="password" maxlength="128" autocomplete="current-password" required>
-    </label>
+    <div class="markerManagementField">
+      <label class="markerManagementFieldLabel" for="markerManagementPasswordInput">編集・削除用パスワード</label>
+      <div id="markerManagementPasswordInputWrapper">
+        <input id="markerManagementPasswordInput" type="password" maxlength="128" autocomplete="current-password" required>
+        <button id="markerManagementPasswordVisibilityButton" type="button" aria-label="パスワードを表示" aria-pressed="false" title="パスワードを表示">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
+    </div>
     <div id="markerManagementActions">
       <button id="confirmMarkerManagementButton" type="submit">保存</button>
       <button id="cancelMarkerManagementButton" type="button">キャンセル</button>
@@ -1676,16 +1690,7 @@ function openRegistrationDialog(markerData) {
   });
 }
 
-function setupRegistrationDialog() {
-  const modal = document.getElementById("registrationModal");
-  const form = document.getElementById("registrationDialog");
-  const titleInput = document.getElementById("registrationTitleInput");
-  const memoInput = document.getElementById("registrationMemoInput");
-  const passwordInput = document.getElementById("registrationPasswordInput");
-  const passwordVisibilityButton = document.getElementById("registrationPasswordVisibilityButton");
-  const confirmButton = document.getElementById("confirmRegistrationButton");
-  const cancelButton = document.getElementById("cancelRegistrationButton");
-
+function setupPasswordVisibility(passwordInput, passwordVisibilityButton) {
   const setPasswordVisible = isVisible => {
     passwordInput.type = isVisible ? "text" : "password";
     passwordVisibilityButton.setAttribute("aria-pressed", String(isVisible));
@@ -1696,6 +1701,25 @@ function setupRegistrationDialog() {
     passwordVisibilityButton.title = isVisible ? "パスワードを隠す" : "パスワードを表示";
   };
 
+  passwordVisibilityButton.addEventListener("click", () => {
+    setPasswordVisible(passwordInput.type === "password");
+    passwordInput.focus({ preventScroll: true });
+  });
+
+  return setPasswordVisible;
+}
+
+function setupRegistrationDialog() {
+  const modal = document.getElementById("registrationModal");
+  const form = document.getElementById("registrationDialog");
+  const titleInput = document.getElementById("registrationTitleInput");
+  const memoInput = document.getElementById("registrationMemoInput");
+  const passwordInput = document.getElementById("registrationPasswordInput");
+  const passwordVisibilityButton = document.getElementById("registrationPasswordVisibilityButton");
+  const confirmButton = document.getElementById("confirmRegistrationButton");
+  const cancelButton = document.getElementById("cancelRegistrationButton");
+  const setPasswordVisible = setupPasswordVisibility(passwordInput, passwordVisibilityButton);
+
   const closeDialog = () => {
     modal.hidden = true;
     pendingMarkerData = null;
@@ -1703,11 +1727,6 @@ function setupRegistrationDialog() {
     setPasswordVisible(false);
     titleInput.disabled = false;
   };
-
-  passwordVisibilityButton.addEventListener("click", () => {
-    setPasswordVisible(passwordInput.type === "password");
-    passwordInput.focus({ preventScroll: true });
-  });
 
   cancelButton.addEventListener("click", closeDialog);
 
@@ -1835,13 +1854,16 @@ function setupMarkerManagementDialog() {
   const titleInput = document.getElementById("markerManagementTitleInput");
   const memoInput = document.getElementById("markerManagementMemoInput");
   const passwordInput = document.getElementById("markerManagementPasswordInput");
+  const passwordVisibilityButton = document.getElementById("markerManagementPasswordVisibilityButton");
   const confirmButton = document.getElementById("confirmMarkerManagementButton");
   const cancelButton = document.getElementById("cancelMarkerManagementButton");
+  const setPasswordVisible = setupPasswordVisibility(passwordInput, passwordVisibilityButton);
 
   const closeDialog = () => {
     modal.hidden = true;
     pendingMarkerAction = null;
     form.reset();
+    setPasswordVisible(false);
   };
 
   cancelButton.addEventListener("click", closeDialog);
