@@ -159,6 +159,31 @@
     display: none;
   }
 
+  #sceneryDetailActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  #sceneryDetailActions button {
+    margin: 0;
+    padding: 5px 10px;
+    color: #fff;
+    background: #444;
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 3px;
+    cursor: pointer;
+  }
+
+  #sceneryDetailActions button:hover {
+    background: #555;
+  }
+
+  #sceneryDetailDeleteButton {
+    color: #ffcccc;
+  }
+
   #sidePanelOverlay {
     position: absolute;
     inset: 0;
@@ -653,6 +678,92 @@
     background: #555;
   }
 
+  #markerManagementModal {
+    position: absolute;
+    inset: 0;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+    background: rgba(0,0,0,0.45);
+  }
+
+  #markerManagementModal[hidden],
+  #markerManagementEditFields[hidden] {
+    display: none;
+  }
+
+  #markerManagementDialog {
+    width: min(360px, 100%);
+    max-height: 100%;
+    overflow-y: auto;
+    padding: 16px;
+    box-sizing: border-box;
+    color: #fff;
+    background: #333;
+    border: 1px solid #a7a5a5;
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.45);
+  }
+
+  #markerManagementDialog strong {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 18px;
+  }
+
+  #markerManagementMessage {
+    margin: 0 0 12px;
+    color: #ddd;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .markerManagementField {
+    display: block;
+    margin: 0 0 12px;
+  }
+
+  .markerManagementField > span {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  #markerManagementDialog input,
+  #markerManagementDialog textarea {
+    width: 100%;
+    box-sizing: border-box;
+    color: #fff;
+    background: #222;
+    border: 1px solid #a7a5a5;
+  }
+
+  #markerManagementDialog textarea {
+    min-height: 80px;
+    resize: vertical;
+  }
+
+  #markerManagementActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  #markerManagementActions button {
+    margin: 0;
+    color: #fff;
+    background: #444;
+    border: 1px solid #a7a5a5;
+    cursor: pointer;
+  }
+
+  #markerManagementActions button:hover {
+    background: #555;
+  }
+
  #controls {
     padding: 1px;
     background: #000000;
@@ -938,16 +1049,16 @@
     </fieldset>
     <label class="registrationField" for="registrationTitleInput">
       <span>題名</span>
-      <input id="registrationTitleInput" class="registrationTextInput" type="text" autocomplete="off">
+      <input id="registrationTitleInput" class="registrationTextInput" type="text" maxlength="100" autocomplete="off">
     </label>
     <label class="registrationField" for="registrationMemoInput">
       <span>メモ</span>
-      <textarea id="registrationMemoInput" class="registrationTextInput"></textarea>
+      <textarea id="registrationMemoInput" class="registrationTextInput" maxlength="2000"></textarea>
     </label>
     <div class="registrationField">
       <label class="registrationFieldLabel" for="registrationPasswordInput">編集・削除用パスワード</label>
       <div id="registrationPasswordInputWrapper">
-        <input id="registrationPasswordInput" class="registrationTextInput" type="password" autocomplete="new-password" required>
+        <input id="registrationPasswordInput" class="registrationTextInput" type="password" minlength="8" maxlength="128" autocomplete="new-password" required>
         <button id="registrationPasswordVisibilityButton" type="button" aria-label="パスワードを表示" aria-pressed="false" title="パスワードを表示">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path>
@@ -961,6 +1072,31 @@
     <div id="registrationActions">
       <button id="confirmRegistrationButton" type="submit">登録</button>
       <button id="cancelRegistrationButton" type="button">キャンセル</button>
+    </div>
+  </form>
+</div>
+
+<div id="markerManagementModal" hidden>
+  <form id="markerManagementDialog" role="dialog" aria-modal="true" aria-labelledby="markerManagementTitle">
+    <strong id="markerManagementTitle">投稿を編集</strong>
+    <p id="markerManagementMessage"></p>
+    <div id="markerManagementEditFields">
+      <label class="markerManagementField" for="markerManagementTitleInput">
+        <span>題名</span>
+        <input id="markerManagementTitleInput" type="text" maxlength="100" autocomplete="off" required>
+      </label>
+      <label class="markerManagementField" for="markerManagementMemoInput">
+        <span>メモ</span>
+        <textarea id="markerManagementMemoInput" maxlength="2000"></textarea>
+      </label>
+    </div>
+    <label class="markerManagementField" for="markerManagementPasswordInput">
+      <span>編集・削除用パスワード</span>
+      <input id="markerManagementPasswordInput" type="password" maxlength="128" autocomplete="current-password" required>
+    </label>
+    <div id="markerManagementActions">
+      <button id="confirmMarkerManagementButton" type="submit">保存</button>
+      <button id="cancelMarkerManagementButton" type="button">キャンセル</button>
     </div>
   </form>
 </div>
@@ -996,6 +1132,7 @@ let map, panorama, coverageLayer;
 let markers = [];
 let resetZoomOnEnter = true;
 let pendingMarkerData = null;
+let pendingMarkerAction = null;
 const STORAGE_KEY = "catsmap_markers";
 const markerCategories = ["cat", "interesting_scenery", "strange_funny", "creepy", "other"];
 const markerIconUrls = {
@@ -1031,6 +1168,7 @@ function initMap() {
   setupStreetViewCoverageButton();
   setupLayerMenu();
   setupRegistrationDialog();
+  setupMarkerManagementDialog();
   setupSidePanel();
   setupMapTypeSettings();
 
@@ -1213,11 +1351,12 @@ function getCreatedAtMillis(createdAt) {
   return Number.isFinite(milliseconds) ? milliseconds : null;
 }
 
-function showSceneryDetailCard(jsonData = {}) {
+function showSceneryDetailCard(jsonData = {}, marker = null) {
   const card = document.getElementById("sceneryDetailCard");
   const titleElement = document.getElementById("sceneryDetailTitle");
   const memoElement = document.getElementById("sceneryDetailMemo");
   const dateElement = document.getElementById("sceneryDetailDate");
+  const actionsElement = document.getElementById("sceneryDetailActions");
   const title = typeof jsonData.title === "string" && jsonData.title.trim()
     ? jsonData.title.trim()
     : "名称未設定";
@@ -1241,6 +1380,21 @@ function showSceneryDetailCard(jsonData = {}) {
       day: "numeric"
     }).format(createdAt)}`;
     dateElement.hidden = false;
+  }
+
+  actionsElement.replaceChildren();
+  if (marker?.firestoreId) {
+    const editButton = document.createElement("button");
+    const deleteButton = document.createElement("button");
+    editButton.id = "sceneryDetailEditButton";
+    editButton.type = "button";
+    editButton.textContent = "編集";
+    deleteButton.id = "sceneryDetailDeleteButton";
+    deleteButton.type = "button";
+    deleteButton.textContent = "削除";
+    editButton.addEventListener("click", () => openMarkerManagementDialog(marker, "edit"));
+    deleteButton.addEventListener("click", () => openMarkerManagementDialog(marker, "delete"));
+    actionsElement.append(editButton, deleteButton);
   }
 
   card.hidden = false;
@@ -1344,7 +1498,7 @@ function renderLatestSceneryList() {
       const savedPanoramaView = getSavedPanoramaView(jsonData);
 
       if (savedPanoramaView) {
-        showPanorama(savedPanoramaView, jsonData);
+        showPanorama(savedPanoramaView, jsonData, marker);
       } else {
         hideSceneryDetailCard();
         const position = marker.getPosition();
@@ -1452,35 +1606,6 @@ async function getCoarseLocationName(lat, lng) {
   }
 }
 
-function bytesToBase64(bytes) {
-  let binary = "";
-  bytes.forEach(byte => binary += String.fromCharCode(byte));
-  return btoa(binary);
-}
-
-async function hashEditPassword(password) {
-  if (!window.crypto?.subtle) {
-    throw new Error("このブラウザでは安全なパスワード処理を利用できません。");
-  }
-
-  const iterations = 600000;
-  const salt = window.crypto.getRandomValues(new Uint8Array(16));
-  const keyMaterial = await window.crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(password),
-    "PBKDF2",
-    false,
-    ["deriveBits"]
-  );
-  const hash = await window.crypto.subtle.deriveBits(
-    { name: "PBKDF2", hash: "SHA-256", salt, iterations },
-    keyMaterial,
-    256
-  );
-
-  return `pbkdf2-sha256$${iterations}$${bytesToBase64(salt)}$${bytesToBase64(new Uint8Array(hash))}`;
-}
-
 function openRegistrationDialog(markerData) {
   const modal = document.getElementById("registrationModal");
   const form = document.getElementById("registrationDialog");
@@ -1559,33 +1684,174 @@ function setupRegistrationDialog() {
       passwordInput.focus();
       return;
     }
+    if (password.length < 8) {
+      alert("編集・削除用パスワードは8文字以上で入力してください。");
+      passwordInput.focus();
+      return;
+    }
 
     confirmButton.disabled = true;
     cancelButton.disabled = true;
     try {
       const locationName = pendingMarkerData.locationName || "名称未設定";
-      const editPasswordHash = await hashEditPassword(password);
+      const title = titleInput.value.trim() || locationName;
+      const memo = memoInput.value.trim();
+      if (typeof window.firebaseCreateMarker !== "function") {
+        throw new Error("登録機能の準備が完了していません。");
+      }
+      const result = await window.firebaseCreateMarker({
+        category: selectedCategory,
+        ...pendingMarkerData,
+        title,
+        memo,
+        locationName,
+        password
+      });
+      const firestoreId = result?.data?.markerId;
+      if (!firestoreId) throw new Error("登録したマーカーのIDを取得できませんでした。");
+
       const jsonData = {
         category: selectedCategory,
         ...pendingMarkerData,
-        title: titleInput.value.trim() || locationName,
-        memo: memoInput.value.trim(),
+        title,
+        memo,
         locationName,
-        editPasswordHash,
         ownerUid: null,
-        createdAt: window.firebaseServerTimestamp(),
+        createdAt: new Date(),
         migratedAt: null
       };
-      const docRef = await window.firebaseAddDoc(
-        window.firebaseCollection(window.firebaseDB, "mapMarkers"),
-        jsonData
-      );
-      addMarker(jsonData, true, docRef.id);
+      addMarker(jsonData, true, firestoreId);
       renderLatestSceneryList();
       closeDialog();
     } catch (e) {
       console.error("マーカー保存エラー:", e);
-      alert("マーカーを保存できませんでした。");
+      alert(getCallableErrorMessage(e, "マーカーを保存できませんでした。"));
+    } finally {
+      confirmButton.disabled = false;
+      cancelButton.disabled = false;
+    }
+  });
+}
+
+function getCallableErrorMessage(error, fallbackMessage) {
+  if (error?.code === "functions/permission-denied") {
+    return "パスワードが正しくないか、この投稿には編集・削除用の資格情報がありません。";
+  }
+  if (error?.code === "functions/not-found") {
+    return "対象の投稿が見つかりませんでした。";
+  }
+  if (error?.code === "functions/invalid-argument") {
+    return error.message || "入力内容を確認してください。";
+  }
+  return error?.message || fallbackMessage;
+}
+
+function openMarkerManagementDialog(marker, mode) {
+  if (!marker?.firestoreId || !["edit", "delete"].includes(mode)) {
+    alert("この投稿のFirestore IDが見つかりません。");
+    return;
+  }
+
+  const modal = document.getElementById("markerManagementModal");
+  const form = document.getElementById("markerManagementDialog");
+  const editFields = document.getElementById("markerManagementEditFields");
+  const titleInput = document.getElementById("markerManagementTitleInput");
+  const memoInput = document.getElementById("markerManagementMemoInput");
+  const passwordInput = document.getElementById("markerManagementPasswordInput");
+  const confirmButton = document.getElementById("confirmMarkerManagementButton");
+  const isEdit = mode === "edit";
+
+  pendingMarkerAction = { marker, mode };
+  form.reset();
+  editFields.hidden = !isEdit;
+  titleInput.required = isEdit;
+  document.getElementById("markerManagementTitle").textContent = isEdit ? "投稿を編集" : "投稿を削除";
+  document.getElementById("markerManagementMessage").textContent = isEdit
+    ? "登録時に設定したパスワードを入力してください。"
+    : "この投稿を削除します。登録時に設定したパスワードを入力してください。";
+  confirmButton.textContent = isEdit ? "保存" : "削除";
+  if (isEdit) {
+    titleInput.value = typeof marker.jsonData.title === "string" ? marker.jsonData.title : "";
+    memoInput.value = typeof marker.jsonData.memo === "string" ? marker.jsonData.memo : "";
+  }
+  modal.hidden = false;
+  (isEdit ? titleInput : passwordInput).focus();
+}
+
+function setupMarkerManagementDialog() {
+  const modal = document.getElementById("markerManagementModal");
+  const form = document.getElementById("markerManagementDialog");
+  const titleInput = document.getElementById("markerManagementTitleInput");
+  const memoInput = document.getElementById("markerManagementMemoInput");
+  const passwordInput = document.getElementById("markerManagementPasswordInput");
+  const confirmButton = document.getElementById("confirmMarkerManagementButton");
+  const cancelButton = document.getElementById("cancelMarkerManagementButton");
+
+  const closeDialog = () => {
+    modal.hidden = true;
+    pendingMarkerAction = null;
+    form.reset();
+  };
+
+  cancelButton.addEventListener("click", closeDialog);
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!pendingMarkerAction) return;
+
+    const { marker, mode } = pendingMarkerAction;
+    const password = passwordInput.value;
+    if (!password) {
+      alert("編集・削除用パスワードを入力してください。");
+      passwordInput.focus();
+      return;
+    }
+
+    confirmButton.disabled = true;
+    cancelButton.disabled = true;
+    try {
+      if (mode === "edit") {
+        const title = titleInput.value.trim();
+        if (!title) {
+          alert("題名を入力してください。");
+          titleInput.focus();
+          return;
+        }
+        if (typeof window.firebaseUpdateMarker !== "function") {
+          throw new Error("編集機能の準備が完了していません。");
+        }
+        await window.firebaseUpdateMarker({
+          markerId: marker.firestoreId,
+          password,
+          title,
+          memo: memoInput.value.trim()
+        });
+        marker.jsonData.title = title;
+        marker.jsonData.memo = memoInput.value.trim();
+        marker.setLabel(getMarkerTitleLabel(marker.jsonData));
+        renderLatestSceneryList();
+        showSceneryDetailCard(marker.jsonData, marker);
+      } else {
+        if (!confirm("この投稿を削除します。よろしいですか？")) return;
+        if (typeof window.firebaseDeleteMarker !== "function") {
+          throw new Error("削除機能の準備が完了していません。");
+        }
+        await window.firebaseDeleteMarker({
+          markerId: marker.firestoreId,
+          password
+        });
+        marker.setMap(null);
+        markers = markers.filter(item => item !== marker);
+        renderLatestSceneryList();
+        hideSceneryDetailCard();
+      }
+      closeDialog();
+    } catch (error) {
+      console.error(`マーカー${mode === "edit" ? "編集" : "削除"}エラー:`, error);
+      alert(getCallableErrorMessage(
+        error,
+        mode === "edit" ? "投稿を編集できませんでした。" : "投稿を削除できませんでした。"
+      ));
     } finally {
       confirmButton.disabled = false;
       cancelButton.disabled = false;
@@ -1803,26 +2069,7 @@ function addMarker(jsonData, focus = false, firestoreId = null) {
 
 marker.addListener("click", async (e) => {
   if (e.domEvent.shiftKey) {
-    if (confirm("この猫マーカーを削除しますか？🐈")) {
-      if (confirm("本当に削除しますか？🙀")) {
-        if (!marker.firestoreId) {
-          alert("このマーカーのFirestore IDが見つかりません。");
-          return;
-        }
-
-        try {
-          await window.firebaseDeleteDoc(
-            window.firebaseDoc(window.firebaseDB, "mapMarkers", marker.firestoreId)
-          );
-          marker.setMap(null);
-          markers = markers.filter(m => m !== marker);
-          renderLatestSceneryList();
-        } catch (error) {
-          console.error("マーカー削除エラー:", error);
-          alert("マーカーを削除できませんでした。");
-        }
-      }
-    }
+    openMarkerManagementDialog(marker, "delete");
   } else {
     // 普通のクリック → ストリートビュー
     showPanorama(jsonData);
@@ -1882,8 +2129,8 @@ function setupStreetViewCoverageButton() {
   });
 }
 
-function showPanorama(data, detailData = null) {
-  if (detailData) showSceneryDetailCard(detailData);
+function showPanorama(data, detailData = null, detailMarker = null) {
+  if (detailData) showSceneryDetailCard(detailData, detailMarker);
   else hideSceneryDetailCard();
   resetZoomOnEnter = false;
   if (data.pano) panorama.setPano(data.pano);
@@ -1936,7 +2183,8 @@ async function loadSavedMarkers() {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app-check.js";
-import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-functions.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC_HyYwQMwfODX15o5HXjw7aYSPnuaFTOg",
@@ -1953,14 +2201,14 @@ initializeAppCheck(app, {
   isTokenAutoRefreshEnabled: true
 });
 const db = getFirestore(app);
+const functions = getFunctions(app, "asia-northeast1");
 
 window.firebaseDB = db;
 window.firebaseCollection = collection;
 window.firebaseGetDocs = getDocs;
-window.firebaseAddDoc = addDoc;
-window.firebaseDoc = doc;
-window.firebaseDeleteDoc = deleteDoc;
-window.firebaseServerTimestamp = serverTimestamp;
+window.firebaseCreateMarker = httpsCallable(functions, "createMarker");
+window.firebaseUpdateMarker = httpsCallable(functions, "updateMarker");
+window.firebaseDeleteMarker = httpsCallable(functions, "deleteMarker");
 
 console.log("🔥 Firebase接続成功");
 </script>
