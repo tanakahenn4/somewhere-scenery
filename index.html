@@ -1784,9 +1784,10 @@ function setupRegistrationDialog() {
         createdAt: new Date(),
         migratedAt: null
       };
-      addMarker(jsonData, true, firestoreId);
+      const marker = addMarker(jsonData, true, firestoreId);
       renderLatestSceneryList();
       closeDialog();
+      showSceneryDetailCard(jsonData, marker);
     } catch (e) {
       console.error("マーカー保存エラー:", e);
       alert(getCallableErrorMessage(e, "マーカーを保存できませんでした。"));
@@ -2170,6 +2171,7 @@ marker.addListener("click", async (e) => {
   markers.push(marker);
   applyMarkerVisibility(marker);
   if (focus) map.setCenter(marker.getPosition());
+  return marker;
 }
 
 function setupStreetViewCoverageButton() {
