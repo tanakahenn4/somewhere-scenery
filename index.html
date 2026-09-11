@@ -1191,6 +1191,10 @@ const markerIconUrls = {
 };
 const MARKER_TITLE_LABEL_WIDTH = 320;
 const MARKER_TITLE_LABEL_GAP = 6;
+const MAP_MARKER_MAX_SIZE = 55;
+const MAP_MARKER_MIN_SIZE = 24;
+const MAP_MARKER_TITLE_MAX_SIZE = 13;
+const MAP_MARKER_TITLE_MIN_SIZE = 8.5;
 const visibleMarkerCategories = new Set(markerCategories);
 
 
@@ -1258,6 +1262,12 @@ function initMap() {
     const pos = panorama.getPosition();
     if (pos) lastPanoramaPos = { lat: pos.lat(), lng: pos.lng() };
     updateMarkerIconSizes();
+  });
+
+  map.addListener("zoom_changed", () => {
+    if (panorama && panorama.getVisible()) return;
+    updateMarkerIconSizes();
+    updateMarkerTitleLabels();
   });
 
   document.getElementById("getPosButton").addEventListener("click", () => {
@@ -2037,6 +2047,11 @@ function setupFullscreenButton() {
 }
 
 function getCatMarkerSize(jsonData = {}) {
+  if (!panorama || !panorama.getVisible()) {
+    const size = getTopDownMapSize(MAP_MARKER_MAX_SIZE, MAP_MARKER_MIN_SIZE, 1.17);
+    return new google.maps.Size(size, size);
+  }
+
   const width = window.innerWidth || document.documentElement.clientWidth || 1024;
   const baseSize = Math.max(50, Math.min(60, width * 0.1));
   let zoomScale = 1;
@@ -2056,6 +2071,12 @@ function getCatMarkerSize(jsonData = {}) {
 
   const size = Math.round(Math.max(32, Math.min(220, baseSize * zoomScale * distanceScale)));
   return new google.maps.Size(size, size);
+}
+
+function getTopDownMapSize(maxSize, minSize, scaleBase) {
+  const zoom = Number(map && map.getZoom ? map.getZoom() : 13);
+  if (!Number.isFinite(zoom) || zoom >= 13) return maxSize;
+  return Math.max(minSize, maxSize * Math.pow(scaleBase, zoom - 13));
 }
 
 function getCatDistanceScale(jsonData = {}) {
@@ -2114,12 +2135,17 @@ function getCatMarkerIcon(jsonData = {}) {
 function getMarkerTitleLabel(jsonData = {}) {
   const title = typeof jsonData.title === "string" ? jsonData.title.trim() : "";
   if (!title || (panorama && panorama.getVisible())) return null;
+  const fontSize = getTopDownMapSize(
+    MAP_MARKER_TITLE_MAX_SIZE,
+    MAP_MARKER_TITLE_MIN_SIZE,
+    1.09
+  );
 
   return {
     text: title,
     color: "#fff",
     fontFamily: '"Segoe UI", sans-serif',
-    fontSize: "13px",
+    fontSize: `${fontSize}px`,
     fontWeight: "600",
     className: "marker-title-label"
   };
