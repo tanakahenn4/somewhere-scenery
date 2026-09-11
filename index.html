@@ -2121,7 +2121,7 @@ marker.addListener("click", async (e) => {
     openMarkerManagementDialog(marker, "delete");
   } else {
     // 普通のクリック → ストリートビュー
-    showPanorama(jsonData);
+    showPanorama(jsonData, jsonData, marker);
 
     // 猫の鳴き声再生
     meowSound.currentTime = 0; // 何度もクリックできるように先頭に戻す
