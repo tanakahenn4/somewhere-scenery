@@ -1450,6 +1450,7 @@ function hideSceneryDetailCard() {
 
 function getLatestSceneryMarkers(limit = 20) {
   return markers
+    .filter(marker => visibleMarkerCategories.has(getMarkerCategory(marker)))
     .map((marker, index) => ({
       marker,
       index,
@@ -1930,6 +1931,7 @@ function applyMarkerVisibility(marker) {
 
 function updateMarkerVisibility() {
   markers.forEach(applyMarkerVisibility);
+  renderLatestSceneryList();
 }
 
 function clearSearchResults() {
