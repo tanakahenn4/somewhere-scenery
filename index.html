@@ -110,13 +110,18 @@
   #sceneryDetailCardShadow {
     position: absolute;
     top: 12px;
-    right: calc(var(--side-navigation-width) + var(--side-panel-width) + 12px);
+    right: calc(var(--side-navigation-width) + 12px);
     z-index: 1001;
     width: 392px;
     max-width: max(0px, calc(100% - var(--side-navigation-width) - var(--side-panel-width) - 36px));
     filter:
       drop-shadow(2px 3px 1px rgba(0, 0, 0, 0.18))
       drop-shadow(6px 7px 3px rgba(0, 0, 0, 0.28));
+    transition: right 0.25s ease;
+  }
+
+  #mapContainer:has(#sidePanel.is-open) #sceneryDetailCardShadow {
+    right: calc(var(--side-navigation-width) + var(--side-panel-width) + 12px);
   }
 
   #sceneryDetailCard {
@@ -176,7 +181,7 @@
   #mapContainer:has(#sceneryDetailCard:not([hidden]))::before {
     position: absolute;
     top: 0;
-    right: calc(var(--side-navigation-width) + var(--side-panel-width) + 156px);
+    right: calc(var(--side-navigation-width) + 156px);
     z-index: 1002;
     width: 104px;
     height: 25px;
@@ -188,12 +193,17 @@
     box-shadow: 0 1px 2px rgba(75, 58, 30, 0.16);
     opacity: 0.76;
     transform: rotate(-1.4deg);
+    transition: right 0.25s ease;
     clip-path: polygon(
       0 7%, 7% 1%, 15% 5%, 24% 0, 34% 4%, 45% 1%,
       56% 5%, 67% 0, 78% 4%, 89% 1%, 100% 6%,
       98% 94%, 88% 99%, 77% 95%, 66% 100%, 55% 96%,
       44% 100%, 33% 95%, 22% 99%, 11% 95%, 2% 100%
     );
+  }
+
+  #mapContainer:has(#sidePanel.is-open):has(#sceneryDetailCard:not([hidden]))::before {
+    right: calc(var(--side-navigation-width) + var(--side-panel-width) + 156px);
   }
 
   #sceneryDetailCard::after {
