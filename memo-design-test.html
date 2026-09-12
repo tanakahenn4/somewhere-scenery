@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>メモの切れ端風 詳細カード試作</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
+      background: #17191b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: #e7e7e7;
+      background:
+        linear-gradient(45deg, rgba(255, 255, 255, 0.025) 25%, transparent 25% 75%, rgba(255, 255, 255, 0.025) 75%),
+        linear-gradient(45deg, rgba(255, 255, 255, 0.025) 25%, transparent 25% 75%, rgba(255, 255, 255, 0.025) 75%),
+        #292c32;
+      background-position: 0 0, 8px 8px;
+      background-size: 16px 16px;
+    }
+
+    .test-page {
+      width: min(1240px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 36px 0 64px;
+    }
+
+    .test-header {
+      margin-bottom: 30px;
+    }
+
+    .test-header h1 {
+      margin: 0;
+      font-size: clamp(21px, 3vw, 30px);
+      font-weight: 650;
+      letter-spacing: 0.04em;
+    }
+
+    .test-header p {
+      max-width: 720px;
+      margin: 10px 0 0;
+      color: #adb3b6;
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items: start;
+      gap: 34px;
+    }
+
+    .test-case {
+      min-width: 0;
+    }
+
+    .case-label {
+      margin: 0 0 12px 6px;
+      color: #c1c6c8;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .memo-shadow {
+      filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.34));
+      transform: rotate(-0.2deg);
+      transform-origin: 50% 12px;
+    }
+
+    .test-case:nth-child(2) .memo-shadow {
+      transform: rotate(0.15deg);
+    }
+
+    .test-case:nth-child(3) .memo-shadow {
+      transform: rotate(-0.1deg);
+    }
+
+    .memo-paper {
+      position: relative;
+      width: 100%;
+      min-height: 176px;
+      padding: 40px 24px 38px 52px;
+      overflow: hidden;
+      color: #2d2a22;
+      background-color: #f1f1ed;
+      background-image:
+        repeating-linear-gradient(180deg, transparent 0 24px, rgba(132, 143, 150, 0.2) 24px 25px),
+        linear-gradient(100deg, #ebebe7 0%, #f8f8f5 50%, #e8e8e4 100%);
+      background-position: 0 14px, 0 0;
+      background-repeat: repeat, no-repeat;
+      clip-path: polygon(
+        0 1px, 100% 0, 100% calc(100% - 16px),
+        94% calc(100% - 14px), 88% calc(100% - 9px), 81% calc(100% - 12px),
+        74% calc(100% - 6px), 67% calc(100% - 8px), 60% calc(100% - 3px),
+        53% calc(100% - 5px), 46% calc(100% - 11px), 39% calc(100% - 17px),
+        32% calc(100% - 13px), 25% calc(100% - 7px), 18% calc(100% - 5px),
+        11% calc(100% - 10px), 5% calc(100% - 13px), 0 calc(100% - 18px)
+      );
+      -webkit-mask-image:
+        linear-gradient(#000 0 0),
+        radial-gradient(ellipse 4.5px 4.3px at 11.5px 10px, #000 0 94%, transparent 100%),
+        linear-gradient(2deg, transparent 48.35%, #000 48.5% 51.5%, transparent 51.65%),
+        radial-gradient(ellipse 4.4px 4.7px at 11.2px 30.5px, #000 0 94%, transparent 100%),
+        linear-gradient(-2.5deg, transparent 48.25%, #000 48.45% 51.55%, transparent 51.75%),
+        radial-gradient(ellipse 4.7px 4.3px at 11.8px 49px, #000 0 94%, transparent 100%),
+        linear-gradient(3deg, transparent 48.4%, #000 48.55% 51.45%, transparent 51.6%),
+        radial-gradient(ellipse 4.4px 4.5px at 11.4px 70.5px, #000 0 94%, transparent 100%),
+        linear-gradient(-1.5deg, transparent 48.3%, #000 48.5% 51.5%, transparent 51.7%);
+      -webkit-mask-size: auto, 22px 80px, 8.5px 80px, 22px 80px, 8.3px 80px, 22px 80px, 8.6px 80px, 22px 80px, 8.5px 80px;
+      -webkit-mask-position: 0 0, 0 3px, 0 -27px, 0 3px, 0 -6.2px, 0 3px, 0 12px, 0 3px, 0 33.5px;
+      -webkit-mask-repeat: no-repeat, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y;
+      -webkit-mask-composite: xor, source-over, source-over, source-over, source-over, source-over, source-over, source-over;
+      mask-image:
+        linear-gradient(#000 0 0),
+        radial-gradient(ellipse 4.5px 4.3px at 11.5px 10px, #000 0 94%, transparent 100%),
+        linear-gradient(2deg, transparent 48.35%, #000 48.5% 51.5%, transparent 51.65%),
+        radial-gradient(ellipse 4.4px 4.7px at 11.2px 30.5px, #000 0 94%, transparent 100%),
+        linear-gradient(-2.5deg, transparent 48.25%, #000 48.45% 51.55%, transparent 51.75%),
+        radial-gradient(ellipse 4.7px 4.3px at 11.8px 49px, #000 0 94%, transparent 100%),
+        linear-gradient(3deg, transparent 48.4%, #000 48.55% 51.45%, transparent 51.6%),
+        radial-gradient(ellipse 4.4px 4.5px at 11.4px 70.5px, #000 0 94%, transparent 100%),
+        linear-gradient(-1.5deg, transparent 48.3%, #000 48.5% 51.5%, transparent 51.7%);
+      mask-size: auto, 22px 80px, 8.5px 80px, 22px 80px, 8.3px 80px, 22px 80px, 8.6px 80px, 22px 80px, 8.5px 80px;
+      mask-position: 0 0, 0 3px, 0 -27px, 0 3px, 0 -6.2px, 0 3px, 0 12px, 0 3px, 0 33.5px;
+      mask-repeat: no-repeat, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y;
+      mask-composite: exclude, add, add, add, add, add, add, add;
+    }
+
+    .test-case:nth-child(2) .memo-paper {
+      clip-path: polygon(
+        0 0, 100% 1px, 100% calc(100% - 14px),
+        93% calc(100% - 9px), 86% calc(100% - 12px), 79% calc(100% - 7px),
+        72% calc(100% - 8px), 65% calc(100% - 4px), 58% calc(100% - 9px),
+        51% calc(100% - 13px), 44% calc(100% - 18px), 37% calc(100% - 14px),
+        30% calc(100% - 9px), 23% calc(100% - 6px), 16% calc(100% - 11px),
+        9% calc(100% - 8px), 4% calc(100% - 12px), 0 calc(100% - 16px)
+      );
+    }
+
+    .test-case:nth-child(3) .memo-paper {
+      clip-path: polygon(
+        0 1px, 100% 0, 100% calc(100% - 12px),
+        94% calc(100% - 8px), 88% calc(100% - 13px), 81% calc(100% - 9px),
+        74% calc(100% - 15px), 67% calc(100% - 11px), 60% calc(100% - 17px),
+        53% calc(100% - 14px), 46% calc(100% - 8px), 39% calc(100% - 5px),
+        32% calc(100% - 10px), 25% calc(100% - 7px), 18% calc(100% - 12px),
+        11% calc(100% - 8px), 5% calc(100% - 11px), 0 calc(100% - 14px)
+      );
+    }
+
+    .memo-paper::after {
+      position: absolute;
+      inset: 0;
+      content: "";
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(65, 66, 64, 0.06), transparent 7%, transparent 91%, rgba(65, 66, 64, 0.07)),
+        repeating-linear-gradient(112deg, rgba(62, 63, 61, 0.015) 0 1px, transparent 1px 5px);
+      mix-blend-mode: multiply;
+    }
+
+    .memo-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .memo-title {
+      margin: 0;
+      color: #29261f;
+      font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.45;
+      letter-spacing: 0.025em;
+      overflow-wrap: anywhere;
+    }
+
+    .memo-text {
+      margin: 13px 0 0;
+      color: #3d3930;
+      font-size: 14px;
+      line-height: 25px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .memo-date {
+      display: block;
+      margin-top: 14px;
+      color: #756e60;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .memo-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .memo-actions button {
+      padding: 5px 11px;
+      color: #4a453c;
+      font: inherit;
+      font-size: 12px;
+      background: rgba(255, 253, 241, 0.55);
+      border: 1px solid rgba(89, 80, 65, 0.32);
+      border-radius: 2px;
+      cursor: default;
+      box-shadow: 0 1px 1px rgba(72, 62, 47, 0.08);
+    }
+
+    .memo-actions .delete-button {
+      color: #7f3d37;
+    }
+
+    @media (max-width: 980px) {
+      .comparison-grid {
+        grid-template-columns: minmax(0, 620px);
+        justify-content: center;
+      }
+
+      .memo-shadow,
+      .test-case:nth-child(2) .memo-shadow,
+      .test-case:nth-child(3) .memo-shadow {
+        transform: rotate(-0.25deg);
+      }
+    }
+
+    @media (max-width: 520px) {
+      .test-page {
+        width: min(100% - 24px, 420px);
+        padding-top: 24px;
+      }
+
+      .comparison-grid {
+        gap: 26px;
+      }
+
+      .memo-paper {
+        padding: 38px 18px 36px 46px;
+        background-image:
+          repeating-linear-gradient(180deg, transparent 0 24px, rgba(132, 143, 150, 0.2) 24px 25px),
+          linear-gradient(100deg, #ebebe7 0%, #f8f8f5 50%, #e8e8e4 100%);
+        background-position: 0 14px, 0 0;
+        background-repeat: repeat, no-repeat;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="test-page">
+    <header class="test-header">
+      <h1>Street View 詳細カード — メモの切れ端案</h1>
+      <p>画像素材を使わず、紙色・罫線・綴じ穴・破れた輪郭・影をCSSのみで試作しています。3種類の文章量で可変高さを確認できます。</p>
+    </header>
+
+    <section class="comparison-grid" aria-label="文章量別の詳細カード試作">
+      <div class="test-case">
+        <p class="case-label">短文</p>
+        <div class="memo-shadow">
+          <article class="memo-paper" aria-label="短文の風景詳細">
+            <div class="memo-content">
+              <h2 class="memo-title">夕方の歩道橋</h2>
+              <p class="memo-text">風が気持ちよかった。</p>
+              <time class="memo-date" datetime="2026-09-12">登録日：2026/9/12</time>
+              <div class="memo-actions" aria-label="投稿の操作">
+                <button type="button">編集</button>
+                <button type="button" class="delete-button">削除</button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="test-case">
+        <p class="case-label">中程度</p>
+        <div class="memo-shadow">
+          <article class="memo-paper" aria-label="中程度の文章の風景詳細">
+            <div class="memo-content">
+              <h2 class="memo-title">路地の奥に残っていた古い看板</h2>
+              <p class="memo-text">駅から少し離れた路地で見つけた。建物は新しくなっているのに、この看板だけが昔のまま残っているようだった。雨上がりの光も印象的。</p>
+              <time class="memo-date" datetime="2026-09-10">登録日：2026/9/10</time>
+              <div class="memo-actions" aria-label="投稿の操作">
+                <button type="button">編集</button>
+                <button type="button" class="delete-button">削除</button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="test-case">
+        <p class="case-label">長文</p>
+        <div class="memo-shadow">
+          <article class="memo-paper" aria-label="長文の風景詳細">
+            <div class="memo-content">
+              <h2 class="memo-title">誰もいない商店街で見つけた、時間の止まったような一角</h2>
+              <p class="memo-text">閉店した店が続く商店街を歩いていると、一軒だけ古い照明がついていた。ガラス越しに見える棚や色あせたポスターは、ずっと前から同じ場所にあるように見える。
+通りを抜ける風の音と、遠くを走る電車の音だけが聞こえていた。昼間なのに少し不思議で、怖いというより懐かしい感じがしたので記録しておく。</p>
+              <time class="memo-date" datetime="2026-09-08">登録日：2026/9/8</time>
+              <div class="memo-actions" aria-label="投稿の操作">
+                <button type="button">編集</button>
+                <button type="button" class="delete-button">削除</button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

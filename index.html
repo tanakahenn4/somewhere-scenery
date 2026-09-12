@@ -114,13 +114,72 @@
     z-index: 1001;
     width: 320px;
     max-width: max(0px, calc(100% - var(--side-navigation-width) - var(--side-panel-width) - 36px));
-    padding: 14px 16px;
+    min-height: 176px;
+    padding: 40px 24px 38px 52px;
+    overflow: hidden;
     box-sizing: border-box;
-    color: #fff;
-    background: rgba(28,28,28,0.9);
-    border: 1px solid rgba(255,255,255,0.22);
-    border-radius: 4px;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.35);
+    color: #2d2a22;
+    background-color: #f1f1ed;
+    background-image:
+      repeating-linear-gradient(180deg, transparent 0 24px, rgba(132, 143, 150, 0.2) 24px 25px),
+      linear-gradient(100deg, #ebebe7 0%, #f8f8f5 50%, #e8e8e4 100%);
+    background-position: 0 14px, 0 0;
+    background-repeat: repeat, no-repeat;
+    filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.34));
+    transform: rotate(-0.2deg);
+    transform-origin: 50% 12px;
+    clip-path: polygon(
+      0 1px, 100% 0, 100% calc(100% - 16px),
+      94% calc(100% - 14px), 88% calc(100% - 9px), 81% calc(100% - 12px),
+      74% calc(100% - 6px), 67% calc(100% - 8px), 60% calc(100% - 3px),
+      53% calc(100% - 5px), 46% calc(100% - 11px), 39% calc(100% - 17px),
+      32% calc(100% - 13px), 25% calc(100% - 7px), 18% calc(100% - 5px),
+      11% calc(100% - 10px), 5% calc(100% - 13px), 0 calc(100% - 18px)
+    );
+    -webkit-mask-image:
+      linear-gradient(#000 0 0),
+      radial-gradient(ellipse 4.5px 4.3px at 11.5px 10px, #000 0 94%, transparent 100%),
+      linear-gradient(2deg, transparent 48.35%, #000 48.5% 51.5%, transparent 51.65%),
+      radial-gradient(ellipse 4.4px 4.7px at 11.2px 30.5px, #000 0 94%, transparent 100%),
+      linear-gradient(-2.5deg, transparent 48.25%, #000 48.45% 51.55%, transparent 51.75%),
+      radial-gradient(ellipse 4.7px 4.3px at 11.8px 49px, #000 0 94%, transparent 100%),
+      linear-gradient(3deg, transparent 48.4%, #000 48.55% 51.45%, transparent 51.6%),
+      radial-gradient(ellipse 4.4px 4.5px at 11.4px 70.5px, #000 0 94%, transparent 100%),
+      linear-gradient(-1.5deg, transparent 48.3%, #000 48.5% 51.5%, transparent 51.7%);
+    -webkit-mask-size: auto, 22px 80px, 8.5px 80px, 22px 80px, 8.3px 80px, 22px 80px, 8.6px 80px, 22px 80px, 8.5px 80px;
+    -webkit-mask-position: 0 0, 0 3px, 0 -27px, 0 3px, 0 -6.2px, 0 3px, 0 12px, 0 3px, 0 33.5px;
+    -webkit-mask-repeat: no-repeat, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y;
+    -webkit-mask-composite: xor, source-over, source-over, source-over, source-over, source-over, source-over, source-over;
+    mask-image:
+      linear-gradient(#000 0 0),
+      radial-gradient(ellipse 4.5px 4.3px at 11.5px 10px, #000 0 94%, transparent 100%),
+      linear-gradient(2deg, transparent 48.35%, #000 48.5% 51.5%, transparent 51.65%),
+      radial-gradient(ellipse 4.4px 4.7px at 11.2px 30.5px, #000 0 94%, transparent 100%),
+      linear-gradient(-2.5deg, transparent 48.25%, #000 48.45% 51.55%, transparent 51.75%),
+      radial-gradient(ellipse 4.7px 4.3px at 11.8px 49px, #000 0 94%, transparent 100%),
+      linear-gradient(3deg, transparent 48.4%, #000 48.55% 51.45%, transparent 51.6%),
+      radial-gradient(ellipse 4.4px 4.5px at 11.4px 70.5px, #000 0 94%, transparent 100%),
+      linear-gradient(-1.5deg, transparent 48.3%, #000 48.5% 51.5%, transparent 51.7%);
+    mask-size: auto, 22px 80px, 8.5px 80px, 22px 80px, 8.3px 80px, 22px 80px, 8.6px 80px, 22px 80px, 8.5px 80px;
+    mask-position: 0 0, 0 3px, 0 -27px, 0 3px, 0 -6.2px, 0 3px, 0 12px, 0 3px, 0 33.5px;
+    mask-repeat: no-repeat, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y;
+    mask-composite: exclude, add, add, add, add, add, add, add;
+  }
+
+  #sceneryDetailCard::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, rgba(65, 66, 64, 0.06), transparent 7%, transparent 91%, rgba(65, 66, 64, 0.07)),
+      repeating-linear-gradient(112deg, rgba(62, 63, 61, 0.015) 0 1px, transparent 1px 5px);
+    mix-blend-mode: multiply;
+  }
+
+  #sceneryDetailCard > * {
+    position: relative;
+    z-index: 1;
   }
 
   #sceneryDetailCard[hidden] {
@@ -129,25 +188,30 @@
 
   #sceneryDetailTitle {
     margin: 0;
-    font-size: 17px;
-    line-height: 1.4;
+    color: #29261f;
+    font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.45;
+    letter-spacing: 0.025em;
     overflow-wrap: anywhere;
   }
 
   #sceneryDetailMemo {
-    margin: 10px 0 0;
-    color: #eee;
-    font-size: 13px;
-    line-height: 1.6;
+    margin: 13px 0 0;
+    color: #3d3930;
+    font-size: 14px;
+    line-height: 25px;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
   }
 
   #sceneryDetailDate {
     display: block;
-    margin-top: 10px;
-    color: #bbb;
+    margin-top: 14px;
+    color: #756e60;
     font-size: 11px;
+    line-height: 1.5;
   }
 
   #sceneryDetailMemo[hidden],
@@ -163,25 +227,28 @@
     display: flex;
     justify-content: flex-end;
     gap: 8px;
-    margin-top: 12px;
+    margin-top: 15px;
   }
 
   #sceneryDetailActions button {
     margin: 0;
-    padding: 5px 10px;
-    color: #fff;
-    background: #444;
-    border: 1px solid rgba(255,255,255,0.35);
-    border-radius: 3px;
+    padding: 5px 11px;
+    color: #4a453c;
+    font: inherit;
+    font-size: 12px;
+    background: rgba(255, 253, 241, 0.55);
+    border: 1px solid rgba(89, 80, 65, 0.32);
+    border-radius: 2px;
     cursor: pointer;
+    box-shadow: 0 1px 1px rgba(72, 62, 47, 0.08);
   }
 
   #sceneryDetailActions button:hover {
-    background: #555;
+    background: rgba(255, 253, 241, 0.82);
   }
 
   #sceneryDetailDeleteButton {
-    color: #ffcccc;
+    color: #7f3d37;
   }
 
   #sidePanelOverlay {
