@@ -125,7 +125,9 @@
       linear-gradient(100deg, #ebebe7 0%, #f8f8f5 50%, #e8e8e4 100%);
     background-position: 0 14px, 0 0;
     background-repeat: repeat, no-repeat;
-    filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.34));
+    filter:
+      drop-shadow(0 3px 2px rgba(0, 0, 0, 0.2))
+      drop-shadow(0 10px 9px rgba(0, 0, 0, 0.3));
     transform: rotate(-0.2deg);
     transform-origin: 50% 12px;
     clip-path: polygon(
@@ -164,6 +166,29 @@
     mask-position: 0 0, 0 3px, 0 -27px, 0 3px, 0 -6.2px, 0 3px, 0 12px, 0 3px, 0 33.5px;
     mask-repeat: no-repeat, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y, repeat-y;
     mask-composite: exclude, add, add, add, add, add, add, add;
+  }
+
+  #sceneryDetailCard::before {
+    position: absolute;
+    top: 1px;
+    left: 50%;
+    z-index: 2;
+    width: 104px;
+    height: 25px;
+    content: "";
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, rgba(255, 250, 224, 0.2), transparent 18% 82%, rgba(116, 92, 47, 0.08)),
+      repeating-linear-gradient(102deg, rgba(224, 203, 151, 0.68) 0 4px, rgba(239, 220, 174, 0.58) 4px 9px);
+    box-shadow: 0 1px 2px rgba(75, 58, 30, 0.16);
+    opacity: 0.76;
+    transform: translateX(-50%) rotate(-1.4deg);
+    clip-path: polygon(
+      0 7%, 7% 1%, 15% 5%, 24% 0, 34% 4%, 45% 1%,
+      56% 5%, 67% 0, 78% 4%, 89% 1%, 100% 6%,
+      98% 94%, 88% 99%, 77% 95%, 66% 100%, 55% 96%,
+      44% 100%, 33% 95%, 22% 99%, 11% 95%, 2% 100%
+    );
   }
 
   #sceneryDetailCard::after {
