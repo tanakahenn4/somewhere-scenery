@@ -58,20 +58,16 @@
   }
 
   #fullscreenButton {
-    position: absolute;
-    top: calc(var(--top-bar-height) + 10px);
-    right: calc(var(--side-navigation-width) + 10px);
-    z-index: 1001;
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    margin: 0;
-    border: 0;
-    border-radius: 2px;
-    background: rgba(0,0,0,0.55);
+    display: block;
+    width: 100%;
+    padding: 8px 10px;
+    margin: 12px 0 0;
     color: #fff;
-    font-size: 22px;
-    line-height: 40px;
+    font: inherit;
+    text-align: left;
+    background: #444;
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 4px;
     cursor: pointer;
   }
 
@@ -220,6 +216,30 @@
   #sceneryDetailCard > * {
     position: relative;
     z-index: 1;
+  }
+
+  #sceneryDetailCard > #sceneryDetailCloseButton {
+    position: absolute;
+    top: 7px;
+    right: 9px;
+    z-index: 3;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    margin: 0;
+    color: rgba(47, 44, 38, 0.58);
+    font: inherit;
+    font-size: 18px;
+    line-height: 20px;
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  #sceneryDetailCard > #sceneryDetailCloseButton:hover {
+    color: rgba(31, 29, 25, 0.92);
+    background: rgba(70, 64, 53, 0.08);
   }
 
   #sceneryDetailCard[hidden] {
@@ -990,13 +1010,6 @@
     --side-navigation-width: 42px;
   }
 
-  #fullscreenButton {
-    width: 34px;
-    height: 34px;
-    font-size: 20px;
-    line-height: 34px;
-  }
-
   #siteTitle {
     font-size: clamp(14px, 4.5vw, 18px);
     white-space: nowrap;
@@ -1076,6 +1089,7 @@
   <div id="map"></div>
   <div id="sceneryDetailCardShadow">
     <section id="sceneryDetailCard" aria-label="風景の詳細" aria-live="polite" hidden>
+      <button id="sceneryDetailCloseButton" type="button" aria-label="詳細カードを閉じる" title="詳細カードを閉じる">×</button>
       <h2 id="sceneryDetailTitle"></h2>
       <p id="sceneryDetailMemo" hidden></p>
       <time id="sceneryDetailDate" hidden></time>
@@ -1149,6 +1163,7 @@
             <label><input type="radio" name="mapType" value="roadmap">地図</label>
             <label><input type="radio" name="mapType" value="satellite">航空写真</label>
           </fieldset>
+          <button id="fullscreenButton" type="button" title="全画面表示" aria-label="全画面表示">全画面表示</button>
         </section>
 
         <section class="sidePanelPage" data-side-panel-page="about" hidden>
@@ -1174,7 +1189,6 @@
     </nav>
   </div>
 </div>
-<button id="fullscreenButton" type="button" title="全画面表示" aria-label="全画面表示">⛶</button>
 <div id="registrationModal" hidden>
   <form id="registrationDialog" role="dialog" aria-modal="true" aria-labelledby="registrationTitle">
     <strong id="registrationTitle">景色を登録</strong>
@@ -1332,6 +1346,9 @@ function initMap() {
   setupMarkerManagementDialog();
   setupSidePanel();
   setupMapTypeSettings();
+  document.getElementById("sceneryDetailCloseButton").addEventListener("click", () => {
+    document.getElementById("sceneryDetailCard").hidden = true;
+  });
 
     panorama.addListener('pov_changed', () => {
     const heading = panorama.getPov().heading;
@@ -2143,7 +2160,7 @@ function setupFullscreenButton() {
 
   document.addEventListener("fullscreenchange", () => {
     const isFullscreen = document.fullscreenElement === app;
-    button.textContent = isFullscreen ? "×" : "⛶";
+    button.textContent = isFullscreen ? "全画面を終了" : "全画面表示";
     button.title = isFullscreen ? "全画面を終了" : "全画面表示";
     button.setAttribute("aria-label", button.title);
 
