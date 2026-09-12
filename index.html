@@ -107,13 +107,21 @@
     pointer-events: none;
   }
 
-  #sceneryDetailCard {
+  #sceneryDetailCardShadow {
     position: absolute;
     top: 12px;
     right: calc(var(--side-navigation-width) + var(--side-panel-width) + 12px);
     z-index: 1001;
     width: 392px;
     max-width: max(0px, calc(100% - var(--side-navigation-width) - var(--side-panel-width) - 36px));
+    filter:
+      drop-shadow(3px 4px 2px rgba(0, 0, 0, 0.46))
+      drop-shadow(9px 10px 6px rgba(0, 0, 0, 0.58));
+  }
+
+  #sceneryDetailCard {
+    position: relative;
+    width: 100%;
     min-height: 176px;
     padding: 28px 15px 24px 38px;
     overflow: hidden;
@@ -125,9 +133,6 @@
       linear-gradient(100deg, #ebebe7 0%, #f8f8f5 50%, #e8e8e4 100%);
     background-position: 0 14px, 0 0;
     background-repeat: repeat, no-repeat;
-    filter:
-      drop-shadow(0 4px 3px rgba(0, 0, 0, 0.26))
-      drop-shadow(0 12px 11px rgba(0, 0, 0, 0.34));
     transform: rotate(-0.2deg);
     transform-origin: 50% 12px;
     clip-path: polygon(
@@ -1059,12 +1064,14 @@
 </header>
 <div id="mapContainer">
   <div id="map"></div>
-  <section id="sceneryDetailCard" aria-label="風景の詳細" aria-live="polite" hidden>
-    <h2 id="sceneryDetailTitle"></h2>
-    <p id="sceneryDetailMemo" hidden></p>
-    <time id="sceneryDetailDate" hidden></time>
-    <div id="sceneryDetailActions" aria-label="投稿の操作"></div>
-  </section>
+  <div id="sceneryDetailCardShadow">
+    <section id="sceneryDetailCard" aria-label="風景の詳細" aria-live="polite" hidden>
+      <h2 id="sceneryDetailTitle"></h2>
+      <p id="sceneryDetailMemo" hidden></p>
+      <time id="sceneryDetailDate" hidden></time>
+      <div id="sceneryDetailActions" aria-label="投稿の操作"></div>
+    </section>
+  </div>
   <div id="sidePanelOverlay">
     <aside id="sidePanel" aria-label="サイドパネル" aria-hidden="true">
       <div id="sidePanelHeader">
