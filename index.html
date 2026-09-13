@@ -89,6 +89,55 @@
     background: #1a73e8;
   }
 
+  #randomViewButton {
+    --random-card-visible-height: 52px;
+    position: fixed;
+    left: 50%;
+    bottom: 34px;
+    z-index: 1001;
+    display: block;
+    width: clamp(230px, 26vw, 350px);
+    padding: 0;
+    margin: 0;
+    line-height: 0;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    transform: translate(-50%, calc(100% - var(--random-card-visible-height)));
+    transform-origin: center bottom;
+    transition: transform 0.28s ease-out;
+  }
+
+  #randomViewButton:hover,
+  #randomViewButton:focus-visible {
+    --random-card-visible-height: 145px;
+  }
+
+  #randomViewButton:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.9);
+    outline-offset: 3px;
+  }
+
+  #randomViewButtonImage {
+    display: block;
+    width: 100%;
+    height: auto;
+    pointer-events: none;
+  }
+
+  #randomViewButton.is-tapping #randomViewButtonImage {
+    animation: random-view-card-tap 190ms ease-out;
+  }
+
+  @keyframes random-view-card-tap {
+    0%, 100% {
+      transform: translateY(0) scale(1);
+    }
+    45% {
+      transform: translateY(5px) scale(0.965);
+    }
+  }
+
   .marker-title-label {
     width: 320px;
     overflow: visible;
@@ -931,6 +980,7 @@
     flex-wrap: wrap;
     box-sizing: border-box;
     position: relative;
+    z-index: 1002;
 }
 
 #searchResults {
@@ -1010,6 +1060,11 @@
     --side-navigation-width: 42px;
   }
 
+  #randomViewButton {
+    width: min(74vw, 300px);
+    bottom: 66px;
+  }
+
   #siteTitle {
     font-size: clamp(14px, 4.5vw, 18px);
     white-space: nowrap;
@@ -1049,6 +1104,16 @@
   #compass {
     width: 42px;
     height: 42px;
+  }
+}
+
+@media (hover: none) {
+  #randomViewButton {
+    --random-card-visible-height: 76px;
+  }
+
+  #randomViewButton:focus-visible {
+    --random-card-visible-height: 118px;
   }
 }
 
@@ -1270,6 +1335,10 @@
   </form>
 </div>
 
+<button id="randomViewButton" type="button" aria-label="どこかの風景へランダム移動">
+  <img id="randomViewButtonImage" src="images/random-view-card.webp" alt="">
+</button>
+
 <div id="controls">
   <!-- JSON系を上に -->
   <strong>登録データ(JSON):</strong>
@@ -1346,6 +1415,7 @@ function initMap() {
   setupMarkerManagementDialog();
   setupSidePanel();
   setupMapTypeSettings();
+  setupRandomViewButton();
   document.getElementById("sceneryDetailCloseButton").addEventListener("click", () => {
     document.getElementById("sceneryDetailCard").hidden = true;
   });
@@ -1634,6 +1704,46 @@ function getSavedPanoramaView(jsonData = {}) {
     pitch: numberOrDefault(jsonData.pitch, 0),
     zoom: numberOrDefault(jsonData.zoom, 1)
   };
+}
+
+function setupRandomViewButton() {
+  const button = document.getElementById("randomViewButton");
+  let isMoving = false;
+
+  button.addEventListener("click", () => {
+    if (isMoving) return;
+    isMoving = true;
+    button.classList.remove("is-tapping");
+    void button.offsetWidth;
+    button.classList.add("is-tapping");
+
+    setTimeout(() => {
+      button.classList.remove("is-tapping");
+      isMoving = false;
+
+      const candidates = markers
+        .map(marker => ({ marker, view: getSavedPanoramaView(marker.jsonData) }))
+        .filter(candidate => candidate.view);
+
+      if (!candidates.length) {
+        alert("移動できる風景が見つかりませんでした。");
+        return;
+      }
+
+      const currentPano = panorama && panorama.getVisible() ? panorama.getPano() : null;
+      const differentPanoCandidates = currentPano
+        ? candidates.filter(candidate => candidate.view.pano !== currentPano)
+        : candidates;
+      const selectableCandidates = differentPanoCandidates.length
+        ? differentPanoCandidates
+        : candidates;
+      const selected = selectableCandidates[
+        Math.floor(Math.random() * selectableCandidates.length)
+      ];
+
+      showPanorama(selected.view, selected.marker.jsonData, selected.marker);
+    }, 190);
+  });
 }
 
 function renderLatestSceneryList() {
