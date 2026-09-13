@@ -90,19 +90,20 @@
   }
 
   #randomViewButton {
+    --random-card-visible-height: 52px;
     position: fixed;
-    left: calc(50% + clamp(40px, 4vw, 90px));
+    left: calc(50% + clamp(100px, 10vw, 240px));
     bottom: 34px;
     z-index: 1001;
     display: block;
-    width: clamp(253px, 28.6vw, 385px);
+    width: clamp(278px, 31.5vw, 424px);
     padding: 0;
     margin: 0;
     line-height: 0;
     background: transparent;
     border: 0;
     cursor: pointer;
-    transform: translate(-50%, 48%);
+    transform: translate(-50%, calc(100% - var(--random-card-visible-height)));
     transform-origin: center bottom;
     transition: transform 0.28s ease-out;
   }
@@ -1061,7 +1062,7 @@
 
   #randomViewButton {
     left: 50%;
-    width: min(81vw, 330px);
+    width: min(89vw, 363px);
     bottom: 66px;
   }
 
@@ -1109,7 +1110,7 @@
 
 @media (hover: none) {
   #randomViewButton {
-    transform: translate(-50%, 42%);
+    --random-card-visible-height: 76px;
   }
 
   #randomViewButton:focus-visible {
