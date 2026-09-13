@@ -90,27 +90,26 @@
   }
 
   #randomViewButton {
-    --random-card-visible-height: 52px;
     position: fixed;
-    left: 50%;
+    left: calc(50% + clamp(40px, 4vw, 90px));
     bottom: 34px;
     z-index: 1001;
     display: block;
-    width: clamp(230px, 26vw, 350px);
+    width: clamp(253px, 28.6vw, 385px);
     padding: 0;
     margin: 0;
     line-height: 0;
     background: transparent;
     border: 0;
     cursor: pointer;
-    transform: translate(-50%, calc(100% - var(--random-card-visible-height)));
+    transform: translate(-50%, 48%);
     transform-origin: center bottom;
     transition: transform 0.28s ease-out;
   }
 
   #randomViewButton:hover,
   #randomViewButton:focus-visible {
-    --random-card-visible-height: 145px;
+    transform: translate(-50%, 0);
   }
 
   #randomViewButton:focus-visible {
@@ -1061,7 +1060,8 @@
   }
 
   #randomViewButton {
-    width: min(74vw, 300px);
+    left: 50%;
+    width: min(81vw, 330px);
     bottom: 66px;
   }
 
@@ -1109,11 +1109,11 @@
 
 @media (hover: none) {
   #randomViewButton {
-    --random-card-visible-height: 76px;
+    transform: translate(-50%, 42%);
   }
 
   #randomViewButton:focus-visible {
-    --random-card-visible-height: 118px;
+    transform: translate(-50%, 0);
   }
 }
 
