@@ -1723,11 +1723,12 @@ function setupRandomViewButton() {
       isMoving = false;
 
       const candidates = markers
+        .filter(marker => visibleMarkerCategories.has(getMarkerCategory(marker)))
         .map(marker => ({ marker, view: getSavedPanoramaView(marker.jsonData) }))
         .filter(candidate => candidate.view);
 
       if (!candidates.length) {
-        alert("移動できる風景が見つかりませんでした。");
+        alert("表示対象の風景がありません。");
         return;
       }
 
