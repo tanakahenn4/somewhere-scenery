@@ -152,26 +152,34 @@
     pointer-events: none;
   }
 
-  #sceneryDetailCardShadow {
+  #sceneryDetailCardViewport {
     --collapsed-visible-width: 32px;
     position: absolute;
-    top: 12px;
+    top: 0;
     right: calc(var(--side-navigation-width) + 12px);
     z-index: 1001;
     width: 392px;
     max-width: max(0px, calc(100% - var(--side-navigation-width) - var(--side-panel-width) - 36px));
+    padding-top: 12px;
+    overflow: hidden;
     filter:
       drop-shadow(2px 3px 1px rgba(0, 0, 0, 0.18))
       drop-shadow(6px 7px 3px rgba(0, 0, 0, 0.28));
-    transition: right 0.25s ease, transform 0.25s ease;
+    transition: right 0.25s ease, width 0.25s ease;
   }
 
-  #mapContainer:has(#sidePanel.is-open) #sceneryDetailCardShadow {
+  #mapContainer:has(#sidePanel.is-open) #sceneryDetailCardViewport {
     right: calc(var(--side-navigation-width) + var(--side-panel-width) + 12px);
   }
 
-  #sceneryDetailCardShadow.is-collapsed {
-    transform: translateX(calc(100% + 12px - var(--collapsed-visible-width)));
+  #sceneryDetailCardViewport.is-collapsed {
+    width: var(--collapsed-visible-width);
+  }
+
+  #sceneryDetailCardShadow {
+    position: relative;
+    width: 392px;
+    max-width: max(0px, calc(100vw - var(--side-navigation-width) - var(--side-panel-width) - 36px));
   }
 
   #sceneryDetailCard {
@@ -1154,14 +1162,16 @@
 </header>
 <div id="mapContainer">
   <div id="map"></div>
-  <div id="sceneryDetailCardShadow">
-    <section id="sceneryDetailCard" aria-label="風景の詳細" aria-live="polite" hidden>
-      <button id="sceneryDetailCloseButton" type="button" aria-label="詳細カードを収納" title="詳細カードを収納">×</button>
-      <h2 id="sceneryDetailTitle"></h2>
-      <p id="sceneryDetailMemo" hidden></p>
-      <time id="sceneryDetailDate" hidden></time>
-      <div id="sceneryDetailActions" aria-label="投稿の操作"></div>
-    </section>
+  <div id="sceneryDetailCardViewport">
+    <div id="sceneryDetailCardShadow">
+      <section id="sceneryDetailCard" aria-label="風景の詳細" aria-live="polite" hidden>
+        <button id="sceneryDetailCloseButton" type="button" aria-label="詳細カードを収納" title="詳細カードを収納">×</button>
+        <h2 id="sceneryDetailTitle"></h2>
+        <p id="sceneryDetailMemo" hidden></p>
+        <time id="sceneryDetailDate" hidden></time>
+        <div id="sceneryDetailActions" aria-label="投稿の操作"></div>
+      </section>
+    </div>
   </div>
   <div id="sidePanelOverlay">
     <aside id="sidePanel" aria-label="サイドパネル" aria-hidden="true">
@@ -1614,7 +1624,7 @@ function getCreatedAtMillis(createdAt) {
 }
 
 function showSceneryDetailCard(jsonData = {}, marker = null) {
-  const shadow = document.getElementById("sceneryDetailCardShadow");
+  const viewport = document.getElementById("sceneryDetailCardViewport");
   const card = document.getElementById("sceneryDetailCard");
   const titleElement = document.getElementById("sceneryDetailTitle");
   const memoElement = document.getElementById("sceneryDetailMemo");
@@ -1663,29 +1673,29 @@ function showSceneryDetailCard(jsonData = {}, marker = null) {
     actionsElement.append(editButton, deleteButton);
   }
 
-  shadow.classList.remove("is-collapsed");
+  viewport.classList.remove("is-collapsed");
   card.hidden = false;
 }
 
 function hideSceneryDetailCard() {
   activeSceneryDetailPano = null;
-  document.getElementById("sceneryDetailCardShadow").classList.remove("is-collapsed");
+  document.getElementById("sceneryDetailCardViewport").classList.remove("is-collapsed");
   document.getElementById("sceneryDetailCard").hidden = true;
 }
 
 function setupSceneryDetailCardToggle() {
-  const shadow = document.getElementById("sceneryDetailCardShadow");
+  const viewport = document.getElementById("sceneryDetailCardViewport");
   const card = document.getElementById("sceneryDetailCard");
   const closeButton = document.getElementById("sceneryDetailCloseButton");
 
   closeButton.addEventListener("click", event => {
     event.stopPropagation();
-    shadow.classList.add("is-collapsed");
+    viewport.classList.add("is-collapsed");
   });
 
   card.addEventListener("click", event => {
     if (event.target.closest("button, a, input, textarea, select")) return;
-    shadow.classList.toggle("is-collapsed");
+    viewport.classList.toggle("is-collapsed");
   });
 }
 
