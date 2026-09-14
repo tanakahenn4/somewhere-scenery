@@ -1454,7 +1454,17 @@ function initMap() {
 
   panorama.addListener("pano_changed", () => {
     const currentPano = panorama.getPano();
-    if (activeSceneryDetailPano && currentPano && currentPano !== activeSceneryDetailPano) {
+    if (!panorama.getVisible() || !currentPano) return;
+
+    const matchingMarker = markers.find(marker =>
+      marker.jsonData?.pano === currentPano
+    );
+
+    if (matchingMarker) {
+      const card = document.getElementById("sceneryDetailCard");
+      if (activeSceneryDetailPano === currentPano && !card.hidden) return;
+      showSceneryDetailCard(matchingMarker.jsonData, matchingMarker);
+    } else {
       hideSceneryDetailCard();
     }
   });
