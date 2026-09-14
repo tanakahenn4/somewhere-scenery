@@ -1417,6 +1417,7 @@ function initMap() {
   setupSidePanel();
   setupMapTypeSettings();
   setupRandomViewButton();
+  setupStreetViewExitShortcut();
   document.getElementById("sceneryDetailCloseButton").addEventListener("click", () => {
     document.getElementById("sceneryDetailCard").hidden = true;
   });
@@ -2479,6 +2480,30 @@ function setupStreetViewCoverageButton() {
       alert("この地点の近くにStreet Viewが見つかりませんでした。");
     }
   });
+}
+
+function setupStreetViewExitShortcut() {
+  document.addEventListener("keydown", event => {
+    if (
+      event.isComposing ||
+      !event.altKey ||
+      !event.shiftKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.code !== "KeyD"
+    ) return;
+
+    const target = event.target;
+    if (
+      target instanceof Element &&
+      target.closest('input, textarea, select, [contenteditable="true"]')
+    ) return;
+
+    if (!panorama || !panorama.getVisible()) return;
+
+    event.preventDefault();
+    panorama.setVisible(false);
+  }, true);
 }
 
 function showPanorama(data, detailData = null, detailMarker = null) {
