@@ -1066,13 +1066,6 @@ background:
   display: none;
 }
 
-@font-face {
-  font-family: 'PopRumCute';
-  src: url('PopRumCute.otf') format('opentype');
-  font-weight: normal;
-  font-style: normal;
-}
-
 @media (max-width: 700px) {
   #app {
     --side-navigation-width: 42px;
@@ -1411,6 +1404,22 @@ const MAP_MARKER_TITLE_MAX_SIZE = 18;
 const MAP_MARKER_TITLE_MIN_SIZE = 11.5;
 const visibleMarkerCategories = new Set(markerCategories);
 
+function openCurrentPanoramaRegistration() {
+  if (!panorama.getVisible()) return alert("ストリートビューが表示されていません。");
+  const pos = panorama.getPosition();
+  const pov = panorama.getPov();
+  const panoId = panorama.getPano();
+
+  openRegistrationDialog({
+    lat: pos.lat(),
+    lng: pos.lng(),
+    heading: pov.heading,
+    pitch: pov.pitch,
+    zoom: pov.zoom,
+    pano: panoId
+  });
+}
+
 
 
 let lastPanoramaPos = { lat: 35.6812, lng: 139.7671 }; // 初期中心（東京駅）
@@ -1453,20 +1462,7 @@ function initMap() {
   });
 
   panorama.addListener("pano_changed", () => {
-    const currentPano = panorama.getPano();
-    if (!panorama.getVisible() || !currentPano) return;
-
-    const matchingMarker = markers.find(marker =>
-      marker.jsonData?.pano === currentPano
-    );
-
-    if (matchingMarker) {
-      const card = document.getElementById("sceneryDetailCard");
-      if (activeSceneryDetailPano === currentPano && !card.hidden) return;
-      showSceneryDetailCard(matchingMarker.jsonData, matchingMarker);
-    } else {
-      hideSceneryDetailCard();
-    }
+    syncSceneryDetailForCurrentPano();
   });
 
   panorama.addListener("visible_changed", () => {
@@ -1474,6 +1470,7 @@ function initMap() {
    if (resetZoomOnEnter) {
     panorama.setPov({ heading: 0, pitch: 0, zoom: 1 });
 }
+      syncSceneryDetailForCurrentPano();
     } else {
       hideSceneryDetailCard();
       const center = lastPanoramaPos;
@@ -1497,21 +1494,7 @@ function initMap() {
     updateMarkerTitleLabels();
   });
 
-  document.getElementById("getPosButton").addEventListener("click", () => {
-    if (!panorama.getVisible()) return alert("ストリートビューが表示されていません。");
-    const pos = panorama.getPosition();
-    const pov = panorama.getPov();
-    const panoId = panorama.getPano();
-
-    openRegistrationDialog({
-      lat: pos.lat(),
-      lng: pos.lng(),
-      heading: pov.heading,
-      pitch: pov.pitch,
-      zoom: pov.zoom,
-      pano: panoId
-    });
-  });
+  document.getElementById("getPosButton").addEventListener("click", openCurrentPanoramaRegistration);
 
   const addressInput = document.getElementById("addressInput");
   addressInput.addEventListener("keydown", event => {
@@ -1657,6 +1640,7 @@ function showSceneryDetailCard(jsonData = {}, marker = null) {
   activeSceneryDetailPano = typeof jsonData.pano === "string"
     ? jsonData.pano.trim() || null
     : null;
+  card.dataset.detailState = "registered";
 
   titleElement.textContent = title;
   memoElement.textContent = memo;
@@ -1696,10 +1680,61 @@ function showSceneryDetailCard(jsonData = {}, marker = null) {
   card.hidden = false;
 }
 
+function showEmptySceneryDetailCard(currentPano) {
+  const viewport = document.getElementById("sceneryDetailCardViewport");
+  const card = document.getElementById("sceneryDetailCard");
+  const titleElement = document.getElementById("sceneryDetailTitle");
+  const memoElement = document.getElementById("sceneryDetailMemo");
+  const dateElement = document.getElementById("sceneryDetailDate");
+  const actionsElement = document.getElementById("sceneryDetailActions");
+  const registerButton = document.createElement("button");
+
+  activeSceneryDetailPano = currentPano;
+  card.dataset.detailState = "empty";
+  titleElement.textContent = "未記入";
+  memoElement.textContent = "この場所にはまだメモがありません。";
+  memoElement.hidden = false;
+  dateElement.hidden = true;
+  dateElement.removeAttribute("datetime");
+  dateElement.textContent = "";
+  registerButton.id = "sceneryDetailRegisterButton";
+  registerButton.type = "button";
+  registerButton.textContent = "現在位置を登録";
+  registerButton.addEventListener("click", openCurrentPanoramaRegistration);
+  actionsElement.replaceChildren(registerButton);
+  card.hidden = false;
+  viewport.classList.add("is-collapsed");
+}
+
+function syncSceneryDetailForCurrentPano() {
+  const currentPano = panorama?.getPano();
+  if (!panorama?.getVisible() || !currentPano) return;
+
+  const matchingMarker = markers.find(marker =>
+    marker.jsonData?.pano === currentPano
+  );
+  const card = document.getElementById("sceneryDetailCard");
+  const detailState = matchingMarker ? "registered" : "empty";
+
+  if (
+    activeSceneryDetailPano === currentPano &&
+    card.dataset.detailState === detailState &&
+    !card.hidden
+  ) return;
+
+  if (matchingMarker) {
+    showSceneryDetailCard(matchingMarker.jsonData, matchingMarker);
+  } else {
+    showEmptySceneryDetailCard(currentPano);
+  }
+}
+
 function hideSceneryDetailCard() {
   activeSceneryDetailPano = null;
   document.getElementById("sceneryDetailCardViewport").classList.remove("is-collapsed");
-  document.getElementById("sceneryDetailCard").hidden = true;
+  const card = document.getElementById("sceneryDetailCard");
+  delete card.dataset.detailState;
+  card.hidden = true;
 }
 
 function setupSceneryDetailCardToggle() {
