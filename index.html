@@ -153,6 +153,7 @@
   }
 
   #sceneryDetailCardShadow {
+    --collapsed-visible-width: 32px;
     position: absolute;
     top: 12px;
     right: calc(var(--side-navigation-width) + 12px);
@@ -162,11 +163,15 @@
     filter:
       drop-shadow(2px 3px 1px rgba(0, 0, 0, 0.18))
       drop-shadow(6px 7px 3px rgba(0, 0, 0, 0.28));
-    transition: right 0.25s ease;
+    transition: right 0.25s ease, transform 0.25s ease;
   }
 
   #mapContainer:has(#sidePanel.is-open) #sceneryDetailCardShadow {
     right: calc(var(--side-navigation-width) + var(--side-panel-width) + 12px);
+  }
+
+  #sceneryDetailCardShadow.is-collapsed {
+    transform: translateX(calc(100% + 12px - var(--collapsed-visible-width)));
   }
 
   #sceneryDetailCard {
@@ -176,6 +181,7 @@
     padding: 28px 15px 24px 38px;
     overflow: hidden;
     box-sizing: border-box;
+    cursor: pointer;
     color: #2d2a22;
     background-color: #f1f1ed;
     background-image:
@@ -223,11 +229,11 @@
     mask-composite: exclude, add, add, add, add, add, add, add;
   }
 
-  #mapContainer:has(#sceneryDetailCard:not([hidden]))::before {
+  #sceneryDetailCardShadow:has(#sceneryDetailCard:not([hidden]))::before {
     position: absolute;
-    top: 0;
-    right: calc(var(--side-navigation-width) + 156px);
-    z-index: 1002;
+    top: -12px;
+    right: 144px;
+    z-index: 2;
     width: 104px;
     height: 25px;
     content: "";
@@ -238,17 +244,12 @@
     box-shadow: 0 1px 2px rgba(75, 58, 30, 0.16);
     opacity: 0.76;
     transform: rotate(-1.4deg);
-    transition: right 0.25s ease;
     clip-path: polygon(
       0 7%, 7% 1%, 15% 5%, 24% 0, 34% 4%, 45% 1%,
       56% 5%, 67% 0, 78% 4%, 89% 1%, 100% 6%,
       98% 94%, 88% 99%, 77% 95%, 66% 100%, 55% 96%,
       44% 100%, 33% 95%, 22% 99%, 11% 95%, 2% 100%
     );
-  }
-
-  #mapContainer:has(#sidePanel.is-open):has(#sceneryDetailCard:not([hidden]))::before {
-    right: calc(var(--side-navigation-width) + var(--side-panel-width) + 156px);
   }
 
   #sceneryDetailCard::after {
@@ -1155,7 +1156,7 @@
   <div id="map"></div>
   <div id="sceneryDetailCardShadow">
     <section id="sceneryDetailCard" aria-label="風景の詳細" aria-live="polite" hidden>
-      <button id="sceneryDetailCloseButton" type="button" aria-label="詳細カードを閉じる" title="詳細カードを閉じる">×</button>
+      <button id="sceneryDetailCloseButton" type="button" aria-label="詳細カードを収納" title="詳細カードを収納">×</button>
       <h2 id="sceneryDetailTitle"></h2>
       <p id="sceneryDetailMemo" hidden></p>
       <time id="sceneryDetailDate" hidden></time>
@@ -1418,9 +1419,7 @@ function initMap() {
   setupMapTypeSettings();
   setupRandomViewButton();
   setupStreetViewExitShortcut();
-  document.getElementById("sceneryDetailCloseButton").addEventListener("click", () => {
-    document.getElementById("sceneryDetailCard").hidden = true;
-  });
+  setupSceneryDetailCardToggle();
 
     panorama.addListener('pov_changed', () => {
     const heading = panorama.getPov().heading;
@@ -1615,6 +1614,7 @@ function getCreatedAtMillis(createdAt) {
 }
 
 function showSceneryDetailCard(jsonData = {}, marker = null) {
+  const shadow = document.getElementById("sceneryDetailCardShadow");
   const card = document.getElementById("sceneryDetailCard");
   const titleElement = document.getElementById("sceneryDetailTitle");
   const memoElement = document.getElementById("sceneryDetailMemo");
@@ -1663,12 +1663,30 @@ function showSceneryDetailCard(jsonData = {}, marker = null) {
     actionsElement.append(editButton, deleteButton);
   }
 
+  shadow.classList.remove("is-collapsed");
   card.hidden = false;
 }
 
 function hideSceneryDetailCard() {
   activeSceneryDetailPano = null;
+  document.getElementById("sceneryDetailCardShadow").classList.remove("is-collapsed");
   document.getElementById("sceneryDetailCard").hidden = true;
+}
+
+function setupSceneryDetailCardToggle() {
+  const shadow = document.getElementById("sceneryDetailCardShadow");
+  const card = document.getElementById("sceneryDetailCard");
+  const closeButton = document.getElementById("sceneryDetailCloseButton");
+
+  closeButton.addEventListener("click", event => {
+    event.stopPropagation();
+    shadow.classList.add("is-collapsed");
+  });
+
+  card.addEventListener("click", event => {
+    if (event.target.closest("button, a, input, textarea, select")) return;
+    shadow.classList.toggle("is-collapsed");
+  });
 }
 
 function getLatestSceneryMarkers(limit = 20) {
