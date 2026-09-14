@@ -176,6 +176,10 @@
     width: var(--collapsed-visible-width);
   }
 
+  #mapContainer:has(#sidePanel.is-open) #sceneryDetailCardViewport.is-collapsed {
+    right: calc(var(--side-navigation-width) + var(--side-panel-width));
+  }
+
   #sceneryDetailCardShadow {
     position: relative;
     width: 392px;
