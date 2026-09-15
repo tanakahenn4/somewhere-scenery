@@ -386,7 +386,6 @@ background:
 
   /* 現在のデザイン：ウィンドウ風 景色詳細UI */
   #sceneryDetailCardViewport {
-    --collapsed-visible-width: 32px;
     --detail-window-width: 484px;
     --detail-titlebar-height: 38px;
     --detail-content-padding-x: 15px;
@@ -410,19 +409,6 @@ background:
     right: calc(var(--side-navigation-width) + var(--side-panel-width) + 12px);
   }
 
-  #sceneryDetailCardViewport.is-collapsed {
-    right: var(--side-navigation-width);
-    width: var(--collapsed-visible-width);
-  }
-
-  #sceneryDetailCardViewport.is-collapsed:hover {
-    width: 46px;
-  }
-
-  #mapContainer:has(#sidePanel.is-open) #sceneryDetailCardViewport.is-collapsed {
-    right: calc(var(--side-navigation-width) + var(--side-panel-width));
-  }
-
   #sceneryDetailCardShadow {
     position: relative;
     width: var(--detail-window-width);
@@ -438,7 +424,7 @@ background:
     border-radius: 5px;
     box-shadow: 0 15px 36px rgba(0, 0, 0, 0.42), 0 4px 10px rgba(0, 0, 0, 0.28);
     overflow: hidden;
-    cursor: pointer;
+    cursor: default;
     font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
   }
 
@@ -450,6 +436,11 @@ background:
   }
 
   #sceneryDetailCard[hidden] {
+    display: none;
+  }
+
+  #sceneryDetailCard.is-collapsed .window-content,
+  #sceneryDetailCard.is-collapsed .window-footer {
     display: none;
   }
 
@@ -1452,8 +1443,8 @@ background:
         <header class="window-titlebar">
           <span class="window-name">メモ帳</span>
           <div class="window-controls" aria-label="ウィンドウ操作">
-            <button class="window-control is-minimize" type="button" aria-label="最小化"></button>
-            <button class="window-control is-maximize" type="button" aria-label="最大化"></button>
+            <button id="sceneryDetailMinimizeButton" class="window-control is-minimize" type="button" aria-label="最小化"></button>
+            <button id="sceneryDetailMaximizeButton" class="window-control is-maximize" type="button" aria-label="最大化"></button>
             <button id="sceneryDetailCloseButton" class="window-control is-close" type="button" aria-label="詳細カードを収納" title="詳細カードを収納"></button>
           </div>
         </header>
@@ -1936,7 +1927,6 @@ function getCreatedAtMillis(createdAt) {
 }
 
 function showSceneryDetailCard(jsonData = {}, marker = null) {
-  const viewport = document.getElementById("sceneryDetailCardViewport");
   const card = document.getElementById("sceneryDetailCard");
   const titleElement = document.getElementById("sceneryDetailTitle");
   const memoElement = document.getElementById("sceneryDetailMemo");
@@ -1986,12 +1976,11 @@ function showSceneryDetailCard(jsonData = {}, marker = null) {
     actionsElement.append(editButton, deleteButton);
   }
 
-  viewport.classList.remove("is-collapsed");
+  card.classList.remove("is-collapsed");
   card.hidden = false;
 }
 
 function showEmptySceneryDetailCard(currentPano) {
-  const viewport = document.getElementById("sceneryDetailCardViewport");
   const card = document.getElementById("sceneryDetailCard");
   const titleElement = document.getElementById("sceneryDetailTitle");
   const memoElement = document.getElementById("sceneryDetailMemo");
@@ -2013,7 +2002,7 @@ function showEmptySceneryDetailCard(currentPano) {
   registerButton.addEventListener("click", openCurrentPanoramaRegistration);
   actionsElement.replaceChildren(registerButton);
   card.hidden = false;
-  viewport.classList.add("is-collapsed");
+  card.classList.add("is-collapsed");
 }
 
 function syncSceneryDetailForCurrentPano() {
@@ -2041,25 +2030,28 @@ function syncSceneryDetailForCurrentPano() {
 
 function hideSceneryDetailCard() {
   activeSceneryDetailPano = null;
-  document.getElementById("sceneryDetailCardViewport").classList.remove("is-collapsed");
   const card = document.getElementById("sceneryDetailCard");
+  card.classList.remove("is-collapsed");
   delete card.dataset.detailState;
   card.hidden = true;
 }
 
 function setupSceneryDetailCardToggle() {
-  const viewport = document.getElementById("sceneryDetailCardViewport");
   const card = document.getElementById("sceneryDetailCard");
+  const minimizeButton = document.getElementById("sceneryDetailMinimizeButton");
+  const maximizeButton = document.getElementById("sceneryDetailMaximizeButton");
   const closeButton = document.getElementById("sceneryDetailCloseButton");
 
-  closeButton.addEventListener("click", event => {
+  const collapseWindow = event => {
     event.stopPropagation();
-    viewport.classList.add("is-collapsed");
-  });
+    card.classList.add("is-collapsed");
+  };
 
-  card.addEventListener("click", event => {
-    if (event.target.closest("button, a, input, textarea, select")) return;
-    viewport.classList.toggle("is-collapsed");
+  minimizeButton.addEventListener("click", collapseWindow);
+  closeButton.addEventListener("click", collapseWindow);
+  maximizeButton.addEventListener("click", event => {
+    event.stopPropagation();
+    card.classList.toggle("is-collapsed");
   });
 }
 
