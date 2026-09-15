@@ -452,7 +452,13 @@ background:
     color: #f1f3f6;
     background: linear-gradient(180deg, #000000, #74009f);
     border-bottom: 1px solid #090b0f;
+    cursor: pointer;
+    transition: filter 0.16s ease;
     user-select: none;
+  }
+
+  #sceneryDetailCard .window-titlebar:hover {
+    filter: brightness(1.06);
   }
 
   #sceneryDetailCard .window-name {
@@ -2056,6 +2062,7 @@ function hideSceneryDetailCard() {
 function setupSceneryDetailCardToggle() {
   const card = document.getElementById("sceneryDetailCard");
   const content = card.querySelector(".window-content");
+  const titlebar = card.querySelector(".window-titlebar");
   const minimizeButton = document.getElementById("sceneryDetailMinimizeButton");
   const maximizeButton = document.getElementById("sceneryDetailMaximizeButton");
   const closeButton = document.getElementById("sceneryDetailCloseButton");
@@ -2069,6 +2076,10 @@ function setupSceneryDetailCardToggle() {
   closeButton.addEventListener("click", collapseWindow);
   maximizeButton.addEventListener("click", event => {
     event.stopPropagation();
+    card.classList.toggle("is-collapsed");
+  });
+
+  titlebar.addEventListener("click", () => {
     card.classList.toggle("is-collapsed");
   });
 
