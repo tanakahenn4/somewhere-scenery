@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>風景詳細ウィンドウ デザインテスト</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+      --window-width: 484px;
+      --titlebar-height: 38px;
+
+      /* 本文領域の左右・上・下の余白 */
+      --content-padding-x: 15px;
+      --content-padding-top: 14px;
+      --content-padding-bottom: 31px;
+
+      /* 投稿タイトルとメモ本文の間隔 */
+      --title-memo-gap: 10px;
+
+      /* メモ本文の行間 */
+      --memo-line-height: 25.7px;
+
+      /* フッターの基本的な高さと左右余白 */
+      --footer-min-height: 63px;
+      --footer-padding-x: 23px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: #4273af;
+    }
+
+    .preview-stage {
+      display: grid;
+      width: 100%;
+      min-height: 100vh;
+      padding: 24px;
+      place-items: center;
+    }
+
+    .scenery-window {
+      position: relative;
+      width: min(100%, var(--window-width));
+      color: #252a31;
+      background: #f3f4f6;
+      border: 2px solid #000000;
+      border-radius: 5px;
+      box-shadow:
+        0 15px 36px rgba(0, 0, 0, 0.42),
+        0 4px 10px rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+    }
+
+    .window-titlebar {
+      display: flex;
+      align-items: center;
+      min-height: var(--titlebar-height);
+      padding: 0 11px 0 13px;
+      color: #f1f3f6;
+      background: linear-gradient(180deg, #000000, #74009f);
+      border-bottom: 1px solid #090b0f;
+      user-select: none;
+    }
+
+    .window-name {
+      min-width: 0;
+      margin-right: auto;
+      overflow: hidden;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .window-controls {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .window-control {
+      position: relative;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      color: #d5d8dd;
+      background: transparent;
+      border: 0;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    .window-control:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .window-control.is-close:hover {
+      background: rgba(202, 65, 76, 0.62);
+    }
+
+    .window-control::before,
+    .window-control::after {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      content: "";
+      pointer-events: none;
+    }
+
+    .window-control.is-minimize::before {
+      width: 11px;
+      height: 1px;
+      background: currentColor;
+      transform: translate(-50%, 2px);
+    }
+
+    .window-control.is-maximize::before {
+      width: 9px;
+      height: 9px;
+      border: 1px solid currentColor;
+      transform: translate(-50%, -50%);
+    }
+
+    .window-control.is-close::before,
+    .window-control.is-close::after {
+      width: 12px;
+      height: 1px;
+      background: currentColor;
+    }
+
+    .window-control.is-close::before {
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    .window-control.is-close::after {
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+
+    .window-content {
+      padding:
+        var(--content-padding-top)
+        var(--content-padding-x)
+        var(--content-padding-bottom);
+      background:
+        linear-gradient(90deg, rgba(71, 174, 220, 0.025), transparent 30%),
+        #f3f4f6;
+    }
+
+    .post-title {
+      margin: 0;
+      color: #20242a;
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.38;
+      overflow-wrap: anywhere;
+    }
+
+    .post-body {
+      margin-top: var(--title-memo-gap);
+    }
+
+    .post-memo {
+      margin: 0;
+      color: #424851;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: var(--memo-line-height);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .window-footer {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: var(--footer-min-height);
+      padding: 10px var(--footer-padding-x) 13px;
+      background: #e7e9ec;
+      border-top: 1px solid #ced2d7;
+    }
+
+    .post-date {
+      margin-right: auto;
+      color: #707884;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .window-action {
+      min-width: 73px;
+      min-height: 38px;
+      padding: 7px 13px;
+      color: #30353c;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      background: #f7f8f9;
+      border: 1px solid #b7bdc6;
+      border-radius: 2px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
+      cursor: pointer;
+    }
+
+    .window-action:hover {
+      border-color: #68afd2;
+      box-shadow: inset 0 -2px 0 rgba(75, 177, 222, 0.32);
+    }
+
+    .window-action.is-delete {
+      color: #81365f;
+    }
+
+    .window-action.is-delete:hover {
+      border-color: #cb75a5;
+      box-shadow: inset 0 -2px 0 rgba(206, 91, 153, 0.28);
+    }
+
+    @media (max-width: 520px) {
+      :root {
+        --content-padding-x: 20px;
+        --footer-padding-x: 20px;
+      }
+
+      .preview-stage {
+        padding: 16px;
+      }
+
+      .post-title {
+        font-size: clamp(21px, 6vw, 26px);
+      }
+
+      .window-footer {
+        flex-wrap: wrap;
+      }
+
+      .post-date {
+        flex: 1 0 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="preview-stage" aria-label="Street View上での表示イメージ">
+    <article class="scenery-window" aria-labelledby="sampleWindowTitle">
+      <header class="window-titlebar">
+        <span class="window-name">メモ帳</span>
+        <div class="window-controls" aria-label="ウィンドウ操作">
+          <button class="window-control is-minimize" type="button" aria-label="最小化"></button>
+          <button class="window-control is-maximize" type="button" aria-label="最大化"></button>
+          <button class="window-control is-close" type="button" aria-label="ウィンドウを閉じる"></button>
+        </div>
+      </header>
+
+      <div class="window-content">
+        <header class="post-header">
+          <h1 class="post-title" id="sampleWindowTitle">夕方の高架下で見つけた風景</h1>
+        </header>
+
+        <section class="post-body">
+          <p class="post-memo">線路の音が少し遠くに聞こえる場所。
+夕方になると柱の間から光が差し込んで、いつもの道が少しだけ違って見えました。</p>
+        </section>
+      </div>
+
+      <footer class="window-footer">
+        <time class="post-date" datetime="2026-09-15">投稿日：2026_9_15</time>
+        <button class="window-action" type="button">編集</button>
+        <button class="window-action is-delete" type="button">削除</button>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -152,6 +152,11 @@
     pointer-events: none;
   }
 
+  /*
+   * 旧デザイン：メモの切れ端風 景色詳細UI
+   * 将来の比較・復元用として残し、現在は適用しない。
+   */
+  @media not all {
   #sceneryDetailCardViewport {
     --collapsed-visible-width: 32px;
     position: absolute;
@@ -376,6 +381,283 @@ background:
 
   #sceneryDetailDeleteButton {
     color: #7f3d37;
+  }
+  }
+
+  /* 現在のデザイン：ウィンドウ風 景色詳細UI */
+  #sceneryDetailCardViewport {
+    --collapsed-visible-width: 32px;
+    --detail-window-width: 484px;
+    --detail-titlebar-height: 38px;
+    --detail-content-padding-x: 15px;
+    --detail-content-padding-top: 14px;
+    --detail-content-padding-bottom: 31px;
+    --detail-title-memo-gap: 10px;
+    --detail-memo-line-height: 25.7px;
+    --detail-footer-min-height: 63px;
+    --detail-footer-padding-x: 23px;
+    position: absolute;
+    top: 12px;
+    right: calc(var(--side-navigation-width) + 12px);
+    z-index: 1001;
+    width: var(--detail-window-width);
+    max-width: max(0px, calc(100% - var(--side-navigation-width) - var(--side-panel-width) - 36px));
+    overflow: hidden;
+    transition: right 0.25s ease, width 0.25s ease;
+  }
+
+  #mapContainer:has(#sidePanel.is-open) #sceneryDetailCardViewport {
+    right: calc(var(--side-navigation-width) + var(--side-panel-width) + 12px);
+  }
+
+  #sceneryDetailCardViewport.is-collapsed {
+    right: var(--side-navigation-width);
+    width: var(--collapsed-visible-width);
+  }
+
+  #sceneryDetailCardViewport.is-collapsed:hover {
+    width: 46px;
+  }
+
+  #mapContainer:has(#sidePanel.is-open) #sceneryDetailCardViewport.is-collapsed {
+    right: calc(var(--side-navigation-width) + var(--side-panel-width));
+  }
+
+  #sceneryDetailCardShadow {
+    position: relative;
+    width: var(--detail-window-width);
+    max-width: max(0px, calc(100vw - var(--side-navigation-width) - var(--side-panel-width) - 36px));
+  }
+
+  #sceneryDetailCard.scenery-window {
+    position: relative;
+    width: 100%;
+    color: #252a31;
+    background: #f3f4f6;
+    border: 2px solid #000000;
+    border-radius: 5px;
+    box-shadow: 0 15px 36px rgba(0, 0, 0, 0.42), 0 4px 10px rgba(0, 0, 0, 0.28);
+    overflow: hidden;
+    cursor: pointer;
+    font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+  }
+
+  #sceneryDetailCard.scenery-window,
+  #sceneryDetailCard.scenery-window *,
+  #sceneryDetailCard.scenery-window *::before,
+  #sceneryDetailCard.scenery-window *::after {
+    box-sizing: border-box;
+  }
+
+  #sceneryDetailCard[hidden] {
+    display: none;
+  }
+
+  #sceneryDetailCard .window-titlebar {
+    display: flex;
+    align-items: center;
+    min-height: var(--detail-titlebar-height);
+    padding: 0 11px 0 13px;
+    color: #f1f3f6;
+    background: linear-gradient(180deg, #000000, #74009f);
+    border-bottom: 1px solid #090b0f;
+    user-select: none;
+  }
+
+  #sceneryDetailCard .window-name {
+    min-width: 0;
+    margin-right: auto;
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  #sceneryDetailCard .window-controls {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 2px;
+  }
+
+  #sceneryDetailCard .window-control {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    margin: 0;
+    padding: 0;
+    color: #d5d8dd;
+    background: transparent;
+    border: 0;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+
+  #sceneryDetailCard .window-control:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  #sceneryDetailCard .window-control.is-close:hover {
+    background: rgba(202, 65, 76, 0.62);
+  }
+
+  #sceneryDetailCard .window-control::before,
+  #sceneryDetailCard .window-control::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    box-sizing: border-box;
+    pointer-events: none;
+  }
+
+  #sceneryDetailCard .window-control.is-minimize::before {
+    width: 11px;
+    height: 1px;
+    background: currentColor;
+    transform: translate(-50%, 2px);
+  }
+
+  #sceneryDetailCard .window-control.is-maximize::before {
+    width: 9px;
+    height: 9px;
+    border: 1px solid currentColor;
+    transform: translate(-50%, -50%);
+  }
+
+  #sceneryDetailCard .window-control.is-close::before,
+  #sceneryDetailCard .window-control.is-close::after {
+    width: 12px;
+    height: 1px;
+    background: currentColor;
+  }
+
+  #sceneryDetailCard .window-control.is-close::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  #sceneryDetailCard .window-control.is-close::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+  }
+
+  #sceneryDetailCard .window-content {
+    padding: var(--detail-content-padding-top) var(--detail-content-padding-x)
+      var(--detail-content-padding-bottom);
+    background:
+      linear-gradient(90deg, rgba(71, 174, 220, 0.025), transparent 30%),
+      #f3f4f6;
+  }
+
+  #sceneryDetailTitle.post-title {
+    margin: 0;
+    color: #20242a;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.38;
+    overflow-wrap: anywhere;
+  }
+
+  #sceneryDetailCard .post-body {
+    margin-top: var(--detail-title-memo-gap);
+  }
+
+  #sceneryDetailCard .post-body:has(#sceneryDetailMemo[hidden]) {
+    display: none;
+  }
+
+  #sceneryDetailMemo.post-memo {
+    margin: 0;
+    color: #424851;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: var(--detail-memo-line-height);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  #sceneryDetailMemo[hidden],
+  #sceneryDetailDate[hidden] {
+    display: none;
+  }
+
+  #sceneryDetailCard .window-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: var(--detail-footer-min-height);
+    padding: 10px var(--detail-footer-padding-x) 13px;
+    background: #e7e9ec;
+    border-top: 1px solid #ced2d7;
+  }
+
+  #sceneryDetailDate.post-date {
+    min-width: 0;
+    margin-right: auto;
+    color: #707884;
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
+  #sceneryDetailActions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+  }
+
+  #sceneryDetailActions button {
+    min-width: 73px;
+    min-height: 38px;
+    margin: 0;
+    padding: 7px 13px;
+    color: #30353c;
+    background: #f7f8f9;
+    border: 1px solid #b7bdc6;
+    border-radius: 2px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
+    font: 600 14px/1 "Segoe UI", "Yu Gothic UI", sans-serif;
+    cursor: pointer;
+  }
+
+  #sceneryDetailActions button:hover {
+    border-color: #68afd2;
+    box-shadow: inset 0 -2px 0 rgba(75, 177, 222, 0.32);
+  }
+
+  #sceneryDetailDeleteButton {
+    color: #81365f !important;
+  }
+
+  #sceneryDetailDeleteButton:hover {
+    border-color: #cb75a5 !important;
+    box-shadow: inset 0 -2px 0 rgba(206, 91, 153, 0.28) !important;
+  }
+
+  @media (max-width: 520px) {
+    #sceneryDetailCardViewport {
+      --detail-content-padding-x: 20px;
+      --detail-footer-padding-x: 20px;
+    }
+
+    #sceneryDetailTitle.post-title {
+      font-size: clamp(21px, 6vw, 26px);
+    }
+
+    #sceneryDetailCard .window-footer {
+      align-items: stretch;
+      flex-wrap: wrap;
+    }
+
+    #sceneryDetailDate.post-date {
+      flex: 1 0 100%;
+    }
   }
 
   #sidePanelOverlay {
@@ -1166,15 +1448,43 @@ background:
   <div id="map"></div>
   <div id="sceneryDetailCardViewport">
     <div id="sceneryDetailCardShadow">
-      <section id="sceneryDetailCard" aria-label="風景の詳細" aria-live="polite" hidden>
-        <button id="sceneryDetailCloseButton" type="button" aria-label="詳細カードを収納" title="詳細カードを収納">×</button>
-        <h2 id="sceneryDetailTitle"></h2>
-        <p id="sceneryDetailMemo" hidden></p>
-        <time id="sceneryDetailDate" hidden></time>
-        <div id="sceneryDetailActions" aria-label="投稿の操作"></div>
+      <section id="sceneryDetailCard" class="scenery-window" aria-label="風景の詳細" aria-live="polite" hidden>
+        <header class="window-titlebar">
+          <span class="window-name">メモ帳</span>
+          <div class="window-controls" aria-label="ウィンドウ操作">
+            <button class="window-control is-minimize" type="button" aria-label="最小化"></button>
+            <button class="window-control is-maximize" type="button" aria-label="最大化"></button>
+            <button id="sceneryDetailCloseButton" class="window-control is-close" type="button" aria-label="詳細カードを収納" title="詳細カードを収納"></button>
+          </div>
+        </header>
+        <div class="window-content">
+          <header class="post-header">
+            <h2 id="sceneryDetailTitle" class="post-title"></h2>
+          </header>
+          <section class="post-body" aria-label="メモ本文">
+            <p id="sceneryDetailMemo" class="post-memo" hidden></p>
+          </section>
+        </div>
+        <footer class="window-footer">
+          <time id="sceneryDetailDate" class="post-date" hidden></time>
+          <div id="sceneryDetailActions" aria-label="投稿の操作"></div>
+        </footer>
       </section>
     </div>
   </div>
+  <!--
+    旧デザイン：メモの切れ端風 景色詳細UI（復元用）
+    template 内は不活性のため、現在の詳細UIや既存JavaScriptには干渉しない。
+  -->
+  <template id="legacyMemoPaperDetailTemplate">
+    <section id="sceneryDetailCard" aria-label="風景の詳細" aria-live="polite" hidden>
+      <button id="sceneryDetailCloseButton" type="button" aria-label="詳細カードを収納" title="詳細カードを収納">×</button>
+      <h2 id="sceneryDetailTitle"></h2>
+      <p id="sceneryDetailMemo" hidden></p>
+      <time id="sceneryDetailDate" hidden></time>
+      <div id="sceneryDetailActions" aria-label="投稿の操作"></div>
+    </section>
+  </template>
   <div id="sidePanelOverlay">
     <aside id="sidePanel" aria-label="サイドパネル" aria-hidden="true">
       <div id="sidePanelHeader">
