@@ -559,6 +559,57 @@ background:
     background-color: #eef0f3;
   }
 
+  #sceneryDetailCard .window-content[hidden],
+  #sceneryDetailCard .window-footer[hidden] {
+    display: none;
+  }
+
+  #sceneryDetailCard .map-overview-count {
+    margin: 0 0 16px;
+    font-size: 18px;
+    line-height: 1.4;
+  }
+
+  #sceneryDetailCard .map-overview-count strong {
+    font-size: 20px;
+  }
+
+  #sceneryDetailCard .map-overview-filters h2 {
+    margin: 0 0 9px;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  #sceneryDetailCard .map-overview-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  #sceneryDetailCard .map-overview-actions button {
+    margin: 0;
+    padding: 5px 10px;
+    color: #30353c;
+    background: #f7f8f9;
+    border: 1px solid #b7bdc6;
+    border-radius: 2px;
+    font: 600 13px/1.2 "Segoe UI", "Yu Gothic UI", sans-serif;
+    cursor: pointer;
+  }
+
+  #sceneryDetailCard .map-overview-filters label {
+    display: block;
+    margin: 7px 0;
+    font-size: 14px;
+    line-height: 1.35;
+    cursor: pointer;
+  }
+
+  #sceneryDetailCard .map-overview-filters input {
+    margin: 0 7px 0 0;
+    vertical-align: -1px;
+  }
+
   #sceneryDetailTitle.post-title {
     margin: 0;
     color: #20242a;
@@ -1456,14 +1507,29 @@ background:
     <div id="sceneryDetailCardShadow">
       <section id="sceneryDetailCard" class="scenery-window" aria-label="風景の詳細" aria-live="polite" hidden>
         <header class="window-titlebar">
-          <span class="window-name">メモ帳</span>
+          <span id="sceneryDetailWindowName" class="window-name">メモ帳</span>
           <div class="window-controls" aria-label="ウィンドウ操作">
             <button id="sceneryDetailMinimizeButton" class="window-control is-minimize" type="button" aria-label="最小化"></button>
             <button id="sceneryDetailMaximizeButton" class="window-control is-maximize" type="button" aria-label="最大化"></button>
             <button id="sceneryDetailCloseButton" class="window-control is-close" type="button" aria-label="詳細カードを収納" title="詳細カードを収納"></button>
           </div>
         </header>
-        <div class="window-content">
+        <div id="sceneryMapOverview" class="window-content map-overview-content" hidden>
+          <p class="map-overview-count">登録された風景　<strong id="registeredSceneryCount">0</strong></p>
+          <section class="map-overview-filters" aria-labelledby="mapOverviewFiltersTitle">
+            <h2 id="mapOverviewFiltersTitle">表示するもの</h2>
+            <div class="map-overview-actions">
+              <button type="button" data-marker-visibility-action="show-all">すべて表示</button>
+              <button type="button" data-marker-visibility-action="hide-all">すべて非表示</button>
+            </div>
+            <label><input type="checkbox" value="cat" data-marker-category checked>ねこ</label>
+            <label><input type="checkbox" value="interesting_scenery" data-marker-category checked>気になった景色</label>
+            <label><input type="checkbox" value="strange_funny" data-marker-category checked>不思議・おもしろい景色</label>
+            <label><input type="checkbox" value="creepy" data-marker-category checked>不気味</label>
+            <label><input type="checkbox" value="other" data-marker-category checked>その他</label>
+          </section>
+        </div>
+        <div class="window-content scenery-detail-content">
           <header class="post-header">
             <h2 id="sceneryDetailTitle" class="post-title"></h2>
           </header>
@@ -1471,7 +1537,7 @@ background:
             <p id="sceneryDetailMemo" class="post-memo" hidden></p>
           </section>
         </div>
-        <footer class="window-footer">
+        <footer class="window-footer scenery-detail-footer">
           <time id="sceneryDetailDate" class="post-date" hidden></time>
           <div id="sceneryDetailActions" aria-label="投稿の操作"></div>
         </footer>
@@ -1512,14 +1578,14 @@ background:
             <div id="layerMenuPanel">
               <strong>表示するもの</strong>
               <div id="layerMenuActions">
-                <button id="showAllMarkersButton" type="button">すべて表示</button>
-                <button id="hideAllMarkersButton" type="button">すべて非表示</button>
+                <button id="showAllMarkersButton" type="button" data-marker-visibility-action="show-all">すべて表示</button>
+                <button id="hideAllMarkersButton" type="button" data-marker-visibility-action="hide-all">すべて非表示</button>
               </div>
-              <label><input type="checkbox" value="cat" checked>ねこ</label>
-              <label><input type="checkbox" value="interesting_scenery" checked>気になった景色</label>
-              <label><input type="checkbox" value="strange_funny" checked>不思議・おもしろい景色</label>
-              <label><input type="checkbox" value="creepy" checked>不気味</label>
-              <label><input type="checkbox" value="other" checked>その他</label>
+              <label><input type="checkbox" value="cat" data-marker-category checked>ねこ</label>
+              <label><input type="checkbox" value="interesting_scenery" data-marker-category checked>気になった景色</label>
+              <label><input type="checkbox" value="strange_funny" data-marker-category checked>不思議・おもしろい景色</label>
+              <label><input type="checkbox" value="creepy" data-marker-category checked>不気味</label>
+              <label><input type="checkbox" value="other" data-marker-category checked>その他</label>
             </div>
           </section>
 
@@ -1766,6 +1832,7 @@ function initMap() {
   setupRandomViewButton();
   setupStreetViewExitShortcut();
   setupSceneryDetailCardToggle();
+  showMapOverviewWindow();
 
     panorama.addListener('pov_changed', () => {
     const heading = panorama.getPov().heading;
@@ -1790,7 +1857,7 @@ function initMap() {
 }
       syncSceneryDetailForCurrentPano();
     } else {
-      hideSceneryDetailCard();
+      showMapOverviewWindow();
       const center = lastPanoramaPos;
       map.setCenter(center);
       map.setZoom(20);
@@ -1881,28 +1948,37 @@ async function searchAddressOrPano() {
 }
 
 function setupLayerMenu() {
-  const panel = document.getElementById("layerMenuPanel");
-  const checkboxes = panel.querySelectorAll('input[type="checkbox"]');
+  const checkboxes = document.querySelectorAll("input[data-marker-category]");
+  const actionButtons = document.querySelectorAll("[data-marker-visibility-action]");
+
+  const syncCheckboxes = () => {
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = visibleMarkerCategories.has(checkbox.value);
+    });
+  };
 
   checkboxes.forEach(checkbox => {
     checkbox.addEventListener("change", () => {
       if (checkbox.checked) visibleMarkerCategories.add(checkbox.value);
       else visibleMarkerCategories.delete(checkbox.value);
+      syncCheckboxes();
       updateMarkerVisibility();
     });
   });
 
-  document.getElementById("showAllMarkersButton").addEventListener("click", () => {
-    checkboxes.forEach(checkbox => checkbox.checked = true);
-    markerCategories.forEach(category => visibleMarkerCategories.add(category));
-    updateMarkerVisibility();
+  actionButtons.forEach(button => {
+    button.addEventListener("click", () => {
+      if (button.dataset.markerVisibilityAction === "show-all") {
+        markerCategories.forEach(category => visibleMarkerCategories.add(category));
+      } else {
+        visibleMarkerCategories.clear();
+      }
+      syncCheckboxes();
+      updateMarkerVisibility();
+    });
   });
 
-  document.getElementById("hideAllMarkersButton").addEventListener("click", () => {
-    checkboxes.forEach(checkbox => checkbox.checked = false);
-    visibleMarkerCategories.clear();
-    updateMarkerVisibility();
-  });
+  syncCheckboxes();
 }
 
 function setupMapTypeSettings() {
@@ -1943,6 +2019,30 @@ function getCreatedAtMillis(createdAt) {
   return Number.isFinite(milliseconds) ? milliseconds : null;
 }
 
+function setSceneryWindowContentMode(mode) {
+  const isMapMode = mode === "map";
+  document.getElementById("sceneryDetailWindowName").textContent =
+    isMapMode ? "どこかの風景" : "メモ帳";
+  document.getElementById("sceneryMapOverview").hidden = !isMapMode;
+  document.querySelector("#sceneryDetailCard .scenery-detail-content").hidden = isMapMode;
+  document.querySelector("#sceneryDetailCard .scenery-detail-footer").hidden = isMapMode;
+}
+
+function updateRegisteredSceneryCount() {
+  document.getElementById("registeredSceneryCount").textContent = String(markers.length);
+}
+
+function showMapOverviewWindow() {
+  activeSceneryDetailPano = null;
+  activeSceneryDetailData = null;
+  activeSceneryDetailMarker = null;
+  const card = document.getElementById("sceneryDetailCard");
+  card.dataset.detailState = "map";
+  setSceneryWindowContentMode("map");
+  updateRegisteredSceneryCount();
+  card.hidden = false;
+}
+
 function showSceneryDetailCard(jsonData = {}, marker = null) {
   const card = document.getElementById("sceneryDetailCard");
   const titleElement = document.getElementById("sceneryDetailTitle");
@@ -1960,6 +2060,7 @@ function showSceneryDetailCard(jsonData = {}, marker = null) {
   activeSceneryDetailData = jsonData;
   activeSceneryDetailMarker = marker;
   card.dataset.detailState = "registered";
+  setSceneryWindowContentMode("detail");
 
   titleElement.textContent = title;
   memoElement.textContent = memo;
@@ -2011,6 +2112,7 @@ function showEmptySceneryDetailCard(currentPano) {
   activeSceneryDetailData = null;
   activeSceneryDetailMarker = null;
   card.dataset.detailState = "empty";
+  setSceneryWindowContentMode("detail");
   titleElement.textContent = "未記入";
   memoElement.textContent = "この場所にはまだメモがありません。";
   memoElement.hidden = false;
@@ -2177,6 +2279,7 @@ function setupRandomViewButton() {
 
 function renderLatestSceneryList() {
   const container = document.getElementById("latestSceneryList");
+  updateRegisteredSceneryCount();
   if (!container) return;
 
   const entries = getLatestSceneryMarkers();
@@ -2231,7 +2334,7 @@ function renderLatestSceneryList() {
 
     button.addEventListener("click", () => {
       if (!showSavedSceneryView(jsonData, marker)) {
-        hideSceneryDetailCard();
+        showMapOverviewWindow();
         const position = marker.getPosition();
         if (position) {
           if (panorama && panorama.getVisible()) panorama.setVisible(false);
