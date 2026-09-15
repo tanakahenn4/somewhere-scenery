@@ -544,6 +544,15 @@ background:
       #f3f4f6;
   }
 
+  #sceneryDetailCard[data-detail-state="registered"] .window-content {
+    cursor: pointer;
+    transition: background-color 0.16s ease;
+  }
+
+  #sceneryDetailCard[data-detail-state="registered"] .window-content:hover {
+    background-color: #eef0f3;
+  }
+
   #sceneryDetailTitle.post-title {
     margin: 0;
     color: #20242a;
@@ -1687,6 +1696,8 @@ let resetZoomOnEnter = true;
 let pendingMarkerData = null;
 let pendingMarkerAction = null;
 let activeSceneryDetailPano = null;
+let activeSceneryDetailData = null;
+let activeSceneryDetailMarker = null;
 const STORAGE_KEY = "catsmap_markers";
 const markerCategories = ["cat", "interesting_scenery", "strange_funny", "creepy", "other"];
 const markerIconUrls = {
@@ -1940,6 +1951,8 @@ function showSceneryDetailCard(jsonData = {}, marker = null) {
   activeSceneryDetailPano = typeof jsonData.pano === "string"
     ? jsonData.pano.trim() || null
     : null;
+  activeSceneryDetailData = jsonData;
+  activeSceneryDetailMarker = marker;
   card.dataset.detailState = "registered";
 
   titleElement.textContent = title;
@@ -1989,6 +2002,8 @@ function showEmptySceneryDetailCard(currentPano) {
   const registerButton = document.createElement("button");
 
   activeSceneryDetailPano = currentPano;
+  activeSceneryDetailData = null;
+  activeSceneryDetailMarker = null;
   card.dataset.detailState = "empty";
   titleElement.textContent = "未記入";
   memoElement.textContent = "この場所にはまだメモがありません。";
@@ -2030,6 +2045,8 @@ function syncSceneryDetailForCurrentPano() {
 
 function hideSceneryDetailCard() {
   activeSceneryDetailPano = null;
+  activeSceneryDetailData = null;
+  activeSceneryDetailMarker = null;
   const card = document.getElementById("sceneryDetailCard");
   card.classList.remove("is-collapsed");
   delete card.dataset.detailState;
@@ -2038,6 +2055,7 @@ function hideSceneryDetailCard() {
 
 function setupSceneryDetailCardToggle() {
   const card = document.getElementById("sceneryDetailCard");
+  const content = card.querySelector(".window-content");
   const minimizeButton = document.getElementById("sceneryDetailMinimizeButton");
   const maximizeButton = document.getElementById("sceneryDetailMaximizeButton");
   const closeButton = document.getElementById("sceneryDetailCloseButton");
@@ -2052,6 +2070,11 @@ function setupSceneryDetailCardToggle() {
   maximizeButton.addEventListener("click", event => {
     event.stopPropagation();
     card.classList.toggle("is-collapsed");
+  });
+
+  content.addEventListener("click", () => {
+    if (card.dataset.detailState !== "registered" || !activeSceneryDetailData) return;
+    showSavedSceneryView(activeSceneryDetailData, activeSceneryDetailMarker);
   });
 }
 
@@ -2090,6 +2113,14 @@ function getSavedPanoramaView(jsonData = {}) {
     pitch: numberOrDefault(jsonData.pitch, 0),
     zoom: numberOrDefault(jsonData.zoom, 1)
   };
+}
+
+function showSavedSceneryView(jsonData, marker = null) {
+  const savedPanoramaView = getSavedPanoramaView(jsonData);
+  if (!savedPanoramaView) return false;
+
+  showPanorama(savedPanoramaView, jsonData, marker);
+  return true;
 }
 
 function setupRandomViewButton() {
@@ -2188,11 +2219,7 @@ function renderLatestSceneryList() {
       .join(" ・ ");
 
     button.addEventListener("click", () => {
-      const savedPanoramaView = getSavedPanoramaView(jsonData);
-
-      if (savedPanoramaView) {
-        showPanorama(savedPanoramaView, jsonData, marker);
-      } else {
+      if (!showSavedSceneryView(jsonData, marker)) {
         hideSceneryDetailCard();
         const position = marker.getPosition();
         if (position) {
