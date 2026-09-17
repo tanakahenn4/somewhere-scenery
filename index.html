@@ -2815,7 +2815,8 @@ function setupFullscreenButton() {
 function getCatMarkerSize(jsonData = {}) {
   if (!panorama || !panorama.getVisible()) {
     const size = getTopDownMapSize(MAP_MARKER_MAX_SIZE, MAP_MARKER_MIN_SIZE, 1.07);
-    return new google.maps.Size(size, size);
+    const displaySize = (jsonData.category || "cat") === "cat" ? size * 0.9 : size;
+    return new google.maps.Size(displaySize, displaySize);
   }
 
   const width = window.innerWidth || document.documentElement.clientWidth || 1024;
