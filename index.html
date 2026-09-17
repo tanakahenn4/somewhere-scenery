@@ -1770,6 +1770,7 @@ let pendingMarkerAction = null;
 let activeSceneryDetailPano = null;
 let activeSceneryDetailData = null;
 let activeSceneryDetailMarker = null;
+let pendingPanoramaViewListener = null;
 const STORAGE_KEY = "catsmap_markers";
 const markerCategories = ["cat", "interesting_scenery", "strange_funny", "creepy", "other"];
 const markerIconUrls = {
@@ -3035,14 +3036,40 @@ function showPanorama(data, detailData = null, detailMarker = null) {
   if (detailData) showSceneryDetailCard(detailData, detailMarker);
   else hideSceneryDetailCard();
   resetZoomOnEnter = false;
-  if (data.pano) panorama.setPano(data.pano);
-  else panorama.setPosition({ lat: data.lat, lng: data.lng });
-  panorama.setPov({
-    heading: data.heading,
-    pitch: data.pitch,
-    zoom: data.zoom
-  });
-  panorama.setVisible(true);
+
+  if (pendingPanoramaViewListener) {
+    pendingPanoramaViewListener.remove();
+    pendingPanoramaViewListener = null;
+  }
+
+  const applySavedView = () => {
+    panorama.setPov({
+      heading: data.heading,
+      pitch: data.pitch
+    });
+    panorama.setZoom(data.zoom);
+  };
+
+  if (data.pano) {
+    if (panorama.getPano() === data.pano) {
+      panorama.setVisible(true);
+      applySavedView();
+    } else {
+      pendingPanoramaViewListener = panorama.addListener("pano_changed", () => {
+        if (panorama.getPano() !== data.pano) return;
+        pendingPanoramaViewListener.remove();
+        pendingPanoramaViewListener = null;
+        applySavedView();
+      });
+      panorama.setPano(data.pano);
+      panorama.setVisible(true);
+    }
+  } else {
+    panorama.setPosition({ lat: data.lat, lng: data.lng });
+    panorama.setVisible(true);
+    applySavedView();
+  }
+
   updateMarkerIconSizes();
 }
 
