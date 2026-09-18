@@ -963,10 +963,18 @@ background:
     gap: 8px;
   }
 
-  .sidePanelFutureTabs span {
+  .sidePanelFutureTabs button {
     padding: 4px 10px;
+    color: inherit;
+    font: inherit;
+    background: transparent;
     border: 1px solid rgba(255,255,255,0.2);
     border-radius: 3px;
+    cursor: pointer;
+  }
+
+  .sidePanelFutureTabs button:hover {
+    background: rgba(255,255,255,0.08);
   }
 
   .sidePanelFutureTabs .is-active {
@@ -974,7 +982,7 @@ background:
     border-color: rgba(255,255,255,0.45);
   }
 
-  #latestSceneryList {
+  #sceneryList {
     margin-top: 10px;
     border-top: 1px solid rgba(255,255,255,0.14);
   }
@@ -1708,11 +1716,11 @@ background:
         <section class="sidePanelPage" data-side-panel-page="scenery-list" hidden>
           <button class="sidePanelBackButton" type="button" data-side-panel-target="home">← 戻る</button>
           <h2>登録されたどこかの風景リスト</h2>
-          <div class="sidePanelFutureTabs" aria-label="今後追加予定の一覧切替">
-            <span class="is-active">最新</span>
-            <span>いいね数順（準備中）</span>
+          <div class="sidePanelFutureTabs" role="tablist" aria-label="風景一覧の並び順">
+            <button class="is-active" type="button" role="tab" aria-selected="true" data-scenery-list-mode="latest">最新</button>
+            <button type="button" role="tab" aria-selected="false" data-scenery-list-mode="popular">人気</button>
           </div>
-          <div id="latestSceneryList" role="list"></div>
+          <div id="sceneryList" role="list"></div>
         </section>
 
         <section class="sidePanelPage" data-side-panel-page="settings" hidden>
@@ -1891,6 +1899,7 @@ const MAP_MARKER_MIN_SIZE = 37;
 const MAP_MARKER_TITLE_MAX_SIZE = 18;
 const MAP_MARKER_TITLE_MIN_SIZE = 11.5;
 const visibleMarkerCategories = new Set(markerCategories);
+let sceneryListMode = "latest";
 
 function parseLikedMarkerIds(rawValue) {
   if (!rawValue) return [];
@@ -1970,6 +1979,7 @@ async function submitMarkerLike(marker) {
     if (activeSceneryDetailMarker === marker && activeSceneryDetailData) {
       activeSceneryDetailData.likeCount = likeCount;
     }
+    if (sceneryListMode === "popular") renderSceneryList();
     likedMarkerIds.add(markerId);
     saveLikedMarkerIds();
   } catch (error) {
@@ -2035,6 +2045,7 @@ function initMap() {
   setupRegistrationDialog();
   setupMarkerManagementDialog();
   setupSidePanel();
+  setupSceneryListTabs();
   setupMapTypeSettings();
   setupRandomViewButton();
   setupStreetViewExitShortcut();
@@ -2407,23 +2418,38 @@ function setupSceneryDetailCardToggle() {
   });
 }
 
-function getLatestSceneryMarkers(limit = 20) {
+function compareSceneryEntriesByNewest(a, b) {
+  if (a.createdAtMillis === null && b.createdAtMillis === null) return 0;
+  if (a.createdAtMillis === null) return 1;
+  if (b.createdAtMillis === null) return -1;
+  return b.createdAtMillis - a.createdAtMillis;
+}
+
+function getSceneryListMarkers(mode = sceneryListMode, limit = 20) {
   return markers
     .filter(marker => visibleMarkerCategories.has(getMarkerCategory(marker)))
     .map((marker, index) => ({
       marker,
       index,
-      createdAtMillis: getCreatedAtMillis(marker.jsonData.createdAt)
+      createdAtMillis: getCreatedAtMillis(marker.jsonData.createdAt),
+      likeCount: getMarkerLikeCount(marker.jsonData)
     }))
     .sort((a, b) => {
-      if (a.createdAtMillis === null && b.createdAtMillis === null) {
-        return a.index - b.index;
+      if (mode === "popular") {
+        const likeCountDifference = b.likeCount - a.likeCount;
+        if (likeCountDifference) return likeCountDifference;
       }
-      if (a.createdAtMillis === null) return 1;
-      if (b.createdAtMillis === null) return -1;
-      return b.createdAtMillis - a.createdAtMillis || a.index - b.index;
+      return compareSceneryEntriesByNewest(a, b) || a.index - b.index;
     })
     .slice(0, limit);
+}
+
+function getLatestSceneryMarkers(limit = 20) {
+  return getSceneryListMarkers("latest", limit);
+}
+
+function getPopularSceneryMarkers(limit = 20) {
+  return getSceneryListMarkers("popular", limit);
 }
 
 function getSavedPanoramaView(jsonData = {}) {
@@ -2493,12 +2519,14 @@ function setupRandomViewButton() {
   });
 }
 
-function renderLatestSceneryList() {
-  const container = document.getElementById("latestSceneryList");
+function renderSceneryList() {
+  const container = document.getElementById("sceneryList");
   updateRegisteredSceneryCount();
   if (!container) return;
 
-  const entries = getLatestSceneryMarkers();
+  const entries = sceneryListMode === "popular"
+    ? getPopularSceneryMarkers()
+    : getLatestSceneryMarkers();
   const dateFormatter = new Intl.DateTimeFormat("ja-JP", {
     year: "numeric",
     month: "numeric",
@@ -2514,7 +2542,7 @@ function renderLatestSceneryList() {
     return;
   }
 
-  entries.forEach(({ marker, createdAtMillis }) => {
+  entries.forEach(({ marker, createdAtMillis, likeCount }) => {
     const jsonData = marker.jsonData;
     const locationName = typeof jsonData.locationName === "string"
       ? jsonData.locationName.trim()
@@ -2544,7 +2572,11 @@ function renderLatestSceneryList() {
     titleElement.className = "sceneryListTitle";
     titleElement.textContent = title;
     metaElement.className = "sceneryListMeta";
-    metaElement.textContent = [locationName !== title ? locationName : "", registeredDate]
+    metaElement.textContent = [
+      locationName !== title ? locationName : "",
+      registeredDate,
+      sceneryListMode === "popular" ? `♥ ${likeCount}` : ""
+    ]
       .filter(Boolean)
       .join(" ・ ");
 
@@ -2566,6 +2598,26 @@ function renderLatestSceneryList() {
   });
 }
 
+function setupSceneryListTabs() {
+  const tabs = document.querySelectorAll("[data-scenery-list-mode]");
+  const updateSelection = () => {
+    tabs.forEach(tab => {
+      const isActive = tab.dataset.sceneryListMode === sceneryListMode;
+      tab.classList.toggle("is-active", isActive);
+      tab.setAttribute("aria-selected", String(isActive));
+    });
+  };
+
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      sceneryListMode = tab.dataset.sceneryListMode === "popular" ? "popular" : "latest";
+      updateSelection();
+      renderSceneryList();
+    });
+  });
+  updateSelection();
+}
+
 const sidePanelPageTitles = {
   home: "メニュー",
   "scenery-list": "風景一覧",
@@ -2584,7 +2636,7 @@ function showSidePanelPage(pageId) {
   });
   document.getElementById("sidePanelPageTitle").textContent =
     sidePanelPageTitles[pageId] || "メニュー";
-  if (pageId === "scenery-list") renderLatestSceneryList();
+  if (pageId === "scenery-list") renderSceneryList();
   content.scrollTop = 0;
 }
 
@@ -2777,7 +2829,7 @@ function setupRegistrationDialog() {
         likeCount: 0
       };
       const marker = addMarker(jsonData, true, firestoreId);
-      renderLatestSceneryList();
+      renderSceneryList();
       closeDialog();
       showSceneryDetailCard(jsonData, marker);
     } catch (e) {
@@ -2906,7 +2958,7 @@ function setupMarkerManagementDialog() {
         marker.setIcon(getCatMarkerIcon(marker.jsonData));
         marker.setLabel(getMarkerTitleLabel(marker.jsonData));
         applyMarkerVisibility(marker);
-        renderLatestSceneryList();
+        renderSceneryList();
         showSceneryDetailCard(marker.jsonData, marker);
       } else {
         if (!confirm("この投稿を削除します。よろしいですか？")) return;
@@ -2919,7 +2971,7 @@ function setupMarkerManagementDialog() {
         });
         marker.setMap(null);
         markers = markers.filter(item => item !== marker);
-        renderLatestSceneryList();
+        renderSceneryList();
         hideSceneryDetailCard();
       }
       closeDialog();
@@ -2946,7 +2998,7 @@ function applyMarkerVisibility(marker) {
 
 function updateMarkerVisibility() {
   markers.forEach(applyMarkerVisibility);
-  renderLatestSceneryList();
+  renderSceneryList();
 }
 
 function clearSearchResults() {
@@ -3319,7 +3371,7 @@ async function loadSavedMarkers() {
     jsonData.category ??= "cat";
     addMarker(jsonData, false, snapshot.id);
   });
-  renderLatestSceneryList();
+  renderSceneryList();
 
   if (snap.size) {
     console.log(`🐾 ${snap.size} 件の猫をFirestoreから復元しました`);
