@@ -1590,10 +1590,22 @@ background:
 
 @media (orientation: landscape) and (max-height: 600px) and (hover: none) and (pointer: coarse) {
   #randomViewButton {
-    --random-card-visible-height: 42px;
+    --random-card-visible-height: 21px;
     left: 50%;
     bottom: 34px;
-    width: min(58vw, 300px);
+    width: min(29vw, 150px);
+    touch-action: none;
+  }
+
+  #randomViewButton:hover,
+  #randomViewButton:focus-visible {
+    transform: translate(-50%, calc(100% - var(--random-card-visible-height)));
+  }
+
+  #randomViewButton.is-touch-expanded,
+  #randomViewButton.is-touch-expanded:hover,
+  #randomViewButton.is-touch-expanded:focus-visible {
+    transform: translate(-50%, 0);
   }
 }
 
@@ -2489,9 +2501,64 @@ function showSavedSceneryView(jsonData, marker = null) {
 
 function setupRandomViewButton() {
   const button = document.getElementById("randomViewButton");
+  const landscapeTouchMedia = window.matchMedia(
+    "(orientation: landscape) and (max-height: 600px) and (hover: none) and (pointer: coarse)"
+  );
+  const SWIPE_DOWN_THRESHOLD = 24;
   let isMoving = false;
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let activeTouchPointerId = null;
+  let suppressNextClick = false;
+  let suppressClickTimer = null;
+
+  button.addEventListener("pointerdown", event => {
+    if (!landscapeTouchMedia.matches || event.pointerType === "mouse" || !event.isPrimary) return;
+    activeTouchPointerId = event.pointerId;
+    touchStartX = event.clientX;
+    touchStartY = event.clientY;
+    button.setPointerCapture?.(event.pointerId);
+  });
+
+  button.addEventListener("pointerup", event => {
+    if (event.pointerId !== activeTouchPointerId) return;
+    activeTouchPointerId = null;
+
+    const deltaX = event.clientX - touchStartX;
+    const deltaY = event.clientY - touchStartY;
+    const isDownwardSwipe = deltaY >= SWIPE_DOWN_THRESHOLD && deltaY > Math.abs(deltaX);
+    if (!isDownwardSwipe) return;
+
+    button.classList.remove("is-touch-expanded");
+    suppressNextClick = true;
+    clearTimeout(suppressClickTimer);
+    suppressClickTimer = setTimeout(() => {
+      suppressNextClick = false;
+    }, 500);
+  });
+
+  button.addEventListener("pointercancel", event => {
+    if (event.pointerId === activeTouchPointerId) activeTouchPointerId = null;
+  });
+
+  landscapeTouchMedia.addEventListener?.("change", event => {
+    if (!event.matches) button.classList.remove("is-touch-expanded");
+  });
 
   button.addEventListener("click", () => {
+    if (landscapeTouchMedia.matches) {
+      if (suppressNextClick) {
+        suppressNextClick = false;
+        clearTimeout(suppressClickTimer);
+        return;
+      }
+
+      if (!button.classList.contains("is-touch-expanded")) {
+        button.classList.add("is-touch-expanded");
+        return;
+      }
+    }
+
     if (isMoving) return;
     isMoving = true;
     button.classList.remove("is-tapping");
