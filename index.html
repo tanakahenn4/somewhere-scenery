@@ -2117,7 +2117,7 @@ function showEmptySceneryDetailCard(currentPano) {
   activeSceneryDetailMarker = null;
   card.dataset.detailState = "empty";
   setSceneryWindowContentMode("detail");
-  titleElement.textContent = "未記入";
+  titleElement.textContent = "データ未記入";
   memoElement.textContent = "この場所にはまだメモがありません。";
   memoElement.hidden = false;
   dateElement.hidden = true;
@@ -2129,7 +2129,7 @@ function showEmptySceneryDetailCard(currentPano) {
   registerButton.addEventListener("click", openCurrentPanoramaRegistration);
   actionsElement.replaceChildren(registerButton);
   card.hidden = false;
-  card.classList.add("is-collapsed");
+  card.classList.remove("is-collapsed");
 }
 
 function syncSceneryDetailForCurrentPano() {
