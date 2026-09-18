@@ -603,14 +603,64 @@ background:
   #sceneryDetailCard .map-overview-filters label {
     display: block;
     margin: 7px 0;
+    padding: 2px 0 2px 27px;
+    position: relative;
     font-size: 14px;
     line-height: 1.35;
     cursor: pointer;
   }
 
-  #sceneryDetailCard .map-overview-filters input {
-    margin: 0 7px 0 0;
-    vertical-align: -1px;
+  #sceneryDetailCard .map-overview-filters input[data-marker-category] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #sceneryDetailCard .map-overview-filters label::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 17px;
+    height: 17px;
+    background: #b9b9b9;
+    transform: translateY(-50%);
+    transition: background-color 0.2s ease;
+  }
+
+  #sceneryDetailCard .map-overview-filters label::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 5px;
+    width: 5px;
+    height: 9px;
+    border-right: 3px solid #fff;
+    border-bottom: 3px solid #fff;
+    opacity: 0;
+    transform: translateY(-62%) rotate(45deg);
+    transition: opacity 0.2s ease;
+  }
+
+  #sceneryDetailCard .map-overview-filters label:has(input[data-marker-category]:checked) {
+    color: #8d83d2;
+  }
+
+  #sceneryDetailCard .map-overview-filters label:has(input[data-marker-category]:checked)::before {
+    background: #8d83d2;
+  }
+
+  #sceneryDetailCard .map-overview-filters label:has(input[data-marker-category]:checked)::after {
+    opacity: 1;
+  }
+
+  #sceneryDetailCard .map-overview-filters label:has(input[data-marker-category]:focus-visible)::before {
+    outline: 2px solid #252a31;
+    outline-offset: 2px;
   }
 
   #sceneryDetailTitle.post-title {
