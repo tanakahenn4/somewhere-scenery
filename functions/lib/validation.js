@@ -129,9 +129,17 @@ function normalizeDeleteMarkerInput(input) {
   };
 }
 
+function normalizeLikeMarkerInput(input) {
+  const data = requireObject(input);
+  return {
+    markerId: normalizeMarkerId(data.markerId),
+  };
+}
+
 module.exports = {
   normalizeCreateMarkerInput,
   normalizeDeleteMarkerInput,
+  normalizeLikeMarkerInput,
   normalizeUpdateMarkerInput,
   ValidationError,
 };

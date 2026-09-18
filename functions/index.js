@@ -6,6 +6,7 @@ const logger = require("firebase-functions/logger");
 const {
   normalizeCreateMarkerInput,
   normalizeDeleteMarkerInput,
+  normalizeLikeMarkerInput,
   normalizeUpdateMarkerInput,
   ValidationError,
 } = require("./lib/validation");
@@ -64,6 +65,7 @@ exports.createMarker = onCall(callableOptions, async (request) => {
       ownerUid: null,
       createdAt: FieldValue.serverTimestamp(),
       migratedAt: null,
+      likeCount: 0,
     });
     batch.create(credentialRef, {
       editPasswordHash,
@@ -135,6 +137,43 @@ exports.deleteMarker = onCall(callableOptions, async (request) => {
     });
 
     return {markerId};
+  } catch (error) {
+    throw asHttpsError(error);
+  }
+});
+
+exports.likeMarker = onCall(callableOptions, async (request) => {
+  try {
+    const {markerId} = normalizeLikeMarkerInput(request.data);
+    const markerRef = db.collection("mapMarkers").doc(markerId);
+
+    const likeCount = await db.runTransaction(async (transaction) => {
+      const markerSnapshot = await transaction.get(markerRef);
+      if (!markerSnapshot.exists) {
+        throw new HttpsError("not-found", "対象の投稿が見つかりませんでした。");
+      }
+
+      const storedLikeCount = markerSnapshot.data()?.likeCount;
+      const currentLikeCount = storedLikeCount === undefined ? 0 : storedLikeCount;
+      if (!Number.isSafeInteger(currentLikeCount) || currentLikeCount < 0) {
+        throw new HttpsError(
+          "failed-precondition",
+          "いいね数の保存状態が正しくありません。",
+        );
+      }
+
+      const nextLikeCount = currentLikeCount + 1;
+      if (!Number.isSafeInteger(nextLikeCount)) {
+        throw new HttpsError(
+          "failed-precondition",
+          "いいね数をこれ以上増やせません。",
+        );
+      }
+      transaction.update(markerRef, {likeCount: nextLikeCount});
+      return nextLikeCount;
+    });
+
+    return {markerId, likeCount};
   } catch (error) {
     throw asHttpsError(error);
   }

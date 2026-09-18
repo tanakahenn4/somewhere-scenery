@@ -70,6 +70,7 @@ test("callable marker lifecycle uses private credentials", async () => {
   assert.equal(marker.category, markerInput.category);
   assert.equal(marker.ownerUid, null);
   assert.equal(marker.migratedAt, null);
+  assert.equal(marker.likeCount, 0);
   assert.ok(marker.createdAt);
   assert.equal("editPasswordHash" in marker, false);
   assert.match(
@@ -77,6 +78,30 @@ test("callable marker lifecycle uses private credentials", async () => {
     /^pbkdf2-sha256\$600000\$[^$]+\$[^$]+$/,
   );
   assert.notEqual(credential.editPasswordHash, markerInput.password);
+
+  const firstLike = await callFunction("likeMarker", {markerId});
+  assert.equal(firstLike.status, 200);
+  assert.equal(firstLike.body.result.markerId, markerId);
+  assert.equal(firstLike.body.result.likeCount, 1);
+  assert.equal((await markerRef.get()).data().likeCount, 1);
+
+  await markerRef.update({likeCount: 7});
+  const nextLike = await callFunction("likeMarker", {markerId});
+  assert.equal(nextLike.status, 200);
+  assert.equal(nextLike.body.result.likeCount, 8);
+  assert.equal((await markerRef.get()).data().likeCount, 8);
+
+  const missingLike = await callFunction("likeMarker", {
+    markerId: "missing-marker",
+  });
+  assert.equal(missingLike.status, 404);
+  assert.equal(missingLike.body.error.status, "NOT_FOUND");
+
+  const invalidLike = await callFunction("likeMarker", {
+    markerId: "invalid/marker-id",
+  });
+  assert.equal(invalidLike.status, 400);
+  assert.equal(invalidLike.body.error.status, "INVALID_ARGUMENT");
 
   const invalidUpdate = await callFunction("updateMarker", {
     markerId,
@@ -113,6 +138,7 @@ test("callable marker lifecycle uses private credentials", async () => {
     zoom: 0,
     createdAt: null,
     locationName: "変更不可",
+    likeCount: 999,
   });
   assert.equal(updated.status, 200);
   const markerAfterUpdate = (await markerRef.get()).data();
@@ -127,9 +153,14 @@ test("callable marker lifecycle uses private credentials", async () => {
   assert.equal(markerAfterUpdate.zoom, markerInput.zoom);
   assert.equal(markerAfterUpdate.locationName, markerInput.locationName);
   assert.equal(markerAfterUpdate.createdAt.isEqual(marker.createdAt), true);
+  assert.equal(markerAfterUpdate.likeCount, 8);
 
   const legacyRef = db.collection("mapMarkers").doc("legacy-without-credential");
   await legacyRef.set({title: "旧データ"});
+  const legacyLike = await callFunction("likeMarker", {markerId: legacyRef.id});
+  assert.equal(legacyLike.status, 200);
+  assert.equal(legacyLike.body.result.likeCount, 1);
+  assert.equal((await legacyRef.get()).data().likeCount, 1);
   const legacyUpdate = await callFunction("updateMarker", {
     markerId: legacyRef.id,
     password: markerInput.password,
