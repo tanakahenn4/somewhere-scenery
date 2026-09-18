@@ -57,6 +57,35 @@
     height: 100%;
   }
 
+  #mapToast {
+    position: absolute;
+    top: 18px;
+    left: calc((100% - var(--side-navigation-width)) / 2);
+    z-index: 1004;
+    max-width: min(420px, calc(100% - var(--side-navigation-width) - 32px));
+    padding: 10px 16px;
+    color: #fff;
+    background: rgba(92, 72, 154, 0.94);
+    border: 1px solid rgba(180, 166, 235, 0.9);
+    border-radius: 7px;
+    box-shadow: 0 6px 18px rgba(22, 13, 48, 0.3);
+    font-size: 14px;
+    line-height: 1.45;
+    text-align: center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate(-50%, -6px);
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0s linear 0.25s;
+  }
+
+  #mapToast.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+    transition-delay: 0s;
+  }
+
   #fullscreenButton {
     display: block;
     width: 100%;
@@ -1553,6 +1582,7 @@ background:
 </header>
 <div id="mapContainer">
   <div id="map"></div>
+  <div id="mapToast" role="status" aria-live="polite" aria-atomic="true"></div>
   <div id="sceneryDetailCardViewport">
     <div id="sceneryDetailCardShadow">
       <section id="sceneryDetailCard" class="scenery-window" aria-label="風景の詳細" aria-live="polite" hidden>
@@ -1821,6 +1851,7 @@ let activeSceneryDetailPano = null;
 let activeSceneryDetailData = null;
 let activeSceneryDetailMarker = null;
 let pendingPanoramaViewListener = null;
+let mapToastTimer = null;
 const STORAGE_KEY = "catsmap_markers";
 const markerCategories = ["cat", "interesting_scenery", "strange_funny", "creepy", "other"];
 const markerIconUrls = {
@@ -3054,9 +3085,22 @@ function setupStreetViewCoverageButton() {
     } catch (e) {
       if (coverageLayer.getMap() !== map) return;
       console.warn("Street View検索エラー:", e);
-      alert("この地点の近くにStreet Viewが見つかりませんでした。");
+      showMapToast("Street Viewが見つかりませんでした");
     }
   });
+}
+
+function showMapToast(message) {
+  const toast = document.getElementById("mapToast");
+  if (!toast) return;
+
+  clearTimeout(mapToastTimer);
+  toast.textContent = message;
+  toast.classList.add("is-visible");
+  mapToastTimer = setTimeout(() => {
+    toast.classList.remove("is-visible");
+    mapToastTimer = null;
+  }, 3000);
 }
 
 function setupStreetViewExitShortcut() {
