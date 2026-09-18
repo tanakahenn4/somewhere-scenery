@@ -776,6 +776,25 @@ background:
     box-shadow: inset 0 -2px 0 rgba(206, 91, 153, 0.28) !important;
   }
 
+  #sceneryDetailLikeButton {
+    min-width: 116px;
+  }
+
+  #sceneryDetailLikeButton.is-liked {
+    color: #62406f;
+    background: #eee7f2;
+    border-color: #8d83d2;
+  }
+
+  #sceneryDetailLikeButton:disabled {
+    cursor: default;
+    opacity: 0.82;
+  }
+
+  #sceneryDetailLikeButton:disabled:hover {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
+  }
+
   @media (max-width: 520px) {
     #sceneryDetailCardViewport {
       --detail-content-padding-x: 20px;
@@ -1853,6 +1872,9 @@ let activeSceneryDetailMarker = null;
 let pendingPanoramaViewListener = null;
 let mapToastTimer = null;
 const STORAGE_KEY = "catsmap_markers";
+const LIKED_MARKER_IDS_STORAGE_KEY = "somewhere_scenery_liked_marker_ids_v1";
+const likedMarkerIds = new Set();
+const pendingLikeMarkerIds = new Set();
 const markerCategories = ["cat", "interesting_scenery", "strange_funny", "creepy", "other"];
 const markerIconUrls = {
   cat: "https://cdn-icons-png.flaticon.com/512/1864/1864514.png",
@@ -1869,6 +1891,108 @@ const MAP_MARKER_MIN_SIZE = 37;
 const MAP_MARKER_TITLE_MAX_SIZE = 18;
 const MAP_MARKER_TITLE_MIN_SIZE = 11.5;
 const visibleMarkerCategories = new Set(markerCategories);
+
+function parseLikedMarkerIds(rawValue) {
+  if (!rawValue) return [];
+  const parsed = JSON.parse(rawValue);
+  if (!Array.isArray(parsed)) throw new Error("いいね履歴の形式が正しくありません。");
+  return parsed.filter(markerId => typeof markerId === "string" && markerId);
+}
+
+function replaceLikedMarkerIds(markerIds) {
+  likedMarkerIds.clear();
+  markerIds.forEach(markerId => likedMarkerIds.add(markerId));
+}
+
+function loadLikedMarkerIds() {
+  try {
+    replaceLikedMarkerIds(parseLikedMarkerIds(
+      window.localStorage.getItem(LIKED_MARKER_IDS_STORAGE_KEY)
+    ));
+  } catch (error) {
+    console.warn("いいね履歴を読み込めませんでした:", error);
+  }
+}
+
+function saveLikedMarkerIds() {
+  try {
+    window.localStorage.setItem(
+      LIKED_MARKER_IDS_STORAGE_KEY,
+      JSON.stringify([...likedMarkerIds])
+    );
+  } catch (error) {
+    console.warn("いいね履歴を保存できませんでした:", error);
+  }
+}
+
+function getMarkerLikeCount(jsonData = {}) {
+  return Number.isSafeInteger(jsonData.likeCount) && jsonData.likeCount >= 0
+    ? jsonData.likeCount
+    : 0;
+}
+
+function updateSceneryLikeButton() {
+  const button = document.getElementById("sceneryDetailLikeButton");
+  if (!button || !activeSceneryDetailMarker?.firestoreId) return;
+
+  const markerId = activeSceneryDetailMarker.firestoreId;
+  if (button.dataset.markerId !== markerId) return;
+  const isLiked = likedMarkerIds.has(markerId);
+  const isPending = pendingLikeMarkerIds.has(markerId);
+  const likeCount = getMarkerLikeCount(activeSceneryDetailMarker.jsonData);
+
+  button.textContent = isLiked
+    ? `♥ いいね済み ${likeCount}`
+    : `♡ いいね ${likeCount}`;
+  button.classList.toggle("is-liked", isLiked);
+  button.disabled = isLiked || isPending;
+  button.setAttribute("aria-pressed", String(isLiked));
+  button.setAttribute("aria-busy", String(isPending));
+}
+
+async function submitMarkerLike(marker) {
+  const markerId = marker?.firestoreId;
+  if (!markerId || likedMarkerIds.has(markerId) || pendingLikeMarkerIds.has(markerId)) return;
+
+  pendingLikeMarkerIds.add(markerId);
+  updateSceneryLikeButton();
+  try {
+    if (typeof window.firebaseLikeMarker !== "function") {
+      throw new Error("いいね機能の準備が完了していません。");
+    }
+    const result = await window.firebaseLikeMarker({markerId});
+    const likeCount = result?.data?.likeCount;
+    if (!Number.isSafeInteger(likeCount) || likeCount < 0) {
+      throw new Error("更新後のいいね数を取得できませんでした。");
+    }
+
+    marker.jsonData.likeCount = likeCount;
+    if (activeSceneryDetailMarker === marker && activeSceneryDetailData) {
+      activeSceneryDetailData.likeCount = likeCount;
+    }
+    likedMarkerIds.add(markerId);
+    saveLikedMarkerIds();
+  } catch (error) {
+    console.error("いいねエラー:", error);
+    showMapToast("いいねできませんでした。もう一度お試しください");
+  } finally {
+    pendingLikeMarkerIds.delete(markerId);
+    updateSceneryLikeButton();
+  }
+}
+
+function setupSceneryLikeState() {
+  loadLikedMarkerIds();
+  window.addEventListener("storage", event => {
+    if (event.key !== LIKED_MARKER_IDS_STORAGE_KEY) return;
+    try {
+      replaceLikedMarkerIds(parseLikedMarkerIds(event.newValue));
+      updateSceneryLikeButton();
+    } catch (error) {
+      console.warn("別タブのいいね履歴を反映できませんでした:", error);
+    }
+  });
+}
 
 function openCurrentPanoramaRegistration() {
   if (!panorama.getVisible()) return alert("ストリートビューが表示されていません。");
@@ -1903,6 +2027,7 @@ function initMap() {
   panorama.setOptions({ fullscreenControl: false });
   panorama.setVisible(false);
 
+  setupSceneryLikeState();
   loadSavedMarkers();
   setupFullscreenButton();
   setupStreetViewCoverageButton();
@@ -2165,8 +2290,16 @@ function showSceneryDetailCard(jsonData = {}, marker = null) {
 
   actionsElement.replaceChildren();
   if (marker?.firestoreId) {
+    const likeButton = document.createElement("button");
     const editButton = document.createElement("button");
     const deleteButton = document.createElement("button");
+    likeButton.id = "sceneryDetailLikeButton";
+    likeButton.type = "button";
+    likeButton.dataset.markerId = marker.firestoreId;
+    likeButton.addEventListener("click", event => {
+      event.stopPropagation();
+      submitMarkerLike(marker);
+    });
     editButton.id = "sceneryDetailEditButton";
     editButton.type = "button";
     editButton.textContent = "編集";
@@ -2175,7 +2308,8 @@ function showSceneryDetailCard(jsonData = {}, marker = null) {
     deleteButton.textContent = "削除";
     editButton.addEventListener("click", () => openMarkerManagementDialog(marker, "edit"));
     deleteButton.addEventListener("click", () => openMarkerManagementDialog(marker, "delete"));
-    actionsElement.append(editButton, deleteButton);
+    actionsElement.append(likeButton, editButton, deleteButton);
+    updateSceneryLikeButton();
   }
 
   card.classList.remove("is-collapsed");
@@ -2639,7 +2773,8 @@ function setupRegistrationDialog() {
         locationName,
         ownerUid: null,
         createdAt: new Date(),
-        migratedAt: null
+        migratedAt: null,
+        likeCount: 0
       };
       const marker = addMarker(jsonData, true, firestoreId);
       renderLatestSceneryList();
@@ -3233,6 +3368,7 @@ window.firebaseGetDocs = getDocs;
 window.firebaseCreateMarker = httpsCallable(functions, "createMarker");
 window.firebaseUpdateMarker = httpsCallable(functions, "updateMarker");
 window.firebaseDeleteMarker = httpsCallable(functions, "deleteMarker");
+window.firebaseLikeMarker = httpsCallable(functions, "likeMarker");
 
 console.log("🔥 Firebase接続成功");
 </script>
