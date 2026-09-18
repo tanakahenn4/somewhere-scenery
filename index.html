@@ -418,11 +418,13 @@ background:
   #sceneryDetailCard.scenery-window {
     position: relative;
     width: 100%;
+    min-height: 0;
+    height: auto;
     color: #252a31;
     background: #f3f4f6;
     border: 2px solid #000000;
     border-radius: 5px;
-    box-shadow: 0 15px 36px rgba(0, 0, 0, 0.42), 0 4px 10px rgba(0, 0, 0, 0.28);
+    box-shadow: 0 15px 36px 0 rgba(0, 0, 0, 0.42);
     overflow: hidden;
     cursor: default;
     font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
@@ -448,9 +450,9 @@ background:
     display: flex;
     align-items: center;
     min-height: var(--detail-titlebar-height);
-    padding: 0 11px 0 13px;
-    color: #f1f3f6;
-    background: linear-gradient(180deg, #000000, #74009f);
+    padding: 0 12px;
+    color: #ffffff;
+    background: linear-gradient(180deg, #8d83d2, #8d83d2);
     border-bottom: 1px solid #090b0f;
     cursor: pointer;
     transition: filter 0.16s ease;
@@ -465,8 +467,8 @@ background:
     min-width: 0;
     margin-right: auto;
     overflow: hidden;
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 320;
     letter-spacing: 0.02em;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -545,9 +547,10 @@ background:
   #sceneryDetailCard .window-content {
     padding: var(--detail-content-padding-top) var(--detail-content-padding-x)
       var(--detail-content-padding-bottom);
-    background:
-      linear-gradient(90deg, rgba(71, 174, 220, 0.025), transparent 30%),
-      #f3f4f6;
+    color: #11001f;
+    font-size: 17px;
+    line-height: var(--detail-memo-line-height);
+    background: #e4d2df;
   }
 
   #sceneryDetailCard[data-detail-state="registered"] .window-content {
@@ -611,8 +614,8 @@ background:
   }
 
   #sceneryDetailTitle.post-title {
-    margin: 0;
-    color: #20242a;
+    margin: 0 0 var(--detail-title-memo-gap);
+    color: #1f012d;
     font-size: 26px;
     font-weight: 700;
     line-height: 1.38;
@@ -620,7 +623,7 @@ background:
   }
 
   #sceneryDetailCard .post-body {
-    margin-top: var(--detail-title-memo-gap);
+    margin-top: 0;
   }
 
   #sceneryDetailCard .post-body:has(#sceneryDetailMemo[hidden]) {
@@ -629,8 +632,8 @@ background:
 
   #sceneryDetailMemo.post-memo {
     margin: 0;
-    color: #424851;
-    font-size: 16px;
+    color: #11001f;
+    font-size: 17px;
     font-weight: 400;
     line-height: var(--detail-memo-line-height);
     white-space: pre-wrap;
@@ -648,14 +651,14 @@ background:
     gap: 12px;
     min-height: var(--detail-footer-min-height);
     padding: 10px var(--detail-footer-padding-x) 13px;
-    background: #e7e9ec;
-    border-top: 1px solid #ced2d7;
+    background: #d9d2e4;
+    border-top: 1px solid #46576d;
   }
 
   #sceneryDetailDate.post-date {
     min-width: 0;
     margin-right: auto;
-    color: #707884;
+    color: #3a0245;
     font-size: 13px;
     line-height: 1.4;
     white-space: nowrap;
@@ -676,7 +679,7 @@ background:
     padding: 7px 13px;
     color: #30353c;
     background: #f7f8f9;
-    border: 1px solid #b7bdc6;
+    border: 1px solid #595959;
     border-radius: 2px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
     font: 600 14px/1 "Segoe UI", "Yu Gothic UI", sans-serif;
