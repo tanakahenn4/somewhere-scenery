@@ -1590,7 +1590,84 @@ background:
 
 @media (orientation: landscape) and (max-height: 600px) and (hover: none) and (pointer: coarse) {
   #sceneryDetailCardViewport {
-    --detail-window-width: 280px;
+    --detail-window-width: 230px;
+    --detail-titlebar-height: 20px;
+    --detail-content-padding-x: 10px;
+    --detail-content-padding-top: 3px;
+    --detail-content-padding-bottom: 4px;
+    --detail-memo-line-height: 16.1px;
+    --detail-footer-min-height: 28px;
+    --detail-footer-padding-x: 23px;
+    top: 2px;
+    right: calc(var(--side-navigation-width) + 5px);
+  }
+
+  #sceneryDetailCard .window-titlebar {
+    min-height: 20px;
+    padding-inline: 12px;
+  }
+
+  #sceneryDetailCard .window-name {
+    font-size: 11px;
+  }
+
+  #sceneryDetailCard .scenery-detail-content {
+    padding: 3px 10px 4px;
+  }
+
+  #sceneryDetailTitle.post-title {
+    font-size: 14px;
+  }
+
+  #sceneryDetailMemo.post-memo {
+    font-size: 11px;
+    line-height: 16.1px;
+  }
+
+  #sceneryDetailCard .scenery-detail-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    min-height: 28px;
+    padding: 4px 23px 6px;
+  }
+
+  #sceneryDetailDate.post-date {
+    flex: 0 0 auto;
+    width: 100%;
+    margin-right: 0;
+    font-size: 12px;
+    text-align: left;
+  }
+
+  #sceneryDetailActions {
+    justify-content: space-between;
+    width: 100%;
+    margin-left: 0;
+    gap: 0;
+  }
+
+  #sceneryDetailActions button {
+    padding-inline: 4px;
+    font-size: 10px;
+  }
+
+  #sceneryDetailLikeButton {
+    width: 66px;
+    min-width: 66px;
+    min-height: 25px;
+  }
+
+  #sceneryDetailEditButton {
+    width: 42px;
+    min-width: 42px;
+    min-height: 25px;
+  }
+
+  #sceneryDetailDeleteButton {
+    width: 47px;
+    min-width: 47px;
+    min-height: 25px;
   }
 
   #randomViewButton {

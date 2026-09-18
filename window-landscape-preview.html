@@ -1,0 +1,1008 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>横持ちスマホ・風景詳細ウィンドウ プレビュー</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+      --device-width: 740px;
+      --device-height: 360px;
+      --window-width: 280px;
+      --window-right: 12px;
+      --window-top: 12px;
+      --titlebar-height: 38px;
+      --titlebar-font-size: 16px;
+      --titlebar-padding-x: 12px;
+      --content-padding-top: 14px;
+      --content-padding-right: 15px;
+      --content-padding-bottom: 31px;
+      --content-padding-left: 15px;
+      --title-font-size: 26px;
+      --memo-font-size: 17px;
+      --memo-line-height: 25.7px;
+      --footer-min-height: 63px;
+      --footer-font-size: 13px;
+      --footer-padding-top: 10px;
+      --footer-padding-right: 23px;
+      --footer-padding-bottom: 13px;
+      --footer-padding-left: 23px;
+      --like-width: 116px;
+      --like-height: 38px;
+      --edit-width: 73px;
+      --edit-height: 38px;
+      --delete-width: 73px;
+      --delete-height: 38px;
+      --button-font-size: 14px;
+      --button-gap: 12px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      color: #e9edf3;
+      background: #15171b;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    .tool-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 54px;
+      padding: 8px 14px;
+      background: rgba(24, 27, 32, 0.97);
+      border-bottom: 1px solid #373c45;
+      backdrop-filter: blur(8px);
+    }
+
+    .tool-header h1 {
+      margin: 0 auto 0 0;
+      font-size: 16px;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .toolbar-group label { font-size: 12px; color: #b9c0ca; }
+
+    .toolbar-group select,
+    .toolbar-group input,
+    .tool-button {
+      min-height: 32px;
+      color: #eef1f5;
+      background: #2a2f37;
+      border: 1px solid #4a515d;
+      border-radius: 4px;
+    }
+
+    .toolbar-group select { padding: 4px 8px; }
+    .toolbar-group input { width: 70px; padding: 4px 6px; }
+
+    .tool-button {
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    .tool-button:hover { background: #363d47; }
+    .tool-button.primary { background: #6358aa; border-color: #9187d4; }
+
+    .custom-viewport[hidden] { display: none; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 390px;
+      min-height: calc(100vh - 54px);
+    }
+
+    .preview-column {
+      min-width: 0;
+      padding: 20px;
+      overflow: auto;
+      background:
+        linear-gradient(45deg, #1d2025 25%, transparent 25%) 0 0 / 20px 20px,
+        linear-gradient(45deg, transparent 75%, #1d2025 75%) 0 0 / 20px 20px,
+        #191b20;
+    }
+
+    .preview-caption {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: var(--device-width);
+      margin: 0 auto 8px;
+      color: #bfc6cf;
+      font-size: 12px;
+    }
+
+    .device-frame {
+      width: calc(var(--device-width) + 12px);
+      height: calc(var(--device-height) + 12px);
+      margin: 0 auto;
+      padding: 6px;
+      background: #08090b;
+      border: 1px solid #484e58;
+      border-radius: 10px;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.4);
+    }
+
+    .site-viewport {
+      position: relative;
+      display: grid;
+      grid-template-rows: 26px minmax(0, 1fr) 31px;
+      width: var(--device-width);
+      height: var(--device-height);
+      overflow: hidden;
+      color: #fff;
+      background: #a9c7d5;
+    }
+
+    .site-header {
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: #000;
+      font: 600 11px/1 "Segoe UI", sans-serif;
+    }
+
+    .map-area {
+      position: relative;
+      min-height: 0;
+      overflow: hidden;
+      background-color: #9cbfd3;
+      background-image:
+        linear-gradient(20deg, transparent 0 43%, rgba(213, 218, 211, 0.96) 44% 57%, transparent 58%),
+        linear-gradient(104deg, transparent 0 61%, rgba(77, 103, 77, 0.55) 62% 75%, transparent 76%),
+        linear-gradient(165deg, #9fc8dd 0 35%, #96b57f 36% 56%, #7f9472 57% 100%);
+    }
+
+    .map-area[data-background="map"] {
+      background-color: #dfe8dd;
+      background-image:
+        linear-gradient(25deg, transparent 0 42%, #fff 43% 52%, transparent 53%),
+        linear-gradient(100deg, transparent 0 55%, #bbc5cf 56% 62%, transparent 63%),
+        linear-gradient(155deg, #cfe9d4 0 43%, #dcebf2 44% 100%);
+    }
+
+    .map-area[data-background="dark"] { background: #222831; }
+    .map-area[data-background="light"] { background: #e7ebef; }
+
+    .dummy-road {
+      position: absolute;
+      left: -8%;
+      bottom: 23%;
+      width: 120%;
+      height: 64px;
+      background: rgba(77, 82, 88, 0.5);
+      transform: rotate(-7deg);
+    }
+
+    .dummy-road::after {
+      position: absolute;
+      top: 30px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      content: "";
+      background: repeating-linear-gradient(90deg, #eee 0 25px, transparent 25px 50px);
+    }
+
+    .map-watermark {
+      position: absolute;
+      left: 8px;
+      bottom: 7px;
+      font: 700 10px/1 sans-serif;
+      text-shadow: 0 1px 2px #000;
+    }
+
+    .menu-strip {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 42px;
+      padding-top: 8px;
+      color: #fff;
+      background: #000;
+      font: 700 8px/1 sans-serif;
+    }
+
+    .menu-strip::before {
+      margin-bottom: 4px;
+      color: #fff;
+      content: "☰";
+      font-size: 20px;
+    }
+
+    .random-card {
+      position: absolute;
+      bottom: -30px;
+      left: 50%;
+      z-index: 3;
+      width: min(29vw, 150px);
+      height: 66px;
+      color: #f5a3ff;
+      background: linear-gradient(135deg, #152374, #37118c 58%, #6e187e);
+      border: 2px solid #706bff;
+      border-radius: 8px;
+      box-shadow: 0 0 0 1px #d04cff inset;
+      transform: translateX(-50%);
+      font: 700 7px/1.2 monospace;
+      letter-spacing: 0.7px;
+    }
+
+    .random-card span {
+      position: absolute;
+      top: 7px;
+      left: 12px;
+    }
+
+    .bottom-bar {
+      z-index: 7;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 4px;
+      background: #000;
+    }
+
+    .bottom-search {
+      flex: 1 1 auto;
+      min-width: 0;
+      height: 25px;
+      padding: 0 7px;
+      color: #aaa;
+      background: #272727;
+      border: 1px solid #777;
+      font-size: 9px;
+    }
+
+    .bottom-bar button {
+      flex: 0 0 auto;
+      height: 25px;
+      padding: 0 7px;
+      color: #fff;
+      background: #333;
+      border: 1px solid #888;
+      font-size: 8px;
+    }
+
+    .detail-window-positioner {
+      position: absolute;
+      top: var(--window-top);
+      right: calc(42px + var(--window-right));
+      z-index: 5;
+      width: var(--window-width);
+    }
+
+    .scenery-window {
+      width: 100%;
+      color: #252a31;
+      background: #f3f4f6;
+      border: 5px solid #8d83d2;
+      border-radius: 11px;
+      box-shadow: 0 15px 36px rgba(0, 0, 0, 0.43);
+      overflow: hidden;
+      font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+    }
+
+    .window-titlebar {
+      display: flex;
+      align-items: center;
+      min-height: var(--titlebar-height);
+      padding: 0 var(--titlebar-padding-x);
+      color: #fff;
+      background: #8d83d2;
+      border-bottom: 1px solid #090b0f;
+    }
+
+    .window-name {
+      min-width: 0;
+      margin-right: auto;
+      overflow: hidden;
+      font-size: var(--titlebar-font-size);
+      font-weight: 320;
+      white-space: nowrap;
+    }
+
+    .window-controls { display: flex; align-self: stretch; margin-right: -8px; }
+
+    .window-control {
+      position: relative;
+      width: 28px;
+      padding: 0;
+      color: #f1f1f5;
+      background: transparent;
+      border: 0;
+    }
+
+    .window-control::before,
+    .window-control::after {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      content: "";
+      pointer-events: none;
+    }
+
+    .is-minimize::before { width: 10px; height: 1px; background: currentColor; transform: translate(-50%, 2px); }
+    .is-maximize::before { width: 8px; height: 8px; border: 1px solid currentColor; transform: translate(-50%, -50%); }
+    .is-close::before, .is-close::after { width: 11px; height: 1px; background: currentColor; }
+    .is-close::before { transform: translate(-50%, -50%) rotate(45deg); }
+    .is-close::after { transform: translate(-50%, -50%) rotate(-45deg); }
+
+    .window-content {
+      padding: var(--content-padding-top) var(--content-padding-right)
+        var(--content-padding-bottom) var(--content-padding-left);
+      color: #11001f;
+      background: #e4d2df;
+    }
+
+    .post-title {
+      margin: 0 0 10px;
+      color: #1f012d;
+      font-size: var(--title-font-size);
+      font-weight: 700;
+      line-height: 1.38;
+      overflow-wrap: anywhere;
+    }
+
+    .post-memo {
+      margin: 0;
+      color: #11001f;
+      font-size: var(--memo-font-size);
+      line-height: var(--memo-line-height);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .window-footer {
+      display: flex;
+      align-items: center;
+      gap: var(--button-gap);
+      min-height: var(--footer-min-height);
+      padding: var(--footer-padding-top) var(--footer-padding-right)
+        var(--footer-padding-bottom) var(--footer-padding-left);
+      background: #d9d2e4;
+      border-top: 1px solid #46576d;
+    }
+
+    .post-date {
+      min-width: 0;
+      margin-right: auto;
+      color: #3a0245;
+      font-size: var(--footer-font-size);
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+
+    .window-actions {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: var(--button-gap);
+      margin-left: auto;
+    }
+
+    .window-actions button {
+      min-width: 0;
+      padding: 0 8px;
+      color: #30353c;
+      background: #f7f8f9;
+      border: 1px solid #595959;
+      border-radius: 2px;
+      font-size: var(--button-font-size);
+      font-weight: 600;
+    }
+
+    .like-button { width: var(--like-width); height: var(--like-height); }
+    .edit-button { width: var(--edit-width); height: var(--edit-height); }
+    .delete-button { width: var(--delete-width); height: var(--delete-height); color: #81365f !important; }
+
+    .scenery-window.is-collapsed .window-content,
+    .scenery-window.is-collapsed .window-footer { display: none; }
+
+    .inspector {
+      min-width: 0;
+      height: calc(100vh - 54px);
+      overflow: auto;
+      background: #202329;
+      border-left: 1px solid #3d434d;
+    }
+
+    .inspector-section {
+      margin: 10px;
+      background: #282c33;
+      border: 1px solid #3c424c;
+      border-radius: 5px;
+    }
+
+    .inspector-section summary {
+      padding: 10px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .control-list { padding: 0 12px 12px; }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: minmax(112px, 1fr) 112px 70px;
+      align-items: center;
+      gap: 7px;
+      min-height: 34px;
+      font-size: 12px;
+    }
+
+    .control-row input[type="range"] { width: 100%; }
+
+    .control-row input[type="number"] {
+      width: 70px;
+      padding: 4px 5px;
+      color: #f3f5f8;
+      background: #17191e;
+      border: 1px solid #4a515d;
+      border-radius: 3px;
+    }
+
+    .css-panel { padding: 12px; }
+
+    .css-panel h2 { margin: 0 0 8px; font-size: 14px; }
+
+    #cssOutput {
+      width: 100%;
+      min-height: 310px;
+      padding: 10px;
+      resize: vertical;
+      color: #dfe7ef;
+      background: #111318;
+      border: 1px solid #414852;
+      border-radius: 4px;
+      font: 11px/1.5 Consolas, monospace;
+    }
+
+    .status { min-height: 18px; margin-top: 6px; color: #9fc7e7; font-size: 11px; }
+
+    @media (max-width: 1050px) {
+      .workspace { grid-template-columns: 1fr; }
+      .inspector { height: auto; border-top: 1px solid #3d434d; border-left: 0; }
+      .tool-header { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <header class="tool-header">
+    <h1>横持ちスマホ・風景詳細ウィンドウ プレビュー</h1>
+    <div class="toolbar-group">
+      <label for="viewportPreset">Viewport</label>
+      <select id="viewportPreset">
+        <option value="640x360">640 × 360</option>
+        <option value="740x360" selected>740 × 360（Galaxy S8+基準）</option>
+        <option value="800x360">800 × 360</option>
+        <option value="850x393">850 × 393</option>
+        <option value="custom">カスタム</option>
+      </select>
+      <span id="customViewport" class="custom-viewport" hidden>
+        <input id="customWidth" type="number" min="320" max="1600" value="740" aria-label="カスタム幅"> ×
+        <input id="customHeight" type="number" min="240" max="900" value="360" aria-label="カスタム高さ">
+      </span>
+    </div>
+    <div class="toolbar-group">
+      <label for="backgroundSelect">背景</label>
+      <select id="backgroundSelect">
+        <option value="street">Street View風</option>
+        <option value="map">地図風</option>
+        <option value="light">明るい単色</option>
+        <option value="dark">暗い単色</option>
+      </select>
+    </div>
+    <button id="undoButton" class="tool-button" type="button">Undo</button>
+    <button id="redoButton" class="tool-button" type="button">Redo</button>
+    <button id="resetButton" class="tool-button" type="button">本番値に戻す</button>
+    <button id="clearButton" class="tool-button" type="button">保存状態を削除</button>
+    <button id="copyButton" class="tool-button primary" type="button">CSSをコピー</button>
+  </header>
+
+  <main class="workspace">
+    <section class="preview-column" aria-label="横持ちサイトプレビュー">
+      <div class="preview-caption">
+        <span>指定viewportを1 CSS px = 1 pxで表示</span>
+        <strong id="viewportLabel">740 × 360</strong>
+      </div>
+      <div class="device-frame">
+        <div id="siteViewport" class="site-viewport">
+          <header class="site-header">どこかの風景共有サイト / 全国猫地図図鑑</header>
+          <div id="mapArea" class="map-area" data-background="street">
+            <div class="dummy-road"></div>
+            <span class="map-watermark">Google風ダミー背景</span>
+            <aside class="menu-strip">MENU</aside>
+            <div class="random-card"><span>DESTINATION: SOMEWHERE UNKNOWN</span></div>
+
+            <div class="detail-window-positioner">
+              <article id="previewWindow" class="scenery-window" aria-labelledby="previewTitle">
+                <header class="window-titlebar">
+                  <span class="window-name">メモ帳</span>
+                  <div class="window-controls" aria-label="ウィンドウ操作">
+                    <button class="window-control is-minimize" type="button" aria-label="最小化"></button>
+                    <button class="window-control is-maximize" type="button" aria-label="最大化"></button>
+                    <button class="window-control is-close" type="button" aria-label="閉じる"></button>
+                  </div>
+                </header>
+                <div class="window-content">
+                  <h2 id="previewTitle" class="post-title">日当たりのよい坂道</h2>
+                  <p class="post-memo">暖かい日差しと、遠くまで続く坂道が印象的だった。</p>
+                </div>
+                <footer class="window-footer">
+                  <time class="post-date" datetime="2026-09-18">登録日：2026/9/18</time>
+                  <div class="window-actions">
+                    <button class="like-button" type="button">♡ いいね 12</button>
+                    <button class="edit-button" type="button">編集</button>
+                    <button class="delete-button" type="button">削除</button>
+                  </div>
+                </footer>
+              </article>
+            </div>
+          </div>
+          <footer class="bottom-bar">
+            <input class="bottom-search" value="住所または pano ID を入力" readonly aria-label="検索欄の見本">
+            <button type="button">現在位置を登録</button>
+            <button type="button">SV OFF</button>
+            <button type="button">ページ更新</button>
+          </footer>
+        </div>
+      </div>
+    </section>
+
+    <aside class="inspector" aria-label="CSS調整パネル">
+      <div id="controlSections"></div>
+      <section class="inspector-section css-panel">
+        <h2>生成CSS</h2>
+        <textarea id="cssOutput" readonly spellcheck="false"></textarea>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "somewhere-scenery-landscape-window-preview-v1";
+
+    const initialState = Object.freeze({
+      viewportWidth: 740,
+      viewportHeight: 360,
+      viewportPreset: "740x360",
+      background: "street",
+      windowWidth: 280,
+      windowRight: 12,
+      windowTop: 12,
+      titlebarHeight: 38,
+      titlebarFontSize: 16,
+      titlebarPaddingX: 12,
+      titleFontSize: 26,
+      memoFontSize: 17,
+      memoLineHeight: 25.7,
+      contentPaddingTop: 14,
+      contentPaddingRight: 15,
+      contentPaddingBottom: 31,
+      contentPaddingLeft: 15,
+      footerMinHeight: 63,
+      footerFontSize: 13,
+      footerPaddingTop: 10,
+      footerPaddingRight: 23,
+      footerPaddingBottom: 13,
+      footerPaddingLeft: 23,
+      likeWidth: 116,
+      likeHeight: 38,
+      editWidth: 73,
+      editHeight: 38,
+      deleteWidth: 73,
+      deleteHeight: 38,
+      buttonFontSize: 14,
+      buttonGap: 12
+    });
+
+    let state = loadState();
+    let undoStack = [];
+    let redoStack = [];
+
+    const sections = [
+      {
+        title: "ウィンドウ配置",
+        open: true,
+        fields: [
+          field("windowWidth", "ウィンドウ幅", 180, 520, 1),
+          field("windowRight", "MENU帯からの右余白", 0, 160, 1),
+          field("windowTop", "上位置", 0, 160, 1)
+        ]
+      },
+      {
+        title: "タイトルバー",
+        open: true,
+        fields: [
+          field("titlebarHeight", "高さ", 24, 64, 1),
+          field("titlebarFontSize", "文字サイズ", 9, 24, 1),
+          field("titlebarPaddingX", "左右padding", 0, 30, 1)
+        ]
+      },
+      {
+        title: "本文・投稿タイトル",
+        open: true,
+        fields: [
+          field("titleFontSize", "タイトル文字", 14, 34, 1),
+          field("memoFontSize", "本文文字", 10, 24, 1),
+          field("memoLineHeight", "本文line-height", 12, 38, 0.1),
+          field("contentPaddingTop", "padding 上", 0, 50, 1),
+          field("contentPaddingRight", "padding 右", 0, 50, 1),
+          field("contentPaddingBottom", "padding 下", 0, 60, 1),
+          field("contentPaddingLeft", "padding 左", 0, 50, 1)
+        ]
+      },
+      {
+        title: "フッター",
+        open: true,
+        fields: [
+          field("footerMinHeight", "高さ（min-height）", 28, 140, 1),
+          field("footerFontSize", "登録日文字", 9, 22, 1),
+          field("footerPaddingTop", "padding 上", 0, 35, 1),
+          field("footerPaddingRight", "padding 右", 0, 40, 1),
+          field("footerPaddingBottom", "padding 下", 0, 35, 1),
+          field("footerPaddingLeft", "padding 左", 0, 40, 1)
+        ]
+      },
+      {
+        title: "操作ボタン",
+        open: true,
+        fields: [
+          field("likeWidth", "いいね 幅", 50, 160, 1),
+          field("likeHeight", "いいね 高さ", 22, 54, 1),
+          field("editWidth", "編集 幅", 35, 110, 1),
+          field("editHeight", "編集 高さ", 22, 54, 1),
+          field("deleteWidth", "削除 幅", 35, 110, 1),
+          field("deleteHeight", "削除 高さ", 22, 54, 1),
+          field("buttonFontSize", "ボタン文字", 9, 20, 1),
+          field("buttonGap", "ボタン間隔", 0, 24, 1)
+        ]
+      }
+    ];
+
+    const cssVariables = {
+      windowWidth: "--window-width",
+      windowRight: "--window-right",
+      windowTop: "--window-top",
+      titlebarHeight: "--titlebar-height",
+      titlebarFontSize: "--titlebar-font-size",
+      titlebarPaddingX: "--titlebar-padding-x",
+      titleFontSize: "--title-font-size",
+      memoFontSize: "--memo-font-size",
+      memoLineHeight: "--memo-line-height",
+      contentPaddingTop: "--content-padding-top",
+      contentPaddingRight: "--content-padding-right",
+      contentPaddingBottom: "--content-padding-bottom",
+      contentPaddingLeft: "--content-padding-left",
+      footerMinHeight: "--footer-min-height",
+      footerFontSize: "--footer-font-size",
+      footerPaddingTop: "--footer-padding-top",
+      footerPaddingRight: "--footer-padding-right",
+      footerPaddingBottom: "--footer-padding-bottom",
+      footerPaddingLeft: "--footer-padding-left",
+      likeWidth: "--like-width",
+      likeHeight: "--like-height",
+      editWidth: "--edit-width",
+      editHeight: "--edit-height",
+      deleteWidth: "--delete-width",
+      deleteHeight: "--delete-height",
+      buttonFontSize: "--button-font-size",
+      buttonGap: "--button-gap"
+    };
+
+    function field(key, label, min, max, step) {
+      return { key, label, min, max, step };
+    }
+
+    function clone(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        return { ...initialState, ...(saved && typeof saved === "object" ? saved : {}) };
+      } catch (error) {
+        console.warn("保存状態を読み込めませんでした:", error);
+        return { ...initialState };
+      }
+    }
+
+    function saveState() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+      catch (error) { console.warn("設定を保存できませんでした:", error); }
+    }
+
+    function buildControls() {
+      const container = document.getElementById("controlSections");
+      sections.forEach(section => {
+        const details = document.createElement("details");
+        details.className = "inspector-section";
+        details.open = section.open;
+        const summary = document.createElement("summary");
+        summary.textContent = section.title;
+        const list = document.createElement("div");
+        list.className = "control-list";
+
+        section.fields.forEach(config => {
+          const row = document.createElement("label");
+          row.className = "control-row";
+          row.htmlFor = `${config.key}Number`;
+          const caption = document.createElement("span");
+          caption.textContent = config.label;
+          const range = document.createElement("input");
+          range.type = "range";
+          range.min = config.min;
+          range.max = config.max;
+          range.step = config.step;
+          range.value = state[config.key];
+          range.dataset.key = config.key;
+          const number = document.createElement("input");
+          number.type = "number";
+          number.id = `${config.key}Number`;
+          number.min = config.min;
+          number.max = config.max;
+          number.step = config.step;
+          number.value = state[config.key];
+          number.dataset.key = config.key;
+
+          [range, number].forEach(input => input.addEventListener("input", event => {
+            updateState(config.key, Number(event.target.value));
+          }));
+
+          row.append(caption, range, number);
+          list.appendChild(row);
+        });
+
+        details.append(summary, list);
+        container.appendChild(details);
+      });
+    }
+
+    function updateState(key, value) {
+      if (!Number.isFinite(value) || state[key] === value) return;
+      undoStack.push(clone(state));
+      if (undoStack.length > 80) undoStack.shift();
+      redoStack = [];
+      state[key] = value;
+      syncControl(key);
+      render();
+    }
+
+    function syncControl(key) {
+      document.querySelectorAll(`[data-key="${key}"]`).forEach(input => {
+        if (Number(input.value) !== Number(state[key])) input.value = state[key];
+      });
+    }
+
+    function syncAllControls() {
+      Object.keys(cssVariables).forEach(syncControl);
+      document.getElementById("viewportPreset").value = state.viewportPreset;
+      document.getElementById("customWidth").value = state.viewportWidth;
+      document.getElementById("customHeight").value = state.viewportHeight;
+      document.getElementById("customViewport").hidden = state.viewportPreset !== "custom";
+      document.getElementById("backgroundSelect").value = state.background;
+    }
+
+    function render() {
+      const root = document.documentElement;
+      root.style.setProperty("--device-width", `${state.viewportWidth}px`);
+      root.style.setProperty("--device-height", `${state.viewportHeight}px`);
+      Object.entries(cssVariables).forEach(([key, variable]) => {
+        root.style.setProperty(variable, `${state[key]}px`);
+      });
+      document.getElementById("viewportLabel").textContent = `${state.viewportWidth} × ${state.viewportHeight}`;
+      document.getElementById("mapArea").dataset.background = state.background;
+      document.getElementById("cssOutput").value = generateCss();
+      saveState();
+      updateUndoRedo();
+    }
+
+    function generateCss() {
+      return `@media (orientation: landscape) and (max-height: 600px) and (hover: none) and (pointer: coarse) {
+  #sceneryDetailCardViewport {
+    --detail-window-width: ${state.windowWidth}px;
+    --detail-titlebar-height: ${state.titlebarHeight}px;
+    --detail-content-padding-x: ${state.contentPaddingLeft}px;
+    --detail-content-padding-top: ${state.contentPaddingTop}px;
+    --detail-content-padding-bottom: ${state.contentPaddingBottom}px;
+    --detail-memo-line-height: ${state.memoLineHeight}px;
+    --detail-footer-min-height: ${state.footerMinHeight}px;
+    --detail-footer-padding-x: ${state.footerPaddingLeft}px;
+    top: ${state.windowTop}px;
+    right: calc(var(--side-navigation-width) + ${state.windowRight}px);
+  }
+
+  #sceneryDetailCard .window-titlebar {
+    min-height: ${state.titlebarHeight}px;
+    padding-inline: ${state.titlebarPaddingX}px;
+  }
+
+  #sceneryDetailCard .window-name {
+    font-size: ${state.titlebarFontSize}px;
+  }
+
+  #sceneryDetailCard .scenery-detail-content {
+    padding: ${state.contentPaddingTop}px ${state.contentPaddingRight}px ${state.contentPaddingBottom}px ${state.contentPaddingLeft}px;
+  }
+
+  #sceneryDetailTitle.post-title {
+    font-size: ${state.titleFontSize}px;
+  }
+
+  #sceneryDetailMemo.post-memo {
+    font-size: ${state.memoFontSize}px;
+    line-height: ${state.memoLineHeight}px;
+  }
+
+  #sceneryDetailCard .scenery-detail-footer {
+    min-height: ${state.footerMinHeight}px;
+    padding: ${state.footerPaddingTop}px ${state.footerPaddingRight}px ${state.footerPaddingBottom}px ${state.footerPaddingLeft}px;
+  }
+
+  #sceneryDetailDate.post-date {
+    font-size: ${state.footerFontSize}px;
+  }
+
+  #sceneryDetailActions {
+    gap: ${state.buttonGap}px;
+  }
+
+  #sceneryDetailActions button {
+    font-size: ${state.buttonFontSize}px;
+  }
+
+  #sceneryDetailLikeButton {
+    min-width: ${state.likeWidth}px;
+    min-height: ${state.likeHeight}px;
+  }
+
+  #sceneryDetailEditButton {
+    min-width: ${state.editWidth}px;
+    min-height: ${state.editHeight}px;
+  }
+
+  #sceneryDetailDeleteButton {
+    min-width: ${state.deleteWidth}px;
+    min-height: ${state.deleteHeight}px;
+  }
+}`;
+    }
+
+    function setViewportPreset(value) {
+      undoStack.push(clone(state));
+      redoStack = [];
+      state.viewportPreset = value;
+      if (value !== "custom") {
+        const [width, height] = value.split("x").map(Number);
+        state.viewportWidth = width;
+        state.viewportHeight = height;
+      }
+      syncAllControls();
+      render();
+    }
+
+    function updateUndoRedo() {
+      document.getElementById("undoButton").disabled = undoStack.length === 0;
+      document.getElementById("redoButton").disabled = redoStack.length === 0;
+    }
+
+    function restore(nextState, targetStack) {
+      targetStack.push(clone(state));
+      state = clone(nextState);
+      syncAllControls();
+      render();
+    }
+
+    function showStatus(message) {
+      const status = document.getElementById("status");
+      status.textContent = message;
+      clearTimeout(showStatus.timer);
+      showStatus.timer = setTimeout(() => { status.textContent = ""; }, 2200);
+    }
+
+    document.getElementById("viewportPreset").addEventListener("change", event => {
+      setViewportPreset(event.target.value);
+    });
+
+    ["customWidth", "customHeight"].forEach(id => {
+      document.getElementById(id).addEventListener("input", event => {
+        const key = id === "customWidth" ? "viewportWidth" : "viewportHeight";
+        const value = Number(event.target.value);
+        if (!Number.isFinite(value)) return;
+        undoStack.push(clone(state));
+        redoStack = [];
+        state.viewportPreset = "custom";
+        state[key] = value;
+        document.getElementById("viewportPreset").value = "custom";
+        document.getElementById("customViewport").hidden = false;
+        render();
+      });
+    });
+
+    document.getElementById("backgroundSelect").addEventListener("change", event => {
+      state.background = event.target.value;
+      render();
+    });
+
+    document.getElementById("undoButton").addEventListener("click", () => {
+      if (!undoStack.length) return;
+      restore(undoStack.pop(), redoStack);
+    });
+
+    document.getElementById("redoButton").addEventListener("click", () => {
+      if (!redoStack.length) return;
+      restore(redoStack.pop(), undoStack);
+    });
+
+    document.getElementById("resetButton").addEventListener("click", () => {
+      undoStack.push(clone(state));
+      redoStack = [];
+      state = { ...initialState };
+      syncAllControls();
+      render();
+      showStatus("現在の本番基準値へ戻しました。");
+    });
+
+    document.getElementById("clearButton").addEventListener("click", () => {
+      localStorage.removeItem(STORAGE_KEY);
+      undoStack.push(clone(state));
+      redoStack = [];
+      state = { ...initialState };
+      syncAllControls();
+      render();
+      showStatus("保存状態を削除しました。");
+    });
+
+    document.getElementById("copyButton").addEventListener("click", async () => {
+      const css = document.getElementById("cssOutput").value;
+      try {
+        await navigator.clipboard.writeText(css);
+      } catch (error) {
+        const output = document.getElementById("cssOutput");
+        output.focus();
+        output.select();
+        document.execCommand("copy");
+      }
+      showStatus("生成CSSをコピーしました。");
+    });
+
+    const previewWindow = document.getElementById("previewWindow");
+    previewWindow.querySelector(".is-minimize").addEventListener("click", () => {
+      previewWindow.classList.add("is-collapsed");
+    });
+    previewWindow.querySelector(".is-maximize").addEventListener("click", () => {
+      previewWindow.classList.remove("is-collapsed");
+    });
+    previewWindow.querySelector(".is-close").addEventListener("click", () => {
+      previewWindow.classList.add("is-collapsed");
+    });
+
+    buildControls();
+    syncAllControls();
+    render();
+  </script>
+</body>
+</html>

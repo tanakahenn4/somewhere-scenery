@@ -1,0 +1,1277 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>横持ちスマホ版 風景詳細ウィンドウ CSSプレビュー</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+      --preview-window-width: 280px;
+      --preview-window-min-height: 0px;
+      --preview-window-height: auto;
+      --preview-window-border-width: 2px;
+      --preview-window-border-color: #000000;
+      --preview-window-radius: 5px;
+      --preview-window-bg: #f3f4f6;
+      --preview-shadow-x: 0px;
+      --preview-shadow-y: 15px;
+      --preview-shadow-blur: 36px;
+      --preview-shadow-spread: 0px;
+      --preview-shadow-opacity: 0.42;
+      --preview-titlebar-height: 30px;
+      --preview-titlebar-bg-start: #000000;
+      --preview-titlebar-bg-end: #74009f;
+      --preview-titlebar-color: #f1f3f6;
+      --preview-titlebar-font-size: 11px;
+      --preview-titlebar-font-weight: 700;
+      --preview-titlebar-padding-x: 8px;
+      --preview-titlebar-padding-y: 0px;
+      --preview-content-bg: #f3f4f6;
+      --preview-content-color: #424851;
+      --preview-content-font-size: 12px;
+      --preview-content-line-height: 18px;
+      --preview-content-padding-top: 9px;
+      --preview-content-padding-right: 10px;
+      --preview-content-padding-bottom: 12px;
+      --preview-content-padding-left: 10px;
+      --preview-title-font-size: 18px;
+      --preview-title-font-weight: 700;
+      --preview-title-color: #20242a;
+      --preview-title-margin-top: 0px;
+      --preview-title-margin-bottom: 6px;
+      --preview-footer-bg: #e7e9ec;
+      --preview-footer-border-width: 1px;
+      --preview-footer-border-color: #ced2d7;
+      --preview-footer-padding-top: 6px;
+      --preview-footer-padding-right: 8px;
+      --preview-footer-padding-bottom: 6px;
+      --preview-footer-padding-left: 8px;
+      --preview-footer-min-height: 38px;
+      --preview-date-color: #707884;
+      --preview-button-width: 52px;
+      --preview-button-height: 28px;
+      --preview-button-bg: #f7f8f9;
+      --preview-button-color: #30353c;
+      --preview-button-border-color: #b7bdc6;
+      --preview-button-radius: 2px;
+      --preview-button-font-size: 11px;
+      --preview-button-gap: 6px;
+      --preview-delete-color: #81365f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      min-width: 320px;
+      color: #eef1f5;
+      background: #15171b;
+      overflow: hidden;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .tool-layout {
+      display: grid;
+      grid-template-columns: minmax(420px, 1fr) minmax(380px, 480px);
+      height: 100%;
+    }
+
+    .preview-pane {
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      border-right: 1px solid #343943;
+    }
+
+    .preview-toolbar {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 10px;
+      min-height: 52px;
+      padding: 8px 14px;
+      color: #dfe4ea;
+      background: #1e2127;
+      border-bottom: 1px solid #343943;
+    }
+
+    .preview-toolbar strong {
+      margin-right: auto;
+      font-size: 14px;
+    }
+
+    .preview-toolbar label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+    }
+
+    .preview-toolbar select {
+      min-width: 150px;
+      padding: 6px 28px 6px 8px;
+      color: #f1f3f6;
+      background: #2b2f36;
+      border: 1px solid #505762;
+      border-radius: 4px;
+    }
+
+    .preview-stage {
+      position: relative;
+      display: grid;
+      flex: 1 1 auto;
+      min-height: 0;
+      place-items: center;
+      padding: 46px;
+      overflow: auto;
+      isolation: isolate;
+    }
+
+    .preview-stage::before,
+    .preview-stage::after {
+      position: absolute;
+      z-index: -1;
+      content: "";
+      pointer-events: none;
+    }
+
+    .preview-stage[data-background="light"] {
+      background: #e8eaee;
+    }
+
+    .preview-stage[data-background="dark"] {
+      background: #171a1f;
+    }
+
+    .preview-stage[data-background="map"] {
+      background-color: #dce8dc;
+      background-image:
+        linear-gradient(27deg, transparent 46%, rgba(255, 255, 255, 0.92) 47% 53%, transparent 54%),
+        linear-gradient(112deg, transparent 38%, rgba(174, 194, 207, 0.9) 39% 44%, transparent 45%),
+        repeating-linear-gradient(0deg, rgba(113, 146, 119, 0.12) 0 1px, transparent 1px 44px),
+        repeating-linear-gradient(90deg, rgba(113, 146, 119, 0.1) 0 1px, transparent 1px 52px);
+    }
+
+    .preview-stage[data-background="map"]::before {
+      inset: 11% 7% 15% 11%;
+      background:
+        linear-gradient(90deg, rgba(171, 210, 242, 0.72) 0 17%, transparent 17%),
+        repeating-linear-gradient(35deg, transparent 0 48px, rgba(255, 255, 255, 0.72) 49px 58px);
+      border-radius: 22% 41% 26% 18%;
+      opacity: 0.75;
+    }
+
+    .preview-stage[data-background="street"] {
+      background:
+        linear-gradient(180deg, #8ab3cf 0 36%, transparent 36%),
+        linear-gradient(155deg, transparent 0 49%, #c7c9c5 50% 67%, #686d72 68% 100%);
+    }
+
+    .preview-stage[data-background="street"]::before {
+      inset: 12% 8% 31% 6%;
+      background:
+        linear-gradient(90deg, #a9a099 0 4%, transparent 4% 18%, #7d756f 18% 21%, transparent 21% 42%, #817872 42% 46%, transparent 46%),
+        repeating-linear-gradient(90deg, #d5d0c8 0 54px, #8d8c8a 55px 60px);
+      box-shadow: inset 0 -18px 0 rgba(72, 78, 72, 0.36);
+      transform: perspective(620px) rotateX(-2deg);
+    }
+
+    .preview-stage[data-background="street"]::after {
+      left: 11%;
+      right: 7%;
+      bottom: 10%;
+      height: 19%;
+      background: repeating-linear-gradient(164deg, #555b61 0 28px, #62686d 29px 31px);
+      clip-path: polygon(0 72%, 100% 0, 100% 100%, 0 100%);
+      opacity: 0.92;
+    }
+
+
+    /* 横持ちスマホの実表示領域を想定した確認枠 */
+    .preview-stage {
+      min-height: 360px;
+    }
+
+    .post-date { font-size: 10px; }
+    .window-control { width: 24px; height: 24px; min-width: 24px; min-height: 24px; }
+
+    .scenery-window {
+      position: relative;
+      width: min(100%, var(--preview-window-width));
+      min-height: var(--preview-window-min-height);
+      height: var(--preview-window-height);
+      color: #252a31;
+      background: var(--preview-window-bg);
+      border: var(--preview-window-border-width) solid var(--preview-window-border-color);
+      border-radius: var(--preview-window-radius);
+      box-shadow:
+        var(--preview-shadow-x)
+        var(--preview-shadow-y)
+        var(--preview-shadow-blur)
+        var(--preview-shadow-spread)
+        rgb(0 0 0 / var(--preview-shadow-opacity));
+      overflow: hidden;
+      font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+    }
+
+    .scenery-window,
+    .scenery-window *,
+    .scenery-window *::before,
+    .scenery-window *::after {
+      box-sizing: border-box;
+    }
+
+    .window-titlebar {
+      display: flex;
+      align-items: center;
+      min-height: var(--preview-titlebar-height);
+      padding: var(--preview-titlebar-padding-y) var(--preview-titlebar-padding-x);
+      color: var(--preview-titlebar-color);
+      background: linear-gradient(180deg, var(--preview-titlebar-bg-start), var(--preview-titlebar-bg-end));
+      border-bottom: 1px solid #090b0f;
+      user-select: none;
+    }
+
+    .window-name {
+      min-width: 0;
+      margin-right: auto;
+      overflow: hidden;
+      font-size: var(--preview-titlebar-font-size);
+      font-weight: var(--preview-titlebar-font-weight);
+      letter-spacing: 0.02em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .window-controls {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .window-control {
+      position: relative;
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      min-height: 28px;
+      padding: 0;
+      color: #d5d8dd;
+      background: transparent;
+      border: 0;
+      border-radius: 2px;
+    }
+
+    .window-control:hover {
+      color: #fff;
+      background: rgb(255 255 255 / 0.1);
+    }
+
+    .window-control.is-close:hover {
+      background: rgb(202 65 76 / 0.62);
+    }
+
+    .window-control::before,
+    .window-control::after {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      box-sizing: border-box;
+      content: "";
+      pointer-events: none;
+    }
+
+    .window-control.is-minimize::before {
+      width: 11px;
+      height: 1px;
+      background: currentColor;
+      transform: translate(-50%, 2px);
+    }
+
+    .window-control.is-maximize::before {
+      width: 9px;
+      height: 9px;
+      border: 1px solid currentColor;
+      transform: translate(-50%, -50%);
+    }
+
+    .window-control.is-close::before,
+    .window-control.is-close::after {
+      width: 12px;
+      height: 1px;
+      background: currentColor;
+    }
+
+    .window-control.is-close::before {
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    .window-control.is-close::after {
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+
+    .window-content,
+    .scenery-detail-content {
+      padding:
+        var(--preview-content-padding-top)
+        var(--preview-content-padding-right)
+        var(--preview-content-padding-bottom)
+        var(--preview-content-padding-left);
+      color: var(--preview-content-color);
+      font-size: var(--preview-content-font-size);
+      line-height: var(--preview-content-line-height);
+      background: var(--preview-content-bg);
+    }
+
+    .post-title {
+      margin:
+        var(--preview-title-margin-top)
+        0
+        var(--preview-title-margin-bottom);
+      color: var(--preview-title-color);
+      font-size: var(--preview-title-font-size);
+      font-weight: var(--preview-title-font-weight);
+      line-height: 1.38;
+      overflow-wrap: anywhere;
+    }
+
+    .post-body {
+      margin: 0;
+    }
+
+    .post-memo {
+      margin: 0;
+      color: var(--preview-content-color);
+      font-size: var(--preview-content-font-size);
+      font-weight: 400;
+      line-height: var(--preview-content-line-height);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .window-footer,
+    .scenery-detail-footer {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: var(--preview-footer-min-height);
+      padding:
+        var(--preview-footer-padding-top)
+        var(--preview-footer-padding-right)
+        var(--preview-footer-padding-bottom)
+        var(--preview-footer-padding-left);
+      background: var(--preview-footer-bg);
+      border-top: var(--preview-footer-border-width) solid var(--preview-footer-border-color);
+    }
+
+    .post-date {
+      min-width: 0;
+      margin-right: auto;
+      color: var(--preview-date-color);
+      font-size: 13px;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+
+    .window-actions {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: var(--preview-button-gap);
+      margin-left: auto;
+    }
+
+    .window-action {
+      min-width: var(--preview-button-width);
+      min-height: var(--preview-button-height);
+      padding: 7px 13px;
+      color: var(--preview-button-color);
+      background: var(--preview-button-bg);
+      border: 1px solid var(--preview-button-border-color);
+      border-radius: var(--preview-button-radius);
+      box-shadow: 0 1px 2px rgb(0 0 0 / 0.07);
+      font-size: var(--preview-button-font-size);
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    .window-action:hover {
+      border-color: #68afd2;
+      box-shadow: inset 0 -2px 0 rgb(75 177 222 / 0.32);
+    }
+
+    .window-action.is-delete {
+      color: var(--preview-delete-color);
+    }
+
+    .scenery-window.is-collapsed .window-content,
+    .scenery-window.is-collapsed .window-footer {
+      display: none;
+    }
+
+    .control-pane {
+      min-width: 0;
+      height: 100%;
+      overflow-y: auto;
+      color: #e9edf2;
+      background: #202329;
+    }
+
+    .control-header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 13px 14px 11px;
+      background: rgb(32 35 41 / 0.97);
+      border-bottom: 1px solid #3a404a;
+      backdrop-filter: blur(8px);
+    }
+
+    .control-header h1 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+
+    .control-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tool-button {
+      min-height: 32px;
+      padding: 5px 9px;
+      color: #eef1f5;
+      background: #30353d;
+      border: 1px solid #505862;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .tool-button:hover:not(:disabled) {
+      background: #3b424c;
+      border-color: #697482;
+    }
+
+    .tool-button:disabled {
+      opacity: 0.42;
+      cursor: default;
+    }
+
+    .tool-button.is-primary {
+      color: #fff;
+      background: #315f86;
+      border-color: #4d8dbd;
+    }
+
+    .control-sections {
+      padding: 10px;
+    }
+
+    .control-section {
+      margin-bottom: 9px;
+      background: #272b32;
+      border: 1px solid #3d434d;
+      border-radius: 5px;
+    }
+
+    .control-section summary {
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .control-section[open] summary {
+      border-bottom: 1px solid #3d434d;
+    }
+
+    .fields {
+      display: grid;
+      gap: 9px;
+      padding: 11px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: minmax(112px, 0.85fr) minmax(110px, 1fr) 78px 28px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .field-row.is-color {
+      grid-template-columns: minmax(112px, 1fr) 76px 92px;
+    }
+
+    .field-label {
+      color: #cfd5dd;
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .field-row input[type="range"] {
+      width: 100%;
+      accent-color: #61a9d3;
+    }
+
+    .field-row input[type="number"],
+    .field-row input[type="text"] {
+      width: 100%;
+      min-width: 0;
+      padding: 5px 6px;
+      color: #f4f6f8;
+      background: #191c21;
+      border: 1px solid #4a515c;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+
+    .field-row input[type="color"] {
+      width: 100%;
+      height: 30px;
+      padding: 2px;
+      background: #191c21;
+      border: 1px solid #4a515c;
+      border-radius: 3px;
+    }
+
+    .unit-value {
+      color: #9ea7b2;
+      font-size: 11px;
+    }
+
+    .css-output-section {
+      padding: 0 10px 14px;
+    }
+
+    .css-output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 7px;
+    }
+
+    .css-output-header h2 {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    #generatedCss {
+      width: 100%;
+      min-height: 260px;
+      padding: 10px;
+      color: #dcebf5;
+      background: #111318;
+      border: 1px solid #444b56;
+      border-radius: 4px;
+      font: 12px/1.55 Consolas, "SFMono-Regular", monospace;
+      resize: vertical;
+      tab-size: 2;
+    }
+
+    #saveStatus {
+      min-height: 18px;
+      margin: 6px 2px 0;
+      color: #9eabb8;
+      font-size: 11px;
+    }
+
+    @media (max-width: 920px) {
+      body {
+        overflow: auto;
+      }
+
+      .tool-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 100%;
+      }
+
+      .preview-pane {
+        min-height: 620px;
+        border-right: 0;
+        border-bottom: 1px solid #343943;
+      }
+
+      .control-pane {
+        height: auto;
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .preview-stage {
+        padding: 26px 14px;
+      }
+
+      .preview-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .preview-toolbar strong {
+        margin-right: 0;
+      }
+
+      .field-row,
+      .field-row.is-color {
+        grid-template-columns: 1fr 88px 28px;
+      }
+
+      .field-row input[type="range"] {
+        grid-column: 1 / -1;
+        grid-row: 2;
+      }
+
+      .field-row.is-color input[type="color"] {
+        grid-column: 2;
+      }
+
+      .field-row.is-color input[type="text"] {
+        grid-column: 1 / -1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="tool-layout">
+    <section class="preview-pane" aria-label="ウィンドウプレビュー">
+      <div class="preview-toolbar">
+        <strong>横持ちスマホ版 風景詳細ウィンドウ プレビュー</strong>
+        <label>
+          背景
+          <select id="backgroundSelect">
+            <option value="light">単色（明るい）</option>
+            <option value="dark">単色（暗い）</option>
+            <option value="map">地図確認用背景</option>
+            <option value="street" selected>Street View確認用背景</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="previewStage" class="preview-stage" data-background="street">
+        <article id="previewWindow" class="scenery-window" aria-labelledby="previewPostTitle">
+          <header class="window-titlebar">
+            <span class="window-name">どこかの風景</span>
+            <div class="window-controls" aria-label="ウィンドウ操作">
+              <button class="window-control is-minimize" type="button" aria-label="最小化"></button>
+              <button class="window-control is-maximize" type="button" aria-label="最大化"></button>
+              <button class="window-control is-close" type="button" aria-label="閉じる"></button>
+            </div>
+          </header>
+          <div class="window-content scenery-detail-content">
+            <header class="post-header">
+              <h2 id="previewPostTitle" class="post-title">日当たりのよい坂道</h2>
+            </header>
+            <section class="post-body" aria-label="メモ本文">
+              <p class="post-memo">暖かい日差しと、遠くまで続く坂道が印象的だった。</p>
+            </section>
+          </div>
+          <footer class="window-footer scenery-detail-footer">
+            <time class="post-date" datetime="2026-09-18">登録日：2026/9/18</time>
+            <div class="window-actions" aria-label="投稿の操作">
+              <button class="window-action" type="button">編集</button>
+              <button class="window-action is-delete" type="button">削除</button>
+            </div>
+          </footer>
+        </article>
+      </div>
+    </section>
+
+    <aside class="control-pane" aria-label="CSS調整パネル">
+      <header class="control-header">
+        <h1>CSS調整</h1>
+        <div class="control-actions">
+          <button id="undoButton" class="tool-button" type="button">Undo</button>
+          <button id="redoButton" class="tool-button" type="button">Redo</button>
+          <button id="restoreButton" class="tool-button" type="button">現在の本番デザインに戻す</button>
+          <button id="clearSavedButton" class="tool-button" type="button">保存状態を削除して初期化</button>
+        </div>
+        <p id="saveStatus" aria-live="polite"></p>
+      </header>
+
+      <div id="controlSections" class="control-sections"></div>
+
+      <section class="css-output-section" aria-labelledby="cssOutputTitle">
+        <div class="css-output-header">
+          <h2 id="cssOutputTitle">生成CSS</h2>
+          <button id="copyCssButton" class="tool-button is-primary" type="button">CSSをコピー</button>
+        </div>
+        <textarea id="generatedCss" readonly spellcheck="false"></textarea>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "somewhere-scenery-window-preview-v1";
+
+    const productionDefaults = Object.freeze({
+      background: "street",
+      windowWidth: 280,
+      windowMinHeight: 0,
+      windowHeight: 0,
+      windowBorderWidth: 2,
+      windowBorderColor: "#000000",
+      windowRadius: 5,
+      windowBackground: "#f3f4f6",
+      shadowX: 0,
+      shadowY: 15,
+      shadowBlur: 36,
+      shadowSpread: 0,
+      shadowOpacity: 0.42,
+      titlebarHeight: 30,
+      titlebarBackgroundStart: "#000000",
+      titlebarBackgroundEnd: "#74009f",
+      titlebarColor: "#f1f3f6",
+      titlebarFontSize: 11,
+      titlebarFontWeight: 700,
+      titlebarPaddingX: 8,
+      titlebarPaddingY: 0,
+      contentBackground: "#f3f4f6",
+      contentColor: "#424851",
+      contentFontSize: 12,
+      contentLineHeight: 18,
+      contentPaddingTop: 9,
+      contentPaddingRight: 10,
+      contentPaddingBottom: 12,
+      contentPaddingLeft: 10,
+      titleFontSize: 18,
+      titleFontWeight: 700,
+      titleColor: "#20242a",
+      titleMarginTop: 0,
+      titleMarginBottom: 6,
+      footerBackground: "#e7e9ec",
+      footerBorderWidth: 1,
+      footerBorderColor: "#ced2d7",
+      footerPaddingTop: 6,
+      footerPaddingRight: 8,
+      footerPaddingBottom: 6,
+      footerPaddingLeft: 8,
+      footerMinHeight: 38,
+      dateColor: "#707884",
+      buttonWidth: 52,
+      buttonHeight: 28,
+      buttonBackground: "#f7f8f9",
+      buttonColor: "#30353c",
+      buttonBorderColor: "#b7bdc6",
+      buttonRadius: 2,
+      buttonFontSize: 11,
+      buttonGap: 6,
+      deleteColor: "#81365f"
+    });
+
+    const sections = [
+      {
+        title: "ウィンドウ",
+        open: true,
+        fields: [
+          numberField("windowWidth", "width", 180, 760, 1, "px"),
+          numberField("windowMinHeight", "min-height", 0, 600, 1, "px"),
+          numberField("windowHeight", "height（0 = auto）", 0, 700, 1, "px"),
+          numberField("windowBorderWidth", "border-width", 0, 12, 1, "px"),
+          colorField("windowBorderColor", "border-color"),
+          numberField("windowRadius", "border-radius", 0, 40, 1, "px"),
+          colorField("windowBackground", "background-color"),
+          numberField("shadowX", "shadow X", -40, 40, 1, "px"),
+          numberField("shadowY", "shadow Y", -40, 60, 1, "px"),
+          numberField("shadowBlur", "shadow blur", 0, 80, 1, "px"),
+          numberField("shadowSpread", "shadow spread", -30, 40, 1, "px"),
+          numberField("shadowOpacity", "shadow opacity", 0, 1, 0.01, "")
+        ]
+      },
+      {
+        title: "タイトルバー",
+        open: true,
+        fields: [
+          numberField("titlebarHeight", "height", 24, 90, 1, "px"),
+          colorField("titlebarBackgroundStart", "背景色（上）"),
+          colorField("titlebarBackgroundEnd", "背景色（下）"),
+          colorField("titlebarColor", "text color"),
+          numberField("titlebarFontSize", "font-size", 9, 30, 1, "px"),
+          numberField("titlebarFontWeight", "font-weight", 100, 900, 100, ""),
+          numberField("titlebarPaddingX", "padding 左右", 0, 50, 1, "px"),
+          numberField("titlebarPaddingY", "padding 上下", 0, 24, 1, "px")
+        ]
+      },
+      {
+        title: "本文",
+        open: true,
+        fields: [
+          colorField("contentBackground", "background-color"),
+          colorField("contentColor", "text color"),
+          numberField("contentFontSize", "font-size", 9, 32, 0.5, "px"),
+          numberField("contentLineHeight", "line-height", 12, 52, 0.1, "px"),
+          numberField("contentPaddingTop", "padding top", 0, 80, 1, "px"),
+          numberField("contentPaddingRight", "padding right", 0, 80, 1, "px"),
+          numberField("contentPaddingBottom", "padding bottom", 0, 100, 1, "px"),
+          numberField("contentPaddingLeft", "padding left", 0, 80, 1, "px"),
+          numberField("titleFontSize", "タイトル font-size", 12, 52, 1, "px"),
+          numberField("titleFontWeight", "タイトル font-weight", 100, 900, 100, ""),
+          colorField("titleColor", "タイトル color"),
+          numberField("titleMarginTop", "タイトル margin-top", 0, 60, 1, "px"),
+          numberField("titleMarginBottom", "タイトル margin-bottom", 0, 80, 1, "px")
+        ]
+      },
+      {
+        title: "フッター",
+        fields: [
+          colorField("footerBackground", "background-color"),
+          numberField("footerBorderWidth", "border-top width", 0, 12, 1, "px"),
+          colorField("footerBorderColor", "border-top color"),
+          numberField("footerPaddingTop", "padding top", 0, 60, 1, "px"),
+          numberField("footerPaddingRight", "padding right", 0, 80, 1, "px"),
+          numberField("footerPaddingBottom", "padding bottom", 0, 60, 1, "px"),
+          numberField("footerPaddingLeft", "padding left", 0, 80, 1, "px"),
+          numberField("footerMinHeight", "高さ（min-height）", 0, 160, 1, "px"),
+          colorField("dateColor", "登録日 color")
+        ]
+      },
+      {
+        title: "ボタン",
+        fields: [
+          numberField("buttonWidth", "width", 36, 180, 1, "px"),
+          numberField("buttonHeight", "height", 24, 90, 1, "px"),
+          colorField("buttonBackground", "background-color"),
+          colorField("buttonColor", "text color"),
+          colorField("buttonBorderColor", "border-color"),
+          numberField("buttonRadius", "border-radius", 0, 32, 1, "px"),
+          numberField("buttonFontSize", "font-size", 9, 28, 1, "px"),
+          numberField("buttonGap", "ボタン間のgap", 0, 40, 1, "px"),
+          colorField("deleteColor", "削除ボタン text color")
+        ]
+      }
+    ];
+
+    const cssVariables = {
+      windowWidth: ["--preview-window-width", "px"],
+      windowMinHeight: ["--preview-window-min-height", "px"],
+      windowBorderWidth: ["--preview-window-border-width", "px"],
+      windowBorderColor: ["--preview-window-border-color", ""],
+      windowRadius: ["--preview-window-radius", "px"],
+      windowBackground: ["--preview-window-bg", ""],
+      shadowX: ["--preview-shadow-x", "px"],
+      shadowY: ["--preview-shadow-y", "px"],
+      shadowBlur: ["--preview-shadow-blur", "px"],
+      shadowSpread: ["--preview-shadow-spread", "px"],
+      shadowOpacity: ["--preview-shadow-opacity", ""],
+      titlebarHeight: ["--preview-titlebar-height", "px"],
+      titlebarBackgroundStart: ["--preview-titlebar-bg-start", ""],
+      titlebarBackgroundEnd: ["--preview-titlebar-bg-end", ""],
+      titlebarColor: ["--preview-titlebar-color", ""],
+      titlebarFontSize: ["--preview-titlebar-font-size", "px"],
+      titlebarFontWeight: ["--preview-titlebar-font-weight", ""],
+      titlebarPaddingX: ["--preview-titlebar-padding-x", "px"],
+      titlebarPaddingY: ["--preview-titlebar-padding-y", "px"],
+      contentBackground: ["--preview-content-bg", ""],
+      contentColor: ["--preview-content-color", ""],
+      contentFontSize: ["--preview-content-font-size", "px"],
+      contentLineHeight: ["--preview-content-line-height", "px"],
+      contentPaddingTop: ["--preview-content-padding-top", "px"],
+      contentPaddingRight: ["--preview-content-padding-right", "px"],
+      contentPaddingBottom: ["--preview-content-padding-bottom", "px"],
+      contentPaddingLeft: ["--preview-content-padding-left", "px"],
+      titleFontSize: ["--preview-title-font-size", "px"],
+      titleFontWeight: ["--preview-title-font-weight", ""],
+      titleColor: ["--preview-title-color", ""],
+      titleMarginTop: ["--preview-title-margin-top", "px"],
+      titleMarginBottom: ["--preview-title-margin-bottom", "px"],
+      footerBackground: ["--preview-footer-bg", ""],
+      footerBorderWidth: ["--preview-footer-border-width", "px"],
+      footerBorderColor: ["--preview-footer-border-color", ""],
+      footerPaddingTop: ["--preview-footer-padding-top", "px"],
+      footerPaddingRight: ["--preview-footer-padding-right", "px"],
+      footerPaddingBottom: ["--preview-footer-padding-bottom", "px"],
+      footerPaddingLeft: ["--preview-footer-padding-left", "px"],
+      footerMinHeight: ["--preview-footer-min-height", "px"],
+      dateColor: ["--preview-date-color", ""],
+      buttonWidth: ["--preview-button-width", "px"],
+      buttonHeight: ["--preview-button-height", "px"],
+      buttonBackground: ["--preview-button-bg", ""],
+      buttonColor: ["--preview-button-color", ""],
+      buttonBorderColor: ["--preview-button-border-color", ""],
+      buttonRadius: ["--preview-button-radius", "px"],
+      buttonFontSize: ["--preview-button-font-size", "px"],
+      buttonGap: ["--preview-button-gap", "px"],
+      deleteColor: ["--preview-delete-color", ""]
+    };
+
+    const controlElements = new Map();
+    let state = loadState();
+    let history = [clone(state)];
+    let historyIndex = 0;
+    let statusTimer = 0;
+    let historyCommitTimer = 0;
+
+    buildControls();
+    setupActions();
+    syncControls();
+    render();
+
+    function numberField(key, label, min, max, step, unit) {
+      return { key, label, type: "number", min, max, step, unit };
+    }
+
+    function colorField(key, label) {
+      return { key, label, type: "color" };
+    }
+
+    function clone(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        return { ...productionDefaults, ...saved };
+      } catch {
+        return { ...productionDefaults };
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function buildControls() {
+      const container = document.getElementById("controlSections");
+      const fragment = document.createDocumentFragment();
+
+      sections.forEach(section => {
+        const details = document.createElement("details");
+        const summary = document.createElement("summary");
+        const fields = document.createElement("div");
+        details.className = "control-section";
+        details.open = Boolean(section.open);
+        summary.textContent = section.title;
+        fields.className = "fields";
+
+        section.fields.forEach(field => {
+          fields.append(createField(field));
+        });
+
+        details.append(summary, fields);
+        fragment.append(details);
+      });
+
+      container.append(fragment);
+    }
+
+    function createField(field) {
+      const row = document.createElement("label");
+      const label = document.createElement("span");
+      row.className = `field-row${field.type === "color" ? " is-color" : ""}`;
+      label.className = "field-label";
+      label.textContent = field.label;
+      row.append(label);
+
+      if (field.type === "color") {
+        const colorInput = document.createElement("input");
+        const textInput = document.createElement("input");
+        colorInput.type = "color";
+        colorInput.dataset.key = field.key;
+        textInput.type = "text";
+        textInput.dataset.key = field.key;
+        textInput.spellcheck = false;
+        attachInputEvents(colorInput, field);
+        attachInputEvents(textInput, field);
+        row.append(colorInput, textInput);
+        controlElements.set(field.key, [colorInput, textInput]);
+      } else {
+        const range = document.createElement("input");
+        const number = document.createElement("input");
+        const unit = document.createElement("span");
+        range.type = "range";
+        number.type = "number";
+        [range, number].forEach(input => {
+          input.min = field.min;
+          input.max = field.max;
+          input.step = field.step;
+          input.dataset.key = field.key;
+          attachInputEvents(input, field);
+        });
+        unit.className = "unit-value";
+        unit.textContent = field.unit || "数値";
+        row.append(range, number);
+        number.insertAdjacentElement("afterend", unit);
+        controlElements.set(field.key, [range, number]);
+      }
+
+      return row;
+    }
+
+    function attachInputEvents(input, field) {
+      input.addEventListener("input", () => {
+        const nextValue = field.type === "number"
+          ? clampNumber(input.value, field)
+          : normalizeColor(input.value, state[field.key]);
+        state[field.key] = nextValue;
+        syncField(field.key, input);
+        render();
+        scheduleHistoryCommit();
+      });
+
+      input.addEventListener("change", () => {
+        syncField(field.key);
+        clearTimeout(historyCommitTimer);
+        commitHistory();
+      });
+    }
+
+    function clampNumber(value, field) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return Number(state[field.key]) || 0;
+      return Math.min(field.max, Math.max(field.min, number));
+    }
+
+    function normalizeColor(value, fallback) {
+      return /^#[0-9a-f]{6}$/i.test(value) ? value.toLowerCase() : fallback;
+    }
+
+    function syncField(key, source = null) {
+      const inputs = controlElements.get(key) || [];
+      inputs.forEach(input => {
+        if (input !== source) input.value = state[key];
+      });
+    }
+
+    function syncControls() {
+      controlElements.forEach((_, key) => syncField(key));
+      document.getElementById("backgroundSelect").value = state.background;
+    }
+
+    function setupActions() {
+      document.getElementById("backgroundSelect").addEventListener("change", event => {
+        state.background = event.target.value;
+        render();
+        commitHistory();
+      });
+
+      document.getElementById("undoButton").addEventListener("click", () => {
+        if (historyIndex <= 0) return;
+        clearTimeout(historyCommitTimer);
+        historyIndex -= 1;
+        state = clone(history[historyIndex]);
+        syncControls();
+        render();
+      });
+
+      document.getElementById("redoButton").addEventListener("click", () => {
+        if (historyIndex >= history.length - 1) return;
+        clearTimeout(historyCommitTimer);
+        historyIndex += 1;
+        state = clone(history[historyIndex]);
+        syncControls();
+        render();
+      });
+
+      document.getElementById("restoreButton").addEventListener("click", () => {
+        state = { ...productionDefaults };
+        syncControls();
+        render();
+        commitHistory();
+        showStatus("現在の本番デザイン値へ戻しました。");
+      });
+
+      document.getElementById("clearSavedButton").addEventListener("click", () => {
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+        } catch {
+          // file:// の保存領域が無効でも、画面上の初期化は継続する。
+        }
+        state = { ...productionDefaults };
+        history = [clone(state)];
+        historyIndex = 0;
+        syncControls();
+        render(false);
+        showStatus("保存状態を削除し、初期状態へ戻しました。");
+      });
+
+      document.getElementById("copyCssButton").addEventListener("click", copyCss);
+
+      const previewWindow = document.getElementById("previewWindow");
+      previewWindow.querySelector(".is-minimize").addEventListener("click", () => {
+        previewWindow.classList.add("is-collapsed");
+      });
+      previewWindow.querySelector(".is-maximize").addEventListener("click", () => {
+        previewWindow.classList.remove("is-collapsed");
+      });
+      previewWindow.querySelector(".is-close").addEventListener("click", () => {
+        previewWindow.classList.toggle("is-collapsed");
+      });
+    }
+
+    function commitHistory() {
+      const snapshot = clone(state);
+      if (JSON.stringify(snapshot) === JSON.stringify(history[historyIndex])) {
+        updateHistoryButtons();
+        return;
+      }
+      history = history.slice(0, historyIndex + 1);
+      history.push(snapshot);
+      historyIndex = history.length - 1;
+      updateHistoryButtons();
+    }
+
+    function scheduleHistoryCommit() {
+      clearTimeout(historyCommitTimer);
+      historyCommitTimer = setTimeout(commitHistory, 180);
+    }
+
+    function render(shouldSave = true) {
+      const rootStyle = document.documentElement.style;
+      Object.entries(cssVariables).forEach(([key, [property, unit]]) => {
+        rootStyle.setProperty(property, `${state[key]}${unit}`);
+      });
+      rootStyle.setProperty(
+        "--preview-window-height",
+        Number(state.windowHeight) === 0 ? "auto" : `${state.windowHeight}px`
+      );
+      document.getElementById("previewStage").dataset.background = state.background;
+      document.getElementById("generatedCss").value = generateCss();
+      updateHistoryButtons();
+      if (shouldSave) {
+        const saved = saveState();
+        showStatus(
+          saved
+            ? "現在の設定をこのブラウザに保存しました。"
+            : "プレビューは更新しました（この環境では保存機能を利用できません）。",
+          900
+        );
+      }
+    }
+
+    function updateHistoryButtons() {
+      document.getElementById("undoButton").disabled = historyIndex <= 0;
+      document.getElementById("redoButton").disabled = historyIndex >= history.length - 1;
+    }
+
+    function generateCss() {
+      const px = key => `${state[key]}px`;
+      const height = Number(state.windowHeight) === 0 ? "auto" : px("windowHeight");
+      return `@media (orientation: landscape) and (max-height: 600px) {\n#sceneryDetailCard.scenery-window {
+  width: ${px("windowWidth")};
+  min-height: ${px("windowMinHeight")};
+  height: ${height};
+  color: #252a31;
+  background: ${state.windowBackground};
+  border: ${px("windowBorderWidth")} solid ${state.windowBorderColor};
+  border-radius: ${px("windowRadius")};
+  box-shadow: ${px("shadowX")} ${px("shadowY")} ${px("shadowBlur")} ${px("shadowSpread")} rgba(0, 0, 0, ${state.shadowOpacity});
+  overflow: hidden;
+}
+
+#sceneryDetailCard .window-titlebar {
+  min-height: ${px("titlebarHeight")};
+  padding: ${px("titlebarPaddingY")} ${px("titlebarPaddingX")};
+  color: ${state.titlebarColor};
+  background: linear-gradient(180deg, ${state.titlebarBackgroundStart}, ${state.titlebarBackgroundEnd});
+}
+
+#sceneryDetailCard .window-name {
+  font-size: ${px("titlebarFontSize")};
+  font-weight: ${state.titlebarFontWeight};
+}
+
+#sceneryDetailCard .scenery-detail-content {
+  padding: ${px("contentPaddingTop")} ${px("contentPaddingRight")} ${px("contentPaddingBottom")} ${px("contentPaddingLeft")};
+  color: ${state.contentColor};
+  font-size: ${px("contentFontSize")};
+  line-height: ${px("contentLineHeight")};
+  background: ${state.contentBackground};
+}
+
+#sceneryDetailTitle.post-title {
+  margin: ${px("titleMarginTop")} 0 ${px("titleMarginBottom")};
+  color: ${state.titleColor};
+  font-size: ${px("titleFontSize")};
+  font-weight: ${state.titleFontWeight};
+}
+
+#sceneryDetailMemo.post-memo {
+  color: ${state.contentColor};
+  font-size: ${px("contentFontSize")};
+  line-height: ${px("contentLineHeight")};
+}
+
+#sceneryDetailCard .scenery-detail-footer {
+  min-height: ${px("footerMinHeight")};
+  padding: ${px("footerPaddingTop")} ${px("footerPaddingRight")} ${px("footerPaddingBottom")} ${px("footerPaddingLeft")};
+  background: ${state.footerBackground};
+  border-top: ${px("footerBorderWidth")} solid ${state.footerBorderColor};
+}
+
+#sceneryDetailDate.post-date {
+  color: ${state.dateColor};
+}
+
+#sceneryDetailActions {
+  gap: ${px("buttonGap")};
+}
+
+#sceneryDetailActions button {
+  min-width: ${px("buttonWidth")};
+  min-height: ${px("buttonHeight")};
+  color: ${state.buttonColor};
+  background: ${state.buttonBackground};
+  border-color: ${state.buttonBorderColor};
+  border-radius: ${px("buttonRadius")};
+  font-size: ${px("buttonFontSize")};
+}
+
+#sceneryDetailDeleteButton {
+  color: ${state.deleteColor} !important;
+}
+}`;
+    }
+
+    async function copyCss() {
+      const output = document.getElementById("generatedCss");
+      try {
+        await navigator.clipboard.writeText(output.value);
+      } catch {
+        output.focus();
+        output.select();
+        document.execCommand("copy");
+        output.setSelectionRange(0, 0);
+      }
+      showStatus("生成CSSをコピーしました。");
+    }
+
+    function showStatus(message, duration = 1800) {
+      const status = document.getElementById("saveStatus");
+      clearTimeout(statusTimer);
+      status.textContent = message;
+      statusTimer = setTimeout(() => {
+        status.textContent = "";
+      }, duration);
+    }
+  </script>
+</body>
+</html>
