@@ -1837,7 +1837,6 @@ const MAP_MARKER_MAX_SIZE = 55;
 const MAP_MARKER_MIN_SIZE = 37;
 const MAP_MARKER_TITLE_MAX_SIZE = 18;
 const MAP_MARKER_TITLE_MIN_SIZE = 11.5;
-const MAP_WHEEL_ZOOM_STEP = 1.3;
 const visibleMarkerCategories = new Set(markerCategories);
 
 function openCurrentPanoramaRegistration() {
@@ -1865,15 +1864,13 @@ function initMap() {
   map = new google.maps.Map(document.getElementById("map"), {
     center: initialCenter,
     zoom: 7,
-    scrollwheel: false,
     mapTypeControl: false,
     fullscreenControl: false
   });
   coverageLayer = new google.maps.StreetViewCoverageLayer();
   panorama = map.getStreetView();
-  panorama.setOptions({ fullscreenControl: false, scrollwheel: true });
+  panorama.setOptions({ fullscreenControl: false });
   panorama.setVisible(false);
-  setupMapWheelZoom();
 
   loadSavedMarkers();
   setupFullscreenButton();
@@ -3060,29 +3057,6 @@ function setupStreetViewCoverageButton() {
       alert("この地点の近くにStreet Viewが見つかりませんでした。");
     }
   });
-}
-
-function setupMapWheelZoom() {
-  const mapElement = map?.getDiv();
-  if (!mapElement) return;
-
-  mapElement.addEventListener("wheel", event => {
-    if (
-      !map ||
-      (panorama && panorama.getVisible()) ||
-      event.deltaY === 0 ||
-      event.ctrlKey
-    ) return;
-
-    const currentZoom = Number(map.getZoom());
-    if (!Number.isFinite(currentZoom)) return;
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    const direction = event.deltaY < 0 ? 1 : -1;
-    map.setZoom(currentZoom + direction * MAP_WHEEL_ZOOM_STEP);
-  }, { capture: true, passive: false });
 }
 
 function setupStreetViewExitShortcut() {
