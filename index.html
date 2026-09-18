@@ -1549,7 +1549,7 @@ background:
 
 <div id="app">
 <header id="topBar">
-  <div id="siteTitle">どこかの風景共有サイト</div>
+  <div id="siteTitle">どこかの風景共有サイト / 全国猫地図図鑑</div>
 </header>
 <div id="mapContainer">
   <div id="map"></div>
@@ -1837,6 +1837,7 @@ const MAP_MARKER_MAX_SIZE = 55;
 const MAP_MARKER_MIN_SIZE = 37;
 const MAP_MARKER_TITLE_MAX_SIZE = 18;
 const MAP_MARKER_TITLE_MIN_SIZE = 11.5;
+const MAP_WHEEL_ZOOM_STEP = 2;
 const visibleMarkerCategories = new Set(markerCategories);
 
 function openCurrentPanoramaRegistration() {
@@ -1864,13 +1865,15 @@ function initMap() {
   map = new google.maps.Map(document.getElementById("map"), {
     center: initialCenter,
     zoom: 7,
+    scrollwheel: false,
     mapTypeControl: false,
     fullscreenControl: false
   });
   coverageLayer = new google.maps.StreetViewCoverageLayer();
   panorama = map.getStreetView();
-  panorama.setOptions({ fullscreenControl: false });
+  panorama.setOptions({ fullscreenControl: false, scrollwheel: true });
   panorama.setVisible(false);
+  setupMapWheelZoom();
 
   loadSavedMarkers();
   setupFullscreenButton();
@@ -3057,6 +3060,29 @@ function setupStreetViewCoverageButton() {
       alert("この地点の近くにStreet Viewが見つかりませんでした。");
     }
   });
+}
+
+function setupMapWheelZoom() {
+  const mapElement = map?.getDiv();
+  if (!mapElement) return;
+
+  mapElement.addEventListener("wheel", event => {
+    if (
+      !map ||
+      (panorama && panorama.getVisible()) ||
+      event.deltaY === 0 ||
+      event.ctrlKey
+    ) return;
+
+    const currentZoom = Number(map.getZoom());
+    if (!Number.isFinite(currentZoom)) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const direction = event.deltaY < 0 ? 1 : -1;
+    map.setZoom(currentZoom + direction * MAP_WHEEL_ZOOM_STEP);
+  }, { capture: true, passive: false });
 }
 
 function setupStreetViewExitShortcut() {
