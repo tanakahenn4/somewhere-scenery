@@ -1979,6 +1979,7 @@ let pendingMarkerAction = null;
 let activeSceneryDetailPano = null;
 let activeSceneryDetailData = null;
 let activeSceneryDetailMarker = null;
+let sceneryDetailCollapsedByUser = false;
 let pendingPanoramaViewListener = null;
 let mapToastTimer = null;
 const STORAGE_KEY = "catsmap_markers";
@@ -2356,10 +2357,12 @@ function showMapOverviewWindow() {
   activeSceneryDetailPano = null;
   activeSceneryDetailData = null;
   activeSceneryDetailMarker = null;
+  sceneryDetailCollapsedByUser = false;
   const card = document.getElementById("sceneryDetailCard");
   card.dataset.detailState = "map";
   setSceneryWindowContentMode("map");
   updateRegisteredSceneryCount();
+  card.classList.remove("is-collapsed");
   card.hidden = false;
 }
 
@@ -2425,6 +2428,7 @@ function showSceneryDetailCard(jsonData = {}, marker = null) {
     updateSceneryLikeButton();
   }
 
+  sceneryDetailCollapsedByUser = false;
   card.classList.remove("is-collapsed");
   card.hidden = false;
 }
@@ -2454,7 +2458,7 @@ function showEmptySceneryDetailCard(currentPano) {
   registerButton.addEventListener("click", openCurrentPanoramaRegistration);
   actionsElement.replaceChildren(registerButton);
   card.hidden = false;
-  card.classList.remove("is-collapsed");
+  card.classList.toggle("is-collapsed", sceneryDetailCollapsedByUser);
 }
 
 function syncSceneryDetailForCurrentPano() {
@@ -2498,20 +2502,25 @@ function setupSceneryDetailCardToggle() {
   const maximizeButton = document.getElementById("sceneryDetailMaximizeButton");
   const closeButton = document.getElementById("sceneryDetailCloseButton");
 
+  const setCollapsedFromUser = isCollapsed => {
+    card.classList.toggle("is-collapsed", isCollapsed);
+    if (panorama?.getVisible()) sceneryDetailCollapsedByUser = isCollapsed;
+  };
+
   const collapseWindow = event => {
     event.stopPropagation();
-    card.classList.add("is-collapsed");
+    setCollapsedFromUser(true);
   };
 
   minimizeButton.addEventListener("click", collapseWindow);
   closeButton.addEventListener("click", collapseWindow);
   maximizeButton.addEventListener("click", event => {
     event.stopPropagation();
-    card.classList.toggle("is-collapsed");
+    setCollapsedFromUser(!card.classList.contains("is-collapsed"));
   });
 
   titlebar.addEventListener("click", () => {
-    card.classList.toggle("is-collapsed");
+    setCollapsedFromUser(!card.classList.contains("is-collapsed"));
   });
 
   content.addEventListener("click", () => {
