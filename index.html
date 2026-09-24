@@ -1593,6 +1593,30 @@ background:
     display: none;
   }
 
+  #controls {
+    position: absolute;
+    right: calc(var(--side-navigation-width) + 6px);
+    bottom: 6px;
+    left: 6px;
+    z-index: 1002;
+    flex-wrap: nowrap;
+    gap: 4px;
+    padding: 0;
+    background: transparent;
+  }
+
+  #addressInput {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto !important;
+  }
+
+  #controls input,
+  #controls button {
+    margin-right: 0;
+    background: #333;
+  }
+
   #sceneryDetailCardViewport {
     --detail-window-width: 230px;
     --detail-titlebar-height: 20px;
