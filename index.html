@@ -1595,26 +1595,58 @@ background:
 
   #controls {
     position: absolute;
-    right: calc(var(--side-navigation-width) + 6px);
-    bottom: 6px;
-    left: 6px;
+    left: 4px;
+    right: calc(var(--side-navigation-width) + 3px);
+    bottom: 1px;
     z-index: 1002;
+    display: flex;
+    align-items: center;
     flex-wrap: nowrap;
-    gap: 4px;
+    gap: 3px;
     padding: 0;
     background: transparent;
   }
 
-  #addressInput {
-    flex: 1 1 auto;
-    min-width: 0;
-    width: auto !important;
-  }
-
   #controls input,
   #controls button {
-    margin-right: 0;
-    background: #333;
+    box-sizing: border-box;
+    margin: 0;
+    background: rgba(51, 51, 51, 0.97);
+    border: 1px solid #a7a5a5;
+    border-radius: 0;
+  }
+
+  #addressInput {
+    flex: 0 0 183px;
+    width: 183px !important;
+    min-width: 0;
+    height: 25px;
+    padding: 6px;
+    font-size: 9.5px;
+  }
+
+  #getPosButton {
+    flex: 0 0 93px;
+    width: 93px;
+    height: 25px;
+    padding: 4px 10px;
+    font-size: 9.5px;
+  }
+
+  #streetViewCoverageButton {
+    flex: 0 0 54px;
+    width: 54px;
+    height: 25px;
+    padding: 6px 10px;
+    font-size: 9.5px;
+  }
+
+  #loadDataButton {
+    flex: 0 0 72px;
+    width: 72px;
+    height: 25px;
+    padding: 4px 10px;
+    font-size: 9.5px;
   }
 
   #sceneryDetailCardViewport {
