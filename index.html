@@ -422,6 +422,7 @@ background:
     --detail-content-padding-bottom: 31px;
     --detail-title-memo-gap: 10px;
     --detail-memo-line-height: 25.7px;
+    --detail-window-max-height: 65vh;
     --detail-footer-min-height: 63px;
     --detail-footer-padding-x: 23px;
     position: absolute;
@@ -459,6 +460,13 @@ background:
     font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
   }
 
+  #sceneryDetailCard.scenery-window[data-detail-state="registered"],
+  #sceneryDetailCard.scenery-window[data-detail-state="empty"] {
+    display: flex;
+    flex-direction: column;
+    max-height: var(--detail-window-max-height);
+  }
+
   #sceneryDetailCard.scenery-window,
   #sceneryDetailCard.scenery-window *,
   #sceneryDetailCard.scenery-window *::before,
@@ -470,13 +478,14 @@ background:
     display: none;
   }
 
-  #sceneryDetailCard.is-collapsed .window-content,
-  #sceneryDetailCard.is-collapsed .window-footer {
+  #sceneryDetailCard.scenery-window.is-collapsed .window-content,
+  #sceneryDetailCard.scenery-window.is-collapsed .window-footer {
     display: none;
   }
 
   #sceneryDetailCard .window-titlebar {
     display: flex;
+    flex: 0 0 auto;
     align-items: center;
     min-height: var(--detail-titlebar-height);
     padding: 0 12px;
@@ -580,6 +589,14 @@ background:
     font-size: 17px;
     line-height: var(--detail-memo-line-height);
     background: #e4d2df;
+  }
+
+  #sceneryDetailCard[data-detail-state="registered"] .scenery-detail-content,
+  #sceneryDetailCard[data-detail-state="empty"] .scenery-detail-content {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
   }
 
   #sceneryDetailCard[data-detail-state="registered"] .window-content {
@@ -702,6 +719,13 @@ background:
     margin-top: 0;
   }
 
+  #sceneryDetailCard[data-detail-state="registered"] .post-body,
+  #sceneryDetailCard[data-detail-state="empty"] .post-body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
   #sceneryDetailCard .post-body:has(#sceneryDetailMemo[hidden]) {
     display: none;
   }
@@ -723,6 +747,7 @@ background:
 
   #sceneryDetailCard .window-footer {
     display: flex;
+    flex: 0 0 auto;
     align-items: center;
     gap: 12px;
     min-height: var(--detail-footer-min-height);
