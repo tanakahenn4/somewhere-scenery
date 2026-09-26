@@ -79,10 +79,40 @@ test("callable marker lifecycle uses private credentials", async () => {
   );
   assert.notEqual(credential.editPasswordHash, markerInput.password);
 
-  const firstLike = await callFunction("likeMarker", {markerId});
+  const firstLike = await callFunction("likeMarker", {
+    markerId,
+    action: "like",
+  });
   assert.equal(firstLike.status, 200);
   assert.equal(firstLike.body.result.markerId, markerId);
   assert.equal(firstLike.body.result.likeCount, 1);
+  assert.equal(firstLike.body.result.liked, true);
+  assert.equal((await markerRef.get()).data().likeCount, 1);
+
+  const unlike = await callFunction("likeMarker", {
+    markerId,
+    action: "unlike",
+  });
+  assert.equal(unlike.status, 200);
+  assert.equal(unlike.body.result.likeCount, 0);
+  assert.equal(unlike.body.result.liked, false);
+  assert.equal((await markerRef.get()).data().likeCount, 0);
+
+  const unlikeAtZero = await callFunction("likeMarker", {
+    markerId,
+    action: "unlike",
+  });
+  assert.equal(unlikeAtZero.status, 200);
+  assert.equal(unlikeAtZero.body.result.likeCount, 0);
+  assert.equal((await markerRef.get()).data().likeCount, 0);
+
+  const relike = await callFunction("likeMarker", {
+    markerId,
+    action: "like",
+  });
+  assert.equal(relike.status, 200);
+  assert.equal(relike.body.result.likeCount, 1);
+  assert.equal(relike.body.result.liked, true);
   assert.equal((await markerRef.get()).data().likeCount, 1);
 
   await markerRef.update({likeCount: 7});
@@ -102,6 +132,13 @@ test("callable marker lifecycle uses private credentials", async () => {
   });
   assert.equal(invalidLike.status, 400);
   assert.equal(invalidLike.body.error.status, "INVALID_ARGUMENT");
+
+  const invalidLikeAction = await callFunction("likeMarker", {
+    markerId,
+    action: "remove-all",
+  });
+  assert.equal(invalidLikeAction.status, 400);
+  assert.equal(invalidLikeAction.body.error.status, "INVALID_ARGUMENT");
 
   const invalidUpdate = await callFunction("updateMarker", {
     markerId,

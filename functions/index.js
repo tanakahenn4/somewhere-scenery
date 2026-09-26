@@ -144,7 +144,7 @@ exports.deleteMarker = onCall(callableOptions, async (request) => {
 
 exports.likeMarker = onCall(callableOptions, async (request) => {
   try {
-    const {markerId} = normalizeLikeMarkerInput(request.data);
+    const {markerId, action} = normalizeLikeMarkerInput(request.data);
     const markerRef = db.collection("mapMarkers").doc(markerId);
 
     const likeCount = await db.runTransaction(async (transaction) => {
@@ -162,7 +162,9 @@ exports.likeMarker = onCall(callableOptions, async (request) => {
         );
       }
 
-      const nextLikeCount = currentLikeCount + 1;
+      const nextLikeCount = action === "like"
+        ? currentLikeCount + 1
+        : Math.max(0, currentLikeCount - 1);
       if (!Number.isSafeInteger(nextLikeCount)) {
         throw new HttpsError(
           "failed-precondition",
@@ -173,7 +175,7 @@ exports.likeMarker = onCall(callableOptions, async (request) => {
       return nextLikeCount;
     });
 
-    return {markerId, likeCount};
+    return {markerId, likeCount, liked: action === "like"};
   } catch (error) {
     throw asHttpsError(error);
   }

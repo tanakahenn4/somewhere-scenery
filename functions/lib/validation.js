@@ -131,8 +131,13 @@ function normalizeDeleteMarkerInput(input) {
 
 function normalizeLikeMarkerInput(input) {
   const data = requireObject(input);
+  const action = data.action ?? "like";
+  if (action !== "like" && action !== "unlike") {
+    throw new ValidationError("いいね操作が正しくありません。");
+  }
   return {
     markerId: normalizeMarkerId(data.markerId),
+    action,
   };
 }
 

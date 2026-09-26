@@ -2129,14 +2129,18 @@ function updateSceneryLikeButton() {
     ? `♥ いいね済み ${likeCount}`
     : `♡ いいね ${likeCount}`;
   button.classList.toggle("is-liked", isLiked);
-  button.disabled = isLiked || isPending;
+  button.disabled = isPending;
+  button.title = isLiked ? "いいねを取り消す" : "いいねする";
   button.setAttribute("aria-pressed", String(isLiked));
   button.setAttribute("aria-busy", String(isPending));
 }
 
 async function submitMarkerLike(marker) {
   const markerId = marker?.firestoreId;
-  if (!markerId || likedMarkerIds.has(markerId) || pendingLikeMarkerIds.has(markerId)) return;
+  if (!markerId || pendingLikeMarkerIds.has(markerId)) return;
+
+  const wasLiked = likedMarkerIds.has(markerId);
+  const action = wasLiked ? "unlike" : "like";
 
   pendingLikeMarkerIds.add(markerId);
   updateSceneryLikeButton();
@@ -2144,7 +2148,7 @@ async function submitMarkerLike(marker) {
     if (typeof window.firebaseLikeMarker !== "function") {
       throw new Error("いいね機能の準備が完了していません。");
     }
-    const result = await window.firebaseLikeMarker({markerId});
+    const result = await window.firebaseLikeMarker({markerId, action});
     const likeCount = result?.data?.likeCount;
     if (!Number.isSafeInteger(likeCount) || likeCount < 0) {
       throw new Error("更新後のいいね数を取得できませんでした。");
@@ -2155,11 +2159,17 @@ async function submitMarkerLike(marker) {
       activeSceneryDetailData.likeCount = likeCount;
     }
     if (sceneryListMode === "popular") renderSceneryList();
-    likedMarkerIds.add(markerId);
+    if (action === "like") {
+      likedMarkerIds.add(markerId);
+    } else {
+      likedMarkerIds.delete(markerId);
+    }
     saveLikedMarkerIds();
   } catch (error) {
     console.error("いいねエラー:", error);
-    showMapToast("いいねできませんでした。もう一度お試しください");
+    showMapToast(action === "like"
+      ? "いいねできませんでした。もう一度お試しください"
+      : "いいねを取り消せませんでした。もう一度お試しください");
   } finally {
     pendingLikeMarkerIds.delete(markerId);
     updateSceneryLikeButton();
