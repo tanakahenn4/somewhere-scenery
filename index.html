@@ -724,6 +724,26 @@ background:
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #8d83d2 #e4d2df;
+  }
+
+  #sceneryDetailCard .post-body::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  #sceneryDetailCard .post-body::-webkit-scrollbar-track {
+    background: #e4d2df;
+  }
+
+  #sceneryDetailCard .post-body::-webkit-scrollbar-thumb {
+    background: #8d83d2;
+    border: 2px solid #e4d2df;
+    border-radius: 999px;
+  }
+
+  #sceneryDetailCard .post-body::-webkit-scrollbar-thumb:hover {
+    background: #7b4fae;
   }
 
   #sceneryDetailCard .post-body:has(#sceneryDetailMemo[hidden]) {
