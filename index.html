@@ -1904,6 +1904,15 @@ background:
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
 }
+/* 背景面の下角を3pxにするため、2pxのborderを含む外縁は5px。
+   パネル自身で内容を切り取り、子要素が丸い角を覆わないようにする。 */
+#sceneryDetailCard.scenery-window-frame #sceneryMapOverview,
+#sceneryDetailCard.scenery-window-frame #sceneryWindowSettings {
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  background-clip: padding-box;
+  overflow: clip;
+}
 #sceneryDetailCard.scenery-window-frame .map-overview-content {
   padding: 21px 22px 20px; color: var(--window-text); background: var(--window-surface); line-height: normal;
 }
@@ -1955,6 +1964,8 @@ background:
 #sceneryDetailCard.scenery-window-frame .window-footer {
   background: var(--window-tab-inactive); border-top-color: var(--window-panel-edge);
   border-radius: 0 0 3px 3px;
+  background-clip: padding-box;
+  overflow: clip;
 }
 #sceneryDetailCard.scenery-window-frame #sceneryDetailActions button {
   color: var(--window-button-text); background: var(--window-button-surface);
