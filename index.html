@@ -1956,25 +1956,26 @@ background:
 #sceneryDetailCard[data-window-mode="map"] .window-name { display: none; }
 #sceneryWindowTabs {
   position: absolute; left: 0; top: 5px; height: 30px;
-  width: calc(100% - 110px); display: flex; align-items: stretch;
+  width: calc(100% - 110px); display: flex; align-items: stretch; gap: 2px;
 }
 #sceneryWindowTabs[hidden] { display: none; }
 #sceneryWindowTabs [role="tab"] {
   position: relative; isolation: isolate; min-width: 0; margin: 0;
-  padding: 0 16px; border: 0; border-radius: 0;
-  background: transparent; color: #644d81; cursor: pointer;
+  padding: 0 32px 0 12px; border: 0; border-radius: 0;
+  background: #ad95c7; color: #644d81; cursor: pointer;
   font: 320 16px/normal "Segoe UI", "Yu Gothic UI", sans-serif;
   letter-spacing: .02em; white-space: nowrap;
   clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 100%, 0 100%);
 }
-#sceneryOverviewTab { flex: 1; text-align: left; }
-#scenerySettingsTab { flex: 0 0 76px; text-align: left; }
+#sceneryOverviewTab { flex: 0 1 auto; text-align: left; }
+#scenerySettingsTab { flex: 0 1 auto; text-align: left; }
 #sceneryWindowTabs [aria-selected="true"] { color: #fff9ff; background: #290e4d; }
-#sceneryWindowTabs [aria-selected="true"]::before {
+#sceneryWindowTabs [role="tab"]::before {
   content: ""; position: absolute; inset: 2px; z-index: -1;
-  background: #4432b7;
+  background: #e9dcf4;
   clip-path: polygon(0 0, calc(100% - 23px) 0, 100% 100%, 0 100%);
 }
+#sceneryWindowTabs [aria-selected="true"]::before { background: #4432b7; }
 #sceneryWindowTabs [role="tab"]:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
 #sceneryWindowSettings { color: #211c1c; }
 #sceneryWindowSettings fieldset { margin: 0; padding: 12px; border: 1px solid #aa94bf; }
@@ -1989,11 +1990,10 @@ background:
 @media (orientation: landscape) and (max-height: 600px) and (hover: none) and (pointer: coarse) {
   #sceneryWindowTabs { top: 2px; height: 17px; width: calc(100% - 78px); }
   #sceneryWindowTabs [role="tab"] {
-    padding: 0 4px; font-size: 11px;
+    padding: 0 10px 0 4px; font-size: 11px;
     clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 100%, 0 100%);
   }
-  #scenerySettingsTab { flex-basis: 36px; }
-  #sceneryWindowTabs [aria-selected="true"]::before {
+  #sceneryWindowTabs [role="tab"]::before {
     inset: 1px; clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 100%, 0 100%);
   }
   #sceneryWindowSettings { padding: 8px 10px; font-size: 12px; }
