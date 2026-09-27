@@ -2059,6 +2059,24 @@ background:
   clip-path: polygon(0 0, calc(100% - 23px) 0, 100% 100%, 24px 100%);
 }
 #sceneryWindowTabs [role="tab"]:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+/* PCの角丸のみを強める。タッチ端末は現在の角処理を維持する。 */
+@media (hover: hover) and (pointer: fine) {
+  #sceneryDetailCard.scenery-window-frame { border-radius: 13px; }
+  #sceneryDetailCard.scenery-window-frame::before { border-radius: 11px; }
+  #sceneryDetailCard.scenery-window-frame #sceneryMapOverview,
+  #sceneryDetailCard.scenery-window-frame #sceneryWindowSettings {
+    /* 2pxのborderを除いた背景面の下角は約6px。 */
+    border-radius: 6px 6px 8px 8px;
+  }
+  #sceneryDetailCard.scenery-window-frame .scenery-detail-content {
+    border-radius: 6px 6px 0 0;
+  }
+  #sceneryDetailCard.scenery-window-frame .window-footer { border-radius: 0 0 10px 10px; }
+  #sceneryWindowTabs #sceneryOverviewTab,
+  #sceneryDetailCard.scenery-window-frame .window-name { border-radius: 10px 0 0 0; }
+  #sceneryWindowTabs #sceneryOverviewTab::before,
+  #sceneryDetailCard.scenery-window-frame .window-name::before { border-radius: 8px 0 0 0; }
+}
 #sceneryWindowSettings { color: #211c1c; }
 #sceneryWindowSettings fieldset { margin: 0; padding: 12px; border: 1px solid #aa94bf; }
 #sceneryWindowSettings legend { padding: 0 4px; font-size: 16px; }
