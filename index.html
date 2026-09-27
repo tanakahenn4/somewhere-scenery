@@ -1818,6 +1818,140 @@ background:
 
 
 </style>
+<style id="sceneryWindowFrameTheme">
+/* フレーム版プレビューの外観。旧デザインは上に保存し、機能のDOM/JSは共用する。 */
+#sceneryDetailCardViewport { --detail-window-width: 500px; }
+#sceneryDetailCard.scenery-window-frame {
+  isolation: isolate;
+  padding: 0 6px 6px 5px;
+  background: #82709e;
+  border: 0;
+  border-radius: 2px;
+  box-shadow: none;
+}
+#sceneryDetailCard.scenery-window-frame::before {
+  content: ""; position: absolute; inset: 2px; z-index: -1;
+  background: #d4a8ff; border-radius: 1px; pointer-events: none;
+}
+#sceneryDetailCard.scenery-window-frame::after {
+  content: ""; position: absolute; bottom: 6px; right: 26px;
+  width: 38px; height: 4px; pointer-events: none;
+  background: repeating-linear-gradient(115deg, transparent 0 4px, #9880b3 4px 5px, #eadcf6 5px 6px, transparent 6px 9px);
+}
+#sceneryDetailCard.scenery-window-frame.is-collapsed::after { content: none; }
+#sceneryDetailCard.scenery-window-frame .window-titlebar {
+  position: relative; height: var(--detail-titlebar-height);
+  min-height: var(--detail-titlebar-height);
+  padding: 0 4px; margin-left: 1px; background: transparent; border: 0;
+}
+#sceneryDetailCard.scenery-window-frame .window-name {
+  position: absolute; isolation: isolate; left: 0; top: 5px;
+  width: min(330px, calc(100% - 110px)); height: 30px;
+  display: flex; align-items: center; padding: 0 16px; margin: 0;
+  color: #fff9ff; background: #290e4d;
+  clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 100%, 0 100%);
+  font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+  font-size: 16px; font-weight: 320; letter-spacing: .02em;
+  line-height: normal; text-shadow: none;
+}
+#sceneryDetailCard.scenery-window-frame .window-name::before {
+  content: ""; position: absolute; inset: 2px; z-index: -1;
+  background: #4432b7; pointer-events: none;
+  clip-path: polygon(0 0, calc(100% - 23px) 0, 100% 100%, 0 100%);
+}
+#sceneryDetailCard.scenery-window-frame .window-controls { gap: 5px; margin-left: auto; }
+#sceneryDetailCard.scenery-window-frame .window-control {
+  width: 29px; min-width: 29px; height: 25px; min-height: 25px;
+  color: #644d81; background: #e9dcf4; border: 1px solid #ad95c7;
+  box-shadow: inset 1px 1px #fff4ff, inset -1px -1px #c6b1dd; border-radius: 1px;
+}
+#sceneryDetailCard.scenery-window-frame .window-control.is-close {
+  color: #835b79; background: #efd2e4; border-color: #bb99b8;
+}
+#sceneryDetailCard.scenery-window-frame .window-control:hover { filter: brightness(1.08); }
+#sceneryDetailCard.scenery-window-frame .is-minimize::before {
+  width: 10px; height: 2px; left: 8px; top: 13px; transform: none;
+}
+#sceneryDetailCard.scenery-window-frame .is-maximize::before {
+  width: 10px; height: 9px; left: 8px; top: 6px; border-top-width: 2px; transform: none;
+}
+#sceneryDetailCard.scenery-window-frame .is-close::before,
+#sceneryDetailCard.scenery-window-frame .is-close::after {
+  left: 7px; top: 11px; transform: rotate(45deg);
+}
+#sceneryDetailCard.scenery-window-frame .is-close::after { transform: rotate(-45deg); }
+#sceneryDetailCard.scenery-window-frame .window-content {
+  border: 2px solid; border-color: #aa94bf #f8edff #f8edff #aa94bf;
+  box-shadow: inset 1px 1px #e1d3e6;
+}
+#sceneryDetailCard.scenery-window-frame .map-overview-content {
+  padding: 21px 22px 20px; color: #211c1c; background: #e4d2df; line-height: normal;
+}
+#sceneryDetailCard.scenery-window-frame .map-overview-count {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 0 0 22px; padding-bottom: 18px; border-bottom: 1px solid transparent;
+  width: 434px; max-width: 100%; height: 32px; line-height: normal;
+}
+#sceneryDetailCard.scenery-window-frame .map-overview-count-label {
+  font-size: 16px; letter-spacing: .025em; margin-bottom: 7px;
+}
+#sceneryDetailCard.scenery-window-frame #registeredSceneryCount {
+  flex-shrink: 0; min-width: 15px; height: 37px; padding: 2px 12px 5px;
+  text-align: center; color: #735390; background: #eee2f4;
+  border: 1px solid #d0bbde; box-shadow: inset 1px 1px #fcf8ff;
+  font: 28px/1 Consolas, monospace; letter-spacing: -.06em; font-variant-numeric: tabular-nums;
+}
+#sceneryDetailCard.scenery-window-frame .map-overview-filters h2 {
+  margin: -19px 0 12px 1px; font-size: 17px; font-weight: 400;
+  letter-spacing: .06em; color: #100f10; line-height: normal;
+}
+#sceneryDetailCard.scenery-window-frame .map-overview-actions { gap: 8px; margin-bottom: 14px; }
+#sceneryDetailCard.scenery-window-frame .map-overview-actions button {
+  min-height: 31px; padding: 5px 14px; color: #654b79; background: #e9ddef;
+  border: 1px solid #bda6cf; box-shadow: inset 1px 1px #fff7ff, inset -1px -1px #d8c6e5;
+  font: 400 12px/normal "Segoe UI", "Yu Gothic UI", sans-serif; border-radius: 1px;
+}
+#sceneryDetailCard.scenery-window-frame .map-overview-actions button:last-child { background: #f8eff7; }
+#sceneryDetailCard.scenery-window-frame .map-overview-filters label {
+  margin: 0; min-height: 25px; padding: 2px 3px 2px 32px;
+  border-bottom: 1px solid transparent; font-size: 14px; line-height: 1.5;
+}
+#sceneryDetailCard.scenery-window-frame .map-overview-filters label:last-child { border-bottom: 0; }
+#sceneryDetailCard.scenery-window-frame .map-overview-filters label::before {
+  left: 3px; border: 1px solid #9276b9;
+  box-shadow: inset 1px 1px #c2addc, 1px 1px #fff;
+}
+#sceneryDetailCard.scenery-window-frame .map-overview-filters label:has(input:checked)::before { background: #a38bc7; }
+#sceneryDetailCard.scenery-window-frame .map-overview-filters label::after {
+  left: 9px; width: 4px; height: 8px; border-color: #fffaff; border-width: 0 2px 2px 0;
+}
+/* 狭い画面だけは、実データの件数・操作部を枠内に収める。 */
+@media (max-width: 520px) {
+  #sceneryDetailCard.scenery-window-frame .map-overview-content { padding: 14px 10px; }
+  #sceneryDetailCard.scenery-window-frame .map-overview-actions { flex-wrap: wrap; }
+}
+@media (orientation: landscape) and (max-height: 600px) and (hover: none) and (pointer: coarse) {
+  #sceneryDetailCardViewport { --detail-window-width: 230px; }
+  #sceneryDetailCard.scenery-window-frame .window-name {
+    top: 2px; height: 17px; width: calc(100% - 78px); padding-inline: 6px; font-size: 11px;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 100%, 0 100%);
+  }
+  #sceneryDetailCard.scenery-window-frame .window-name::before {
+    inset: 1px; clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 100%, 0 100%);
+  }
+  #sceneryDetailCard.scenery-window-frame .window-controls { gap: 3px; }
+  #sceneryDetailCard.scenery-window-frame .window-control { width: 22px; min-width: 22px; height: 18px; min-height: 18px; }
+  #sceneryDetailCard.scenery-window-frame .is-minimize::before { left: 5px; top: 11px; }
+  #sceneryDetailCard.scenery-window-frame .is-maximize::before { left: 5px; top: 3px; }
+  #sceneryDetailCard.scenery-window-frame .is-close::before,
+  #sceneryDetailCard.scenery-window-frame .is-close::after { left: 4px; top: 8px; }
+  #sceneryDetailCard.scenery-window-frame .map-overview-content { padding: 14px 10px 10px; }
+  #sceneryDetailCard.scenery-window-frame .map-overview-count-label { font-size: 14px; }
+  #sceneryDetailCard.scenery-window-frame #registeredSceneryCount { font-size: 22px; height: 31px; padding-inline: 7px; }
+  #sceneryDetailCard.scenery-window-frame .map-overview-actions { gap: 6px; flex-wrap: wrap; }
+  #sceneryDetailCard.scenery-window-frame .map-overview-actions button { padding-inline: 8px; }
+}
+</style>
 </head>
 
 <body>
@@ -1831,7 +1965,7 @@ background:
   <div id="mapToast" role="status" aria-live="polite" aria-atomic="true"></div>
   <div id="sceneryDetailCardViewport">
     <div id="sceneryDetailCardShadow">
-      <section id="sceneryDetailCard" class="scenery-window" aria-label="風景の詳細" aria-live="polite" hidden>
+      <section id="sceneryDetailCard" class="scenery-window scenery-window-frame" aria-label="風景の詳細" aria-live="polite" hidden>
         <header class="window-titlebar">
           <span id="sceneryDetailWindowName" class="window-name">メモ帳</span>
           <div class="window-controls" aria-label="ウィンドウ操作">
@@ -1841,7 +1975,7 @@ background:
           </div>
         </header>
         <div id="sceneryMapOverview" class="window-content map-overview-content" hidden>
-          <p class="map-overview-count">登録された風景　<strong id="registeredSceneryCount">0</strong></p>
+          <p class="map-overview-count"><span class="map-overview-count-label">登録された風景</span><strong id="registeredSceneryCount">0</strong></p>
           <section class="map-overview-filters" aria-labelledby="mapOverviewFiltersTitle">
             <h2 id="mapOverviewFiltersTitle">表示するもの</h2>
             <div class="map-overview-actions">
