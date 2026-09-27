@@ -1967,7 +1967,7 @@ background:
   letter-spacing: .02em; white-space: nowrap;
   clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 100%, 0 100%);
 }
-#sceneryOverviewTab { flex: 0 1 auto; text-align: left; }
+#sceneryOverviewTab { flex: 0 1 auto; text-align: left; z-index: 1; }
 #scenerySettingsTab { flex: 0 1 auto; text-align: left; }
 #sceneryWindowTabs [aria-selected="true"] { color: #fff9ff; background: #290e4d; }
 #sceneryWindowTabs [role="tab"]::before {
@@ -1976,6 +1976,15 @@ background:
   clip-path: polygon(0 0, calc(100% - 23px) 0, 100% 100%, 0 100%);
 }
 #sceneryWindowTabs [aria-selected="true"]::before { background: #4432b7; }
+/* 設定の色面だけを前タブの斜め端まで延ばし、文字とタブ幅は維持する。 */
+#sceneryWindowTabs #scenerySettingsTab {
+  margin-left: -2px;
+  clip-path: polygon(-24px 0, calc(100% - 24px) 0, 100% 100%, 0 100%);
+}
+#sceneryWindowTabs #scenerySettingsTab::before {
+  left: -24px;
+  clip-path: polygon(0 0, calc(100% - 23px) 0, 100% 100%, 24px 100%);
+}
 #sceneryWindowTabs [role="tab"]:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
 #sceneryWindowSettings { color: #211c1c; }
 #sceneryWindowSettings fieldset { margin: 0; padding: 12px; border: 1px solid #aa94bf; }
@@ -1995,6 +2004,13 @@ background:
   }
   #sceneryWindowTabs [role="tab"]::before {
     inset: 1px; clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 100%, 0 100%);
+  }
+  #sceneryWindowTabs #scenerySettingsTab {
+    clip-path: polygon(-8px 0, calc(100% - 8px) 0, 100% 100%, 0 100%);
+  }
+  #sceneryWindowTabs #scenerySettingsTab::before {
+    left: -8px;
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 100%, 8px 100%);
   }
   #sceneryWindowSettings { padding: 8px 10px; font-size: 12px; }
 }
