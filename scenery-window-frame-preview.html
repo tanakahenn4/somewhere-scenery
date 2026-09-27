@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>どこかの風景 — フレーム造形プレビュー</title>
+  <style>
+    /* PC向けの独立した静的モック。外部素材・本番CSS・JavaScriptは使用しない。 */
+    * { box-sizing: border-box; }
+    :root { color-scheme: light; font-family: "Segoe UI", "Yu Gothic UI", sans-serif; color: #211c1c; background: #eeedf3; }
+    body { margin: 0; min-width: 760px; }
+    button { font: inherit; }
+    .preview-heading { width: 960px; max-width: calc(100% - 80px); margin: 38px auto 22px; }
+    .eyebrow { margin: 0 0 9px; font: 11px/1.5 Consolas, monospace; letter-spacing: .16em; color: #756780; }
+    .preview-heading h1 { margin: 0; font-size: 21px; font-weight: 500; letter-spacing: .07em; }
+    .preview-heading p:last-child { margin: 12px 0 0; font-size: 13px; line-height: 1.8; color: #756780; }
+    .stage { min-height: 610px; padding: 58px 50px; display: grid; place-items: center; background: #d6e4e5; border-block: 1px solid #c4d4d8; }
+    .preview-note { width: 960px; max-width: calc(100% - 80px); margin: 20px auto 30px; font-size: 12px; line-height: 1.9; color: #756780; }
+
+    /* 外装はフラットな上端を持つ四角形。斜めの造形は内部のタイトル領域だけに限定する。
+       外装と内側パネルの間の面を残し、フレームの厚みを維持する。 */
+    .window-shell { position: relative; width: 500px; isolation: isolate; }
+    .scenery-window {
+      position: relative;
+      isolation: isolate;
+      padding: 0 6px 6px 5px;
+      background: #82709e;
+      border-radius: 2px;
+    }
+    .scenery-window::before {
+      content: ""; position: absolute; inset: 2px; z-index: -1;
+      background: linear-gradient(135deg, #d4a8ff 0, #d4a8ff 27%, #d4a8ff 75%, #d4a8ff 100%);
+      border-radius: 1px;
+    }
+    /* 小さな接地線のみ。造形は影ではなくフレーム自身で表現する。 */
+    .window-shell::after { content: ""; position: absolute; left: 15px; right: 15px; bottom: -3px; height: 3px; background: #8b81982e; z-index: -1; }
+
+    .window-titlebar { position: relative; height: 38px; display: flex; align-items: center; padding: 0 4px; margin-left: 1px; }
+    .title-tab {
+      position: absolute; left: 0; top: 5px; width: 330px; height: 30px;
+      display: flex; align-items: center; gap: 10px; padding: 0 16px;
+      color: #fff9ff; background: #290e4d;
+      clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 100%, 0 100%);
+    }
+    .title-tab::before { content: ""; position: absolute; inset: 2px; z-index: -1; background: linear-gradient(120deg, #4432b7, #4432b7); clip-path: polygon(0 0, calc(100% - 23px) 0, 100% 100%, 0 100%); }
+    .window-name { margin: 0; font-family: "Segoe UI", "Yu Gothic UI", sans-serif; font-size: 16px; font-weight: 320; letter-spacing: 0.02em; line-height: normal; text-shadow: none; white-space: nowrap; }
+    .app-icon { position: relative; width: 17px; height: 17px; flex: none; border: 1px solid #fff4ff; background: #611a6f; box-shadow: 1px 1px #776097; }
+    .app-icon::before { content: ""; position: absolute; inset: 3px; background: #9883ba; clip-path: polygon(0 100%, 0 70%, 36% 20%, 65% 65%, 100% 35%, 100% 100%); }
+    .app-icon::after { content: ""; position: absolute; width: 3px; height: 3px; top: 3px; right: 3px; background: #fff9de; }
+    .window-controls { display: flex; gap: 5px; margin-left: auto; }
+    .window-control { position: relative; width: 29px; height: 25px; padding: 0; color: #644d81; background: #e9dcf4; border: 1px solid #ad95c7; box-shadow: inset 1px 1px #fff4ff, inset -1px -1px #c6b1dd; border-radius: 1px; }
+    .window-control.is-close { background: #efd2e4; border-color: #bb99b8; color: #835b79; }
+    .window-control::before, .window-control::after { content: ""; position: absolute; }
+    .is-minimize::before { width: 10px; height: 2px; background: currentColor; left: 8px; top: 13px; }
+    .is-maximize::before { width: 10px; height: 9px; border: 1px solid currentColor; border-top-width: 2px; left: 8px; top: 6px; }
+    .is-close::before, .is-close::after { width: 12px; height: 1px; background: currentColor; left: 7px; top: 11px; transform: rotate(45deg); }
+    .is-close::after { transform: rotate(-45deg); }
+
+    /* 内側はフレームから一段沈んだ、独立した表示面。 */
+    .window-content { padding: 21px 22px 20px; background: #e4d2df; border: 2px solid; border-color: #aa94bf #f8edff #f8edff #aa94bf; box-shadow: inset 1px 1px #e1d3e6; }
+    .scenery-count { display: flex; align-items: center; justify-content: space-between; margin: 0 0 22px; padding-bottom: 18px; border-bottom: 1px solid transparent; width: 434px; height: 32px; }
+    .count-label { font-size: 16px; letter-spacing: .025em; margin-bottom: 7px; }
+    .count-value { min-width: 15px; padding: 2px 12px 5px; text-align: center; color: #735390; background: #eee2f4; border: 1px solid #d0bbde; box-shadow: inset 1px 1px #fcf8ff; font: 28px/1 Consolas, monospace; letter-spacing: -.06em; font-variant-numeric: tabular-nums; height: 37px; }
+    .filter-heading { margin: 0 0 12px; font-size: 17px; font-weight: 400; letter-spacing: .06em; color: #100f10; margin-left: 1px; margin-top: -19px; }
+    .filter-actions { display: flex; gap: 8px; margin-bottom: 14px; }
+    .filter-actions button { min-height: 31px; padding: 5px 14px; color: #654b79; background: #e9ddef; border: 1px solid #bda6cf; box-shadow: inset 1px 1px #fff7ff, inset -1px -1px #d8c6e5; font-size: 12px; border-radius: 1px; }
+    .filter-actions button:last-child { background: #f8eff7; }
+    .category-list { display: grid; gap: 0; }
+    .category-option { display: flex; align-items: center; gap: 12px; min-height: 25px; padding: 2px 3px; border-bottom: 1px solid transparent; font-size: 14px; line-height: 1.5; }
+    .category-option:last-child { border-bottom: 0; }
+    .checkbox { flex: none; position: relative; display: inline-block; width: 17px; height: 17px; background: #a38bc7; border: 1px solid #9276b9; box-shadow: inset 1px 1px #c2addc, 1px 1px #fff; }
+    .checkbox::after { content: ""; position: absolute; left: 5px; top: 2px; width: 4px; height: 8px; border: solid #fffaff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+    .frame-grip { height: 4px; width: 38px; position: absolute; bottom: 6px; right: 26px; background: repeating-linear-gradient(115deg, transparent 0 4px, #9880b3 4px 5px, #eadcf6 5px 6px, transparent 6px 9px); }
+    .preview-heading, .preview-note { display: none; }
+    body { min-width: 0; }
+    .stage { min-height: 740px; padding: 48px 40px; place-items: start center; border: 0; }
+  </style>
+</head>
+<body>
+  <header class="preview-heading">
+    <p class="eyebrow">SOMEWHERE SCENERY / CASE STUDY 04</p>
+    <h1>四角いフレームに、斜めのタイトルライン。</h1>
+    <p>ラベンダーの外装の内側で、紫のタイトル領域から操作領域へ斜めに切り替わる造形。</p>
+  </header>
+  <main class="stage">
+    <div class="window-shell">
+      <article class="scenery-window" aria-labelledby="windowName">
+        <header class="window-titlebar">
+          <div class="title-tab"><h2 class="window-name" id="windowName">どこかの風景</h2></div>
+          <div class="window-controls" aria-label="ウィンドウ操作の外観サンプル">
+            <button class="window-control is-minimize" type="button" aria-label="最小化（静的見本）"></button>
+            <button class="window-control is-maximize" type="button" aria-label="最大化（静的見本）"></button>
+            <button class="window-control is-close" type="button" aria-label="閉じる（静的見本）"></button>
+          </div>
+        </header>
+        <div class="window-content">
+          <p class="scenery-count"><span class="count-label">登録された風景</span><strong class="count-value">27</strong></p>
+          <section aria-labelledby="filterHeading">
+            <h3 class="filter-heading" id="filterHeading">表示するもの</h3>
+            <div class="filter-actions"><button type="button">すべて表示</button><button type="button">すべて非表示</button></div>
+            <div class="category-list" aria-label="カテゴリ（すべて表示中の静的見本）">
+              <div class="category-option"><span class="checkbox" aria-hidden="true"></span><span>ねこ</span></div>
+              <div class="category-option"><span class="checkbox" aria-hidden="true"></span><span>気になった景色</span></div>
+              <div class="category-option"><span class="checkbox" aria-hidden="true"></span><span>不思議・おもしろい景色</span></div>
+              <div class="category-option"><span class="checkbox" aria-hidden="true"></span><span>不気味</span></div>
+              <div class="category-option"><span class="checkbox" aria-hidden="true"></span><span>その他</span></div>
+            </div>
+          </section>
+        </div>
+        <span class="frame-grip" aria-hidden="true"></span>
+      </article>
+    </div>
+  </main>
+  <p class="preview-note">PC向け・幅500pxの造形確認用モックアップです。操作部は見た目のみで、チェック切替・ウィンドウ操作は実装していません。<br>本番サイトのファイルやデータは読み込まず、HTML / CSSだけで描画しています。</p>
+</body>
+</html>

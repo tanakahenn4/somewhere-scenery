@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>案A — 地図の書庫 / どこかの風景</title>
+  <style>
+    /* 独立した比較用プレビュー。本番CSS・データ・APIは読み込まない。 */
+    * { box-sizing: border-box; }
+    :root { color-scheme: light; font-family: "Segoe UI", "Yu Gothic UI", "Meiryo", sans-serif; color: #30313b; background: #f2f1ef; }
+    body { margin: 0; }
+    button, select { font: inherit; }
+    button, a, select { -webkit-tap-highlight-color: transparent; }
+    button { cursor: pointer; }
+    :focus-visible { outline: 2px solid #805baa; outline-offset: 3px; }
+    .preview-header { max-width: 1136px; margin: auto; padding: 28px 28px 20px; }
+    .preview-eyebrow { margin: 0 0 10px; color: #69626f; font: 11px/1.5 Consolas, monospace; letter-spacing: .15em; }
+    .preview-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+    .preview-heading h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: .04em; }
+    .design-nav { display: flex; gap: 4px; }
+    .design-nav a { padding: 8px 12px; border: 1px solid #cdc8d0; color: #62596b; text-decoration: none; font-size: 12px; }
+    .design-nav a[aria-current] { background: #36303e; color: #fff; border-color: #36303e; }
+    .preview-description { margin: 12px 0 0; font-size: 13px; color: #736d77; line-height: 1.8; }
+    .preview-toolbar { max-width: 1136px; margin: auto; padding: 0 28px 14px; display: flex; gap: 16px; flex-wrap: wrap; }
+    .preview-toolbar label { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #62596b; }
+    .preview-toolbar select { padding: 6px 24px 6px 8px; background: #faf9f8; border: 1px solid #cdc8d0; border-radius: 2px; color: #39303e; font-size: 12px; }
+    .preview-scroll { overflow: auto; padding: 4px 28px 24px; }
+    /* viewportは実CSS px。画像のような拡大縮小は行わない。 */
+    .preview-stage { position: relative; isolation: isolate; container-type: size; width: min(100%, 1080px); height: 560px; margin: auto; overflow: hidden; background: #dce5dc; border: 1px solid #babfc1; }
+    .preview-stage[data-viewport="landscape"] { width: 740px; height: 360px; }
+    .preview-stage[data-viewport="portrait"] { width: 360px; height: 640px; }
+    .map-art { width: 100%; height: 100%; position: absolute; inset: 0; z-index: -1; }
+    .preview-stage[data-background="light"] { background: #ece9e6; }
+    .preview-stage[data-background="dark"] { background: #303b40; }
+    .preview-stage:not([data-background="map"]) .map-art { display: none; }
+    .site-heading { position: absolute; inset: 0 0 auto; height: 30px; background: #171c20; color: #e1e4e5; display: grid; place-items: center; font-size: 10px; letter-spacing: .12em; }
+    .site-menu { position: absolute; inset: 30px 0 0 auto; width: 32px; background: #171c20; color: #faf7fc; padding-top: 15px; text-align: center; font: 8px/2.4 Consolas, monospace; }
+    .site-menu i { display: block; width: 14px; height: 10px; border-block: 1px solid currentColor; margin: 0 auto; position: relative; }
+    .site-menu i::after { content: ""; position: absolute; top: 4px; inset-inline: 0; border-top: 1px solid currentColor; }
+    .map-caption { position: absolute; left: 16px; bottom: 15px; margin: 0; font: 10px/1.5 Consolas, "Yu Gothic UI", monospace; letter-spacing: .06em; color: #4f6760; background: #f5f7edcc; padding: 5px 8px; }
+    .preview-note { max-width: 1136px; margin: 0 auto; padding: 0 28px 28px; color: #69626f; font-size: 12px; line-height: 1.9; }
+    .preview-note p { margin: 0; }
+
+    /* ===== 共通のウィンドウ構造 / 全案の基準幅は440px ===== */
+    .scenery-window { position: absolute; top: 58px; right: 56px; width: 440px; max-width: calc(100% - 56px); display: flex; flex-direction: column; max-height: calc(100% - 80px); }
+    .window-titlebar { flex: 0 0 auto; display: flex; align-items: center; min-height: 40px; padding: 0 8px 0 13px; gap: 9px; user-select: none; cursor: pointer; }
+    .app-icon { flex: 0 0 auto; width: 16px; height: 16px; position: relative; }
+    .window-name { min-width: 0; margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 14px; font-weight: 600; letter-spacing: .05em; }
+    .window-controls { display: flex; flex-shrink: 0; margin-left: auto; gap: 4px; }
+    .window-control { position: relative; width: 28px; height: 28px; padding: 0; color: inherit; }
+    .window-control::before, .window-control::after { content: ""; position: absolute; }
+    .is-minimize::before { width: 10px; height: 1px; background: currentColor; left: calc(50% - 5px); top: 50%; }
+    .is-maximize::before { width: 9px; height: 8px; border: 1px solid currentColor; left: calc(50% - 4.5px); top: calc(50% - 4px); }
+    .is-close::before, .is-close::after { width: 12px; height: 1px; background: currentColor; top: 50%; left: calc(50% - 6px); transform: rotate(45deg); }
+    .is-close::after { transform: rotate(-45deg); }
+    .window-content { min-height: 0; overflow-y: auto; padding: 20px; scrollbar-width: thin; }
+    .scenery-count { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0 0 21px; }
+    .count-label { display: block; font-size: 14px; font-weight: 600; }
+    .count-caption { display: block; margin-top: 5px; font: 10px/1.3 Consolas, monospace; letter-spacing: .1em; }
+    .count-value { display: flex; align-items: baseline; gap: 7px; }
+    .count-value strong { font: 34px/1 Consolas, monospace; font-variant-numeric: tabular-nums; letter-spacing: -.06em; }
+    .count-value small { font-size: 11px; }
+    .filter-heading { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; font-size: 12px; font-weight: 600; }
+    .filter-heading::after { content: ""; flex: 1; height: 1px; background: currentColor; opacity: .18; }
+    .filter-actions { display: flex; gap: 7px; margin-bottom: 12px; }
+    .filter-actions button { font-size: 12px; min-height: 30px; padding: 4px 13px; }
+    .category-list { display: grid; gap: 3px; }
+    .category-option { position: relative; display: flex; align-items: center; gap: 11px; min-height: 36px; padding: 6px 10px; cursor: pointer; font-size: 14px; line-height: 1.5; }
+    .category-option input { position: absolute; width: 1px; height: 1px; opacity: 0; margin: 0; }
+    .checkbox { flex: 0 0 auto; position: relative; width: 17px; height: 17px; }
+    .checkbox::after { content: ""; position: absolute; width: 5px; height: 9px; left: 5px; top: 1px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); opacity: 0; }
+    .category-option input:checked + .checkbox::after { opacity: 1; }
+    .category-option input:focus-visible + .checkbox { outline: 2px solid #805baa; outline-offset: 3px; }
+    .category-code { margin-left: auto; font: 10px/1 Consolas, monospace; opacity: .5; }
+    .window-status { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; min-height: 29px; padding: 6px 14px; font-size: 10px; letter-spacing: .02em; }
+    .status-dot { display: inline-block; width: 5px; height: 5px; margin-right: 6px; vertical-align: 1px; background: currentColor; }
+    .status-code { font: 10px/1 Consolas, monospace; letter-spacing: .07em; }
+    .scenery-window.is-collapsed .window-content, .scenery-window.is-collapsed .window-status { display: none; }
+
+    /* ===== 案A：地図の書庫 / 控えめなベベルと地図ソフトの情報密度 ===== */
+    .scenery-window { color: #353447; background: #e8e5ee; border: 1px solid #535064; border-radius: 2px; padding: 3px; box-shadow: inset 1px 1px #ffffff, inset -1px -1px #afa8ba, 5px 7px 0 #33364221, 0 15px 30px #32364419; }
+    .window-titlebar { color: #fbf9ff; background: linear-gradient(90deg, #635482, #9180ab); border: 1px solid #5c526f; min-height: 35px; }
+    .window-titlebar:hover { filter: brightness(1.05); }
+    .app-icon { border: 1px solid #f3e7fb; background: linear-gradient(90deg, transparent 43%, #f3e7fb 43% 50%, transparent 50%), linear-gradient(0deg, transparent 43%, #f3e7fb 43% 50%, transparent 50%); }
+    .app-icon::after { content: ""; position: absolute; width: 5px; height: 5px; background: #f2bfcb; left: 3px; top: 3px; box-shadow: 1px 1px 0 #514766; }
+    .window-control { width: 25px; height: 24px; color: #474052; background: #e4deeb; border: 1px solid #554a63; box-shadow: inset 1px 1px #fff, inset -1px -1px #b3a9c3; border-radius: 0; }
+    .window-control:hover { background: #f8f3ff; }
+    .window-control.is-close:hover { background: #e9c6d4; }
+    .window-control:active, .filter-actions button:active { box-shadow: inset 1px 1px #afa8ba; }
+    .window-content { padding: 20px 18px 16px; }
+    .scenery-count { padding: 0 2px 17px; margin-bottom: 16px; border-bottom: 1px solid #c4bccd; box-shadow: 0 1px #f9f6fb; }
+    .count-caption { color: #6c5a7c; }
+    .count-value { color: #635482; }
+    .count-value strong { background: #f5f1f8; border: 1px solid #bcb4c7; padding: 4px 10px 5px; box-shadow: inset 1px 1px #d6cedf; font-size: 30px; }
+    .filter-heading { color: #6c5a7c; }
+    .filter-actions button { color: #504559; background: #e9e3ee; border: 1px solid #b4a9c2; box-shadow: inset 1px 1px #fff, inset -1px -1px #c7bdd1; border-radius: 1px; }
+    .filter-actions button:hover { background: #f5f0f8; }
+    .category-list { border: 1px solid #bcb4c7; padding: 5px; background: #f7f5f8; box-shadow: inset 1px 1px #d8d1df; }
+    .category-option:hover { background: #ece7f1; }
+    .checkbox { background: #fff; border: 1px solid #aba2b6; box-shadow: inset 1px 1px #ddd5e5; color: #fff; }
+    .category-option input:checked + .checkbox { background: #82709e; border-color: #79668f; box-shadow: inset 1px 1px #a89abb; }
+    .window-status { background: #dcd7e5; color: #65546f; border: 1px solid #bcb4c7; box-shadow: inset 1px 1px #faf7ff; margin-top: 2px; }
+
+    /* 同じ条件のスマホ比較。短い画面は2列、狭い縦画面は1列。 */
+    @container (max-width: 600px) {
+      .scenery-window { top: 49px; right: 43px; width: calc(100% - 56px); }
+      .window-content { padding: 16px 13px; }
+      .window-name { font-size: 13px; }
+      .window-controls { gap: 2px; }
+      .window-control { width: 28px; height: 28px; }
+      .category-option { min-height: 42px; }
+      .category-code { display: none; }
+      .filter-actions button { min-height: 36px; }
+    }
+    @container (max-height: 420px) {
+      .site-heading { display: none; }
+      .site-menu { top: 0; }
+      .scenery-window { top: 12px; right: 43px; width: 320px; max-height: calc(100% - 24px); }
+      .window-titlebar { min-height: 34px; }
+      .window-control { width: 28px; height: 28px; }
+      .window-content { padding: 12px; }
+      .scenery-count { margin-bottom: 10px; padding-bottom: 10px; }
+      .count-caption { display: none; }
+      .count-value strong { font-size: 24px; }
+      .filter-heading { margin-bottom: 6px; }
+      .filter-actions { margin-bottom: 7px; }
+      .filter-actions button { min-height: 32px; }
+      .category-list { grid-template-columns: 1fr 1fr; gap: 2px; }
+      .category-option { min-height: 40px; padding: 4px; gap: 7px; font-size: 12px; }
+      .category-code { display: none; }
+    }
+    @media (max-width: 560px) {
+      .preview-header { padding: 20px 16px 16px; }
+      .preview-toolbar { padding-inline: 16px; gap: 10px; }
+      .preview-scroll { padding-inline: 12px; }
+      .preview-heading h1 { font-size: 19px; }
+      .preview-note { padding-inline: 16px; }
+    }
+    @media (orientation: landscape) and (max-height: 600px) {
+      .preview-stage[data-viewport="responsive"] { height: 360px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="preview-header">
+    <p class="preview-eyebrow">SOMEWHERE SCENERY / WINDOW STUDIES · 01</p>
+    <div class="preview-heading">
+      <h1>案A <span aria-hidden="true">—</span> 地図の書庫</h1>
+      <nav class="design-nav" aria-label="デザイン案の比較">
+        <a href="scenery-window-design-a.html" aria-current="page">A レトロ</a>
+        <a href="scenery-window-design-b.html">B かわいさ</a>
+        <a href="scenery-window-design-c.html">C ミニマル</a>
+      </nav>
+    </div>
+    <p class="preview-description">古い地図ソフトの、静かな道具感。段差のある枠と端正な情報整理で、懐かしさを日常の使いやすさに。</p>
+  </header>
+  <div class="preview-toolbar">
+    <label>画面 <select id="viewportSelect"><option value="responsive">PC / 自動幅</option><option value="landscape">スマホ横 · 740 × 360</option><option value="portrait">スマホ縦 · 360 × 640</option></select></label>
+    <label>背景 <select id="backgroundSelect"><option value="map">架空地図</option><option value="light">明るい単色</option><option value="dark">暗い単色</option></select></label>
+  </div>
+  <main class="preview-scroll">
+    <div class="preview-stage" id="stage" data-viewport="responsive" data-background="map">
+      <svg class="map-art" viewBox="0 0 1080 560" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs><pattern id="blocks" width="128" height="96" patternTransform="rotate(-16)" patternUnits="userSpaceOnUse"><rect width="128" height="96" fill="#e4e9dd"/><rect x="8" y="8" width="45" height="30" rx="2" fill="#d2dccb"/><rect x="62" y="8" width="57" height="30" rx="2" fill="#dbe1d2"/><rect x="8" y="49" width="72" height="37" rx="2" fill="#d9dfd0"/><rect x="89" y="49" width="30" height="37" rx="2" fill="#d3ddcf"/><path d="M0 44H128M84 44V96" stroke="#f6f6ee" stroke-width="5"/></pattern></defs>
+        <rect width="1080" height="560" fill="url(#blocks)"/>
+        <path d="M-70 470C160 360 255 460 400 320S670 260 730 160 940 130 1150 10" stroke="#b8d7dd" stroke-width="72" fill="none"/>
+        <path d="M-70 470C160 360 255 460 400 320S670 260 730 160 940 130 1150 10" stroke="#d5e9e9" stroke-width="3" fill="none"/>
+        <path d="M-40 160L1150 420M210 -30L350 590" stroke="#cbd0c2" stroke-width="22" fill="none"/>
+        <path d="M-40 160L1150 420M210 -30L350 590" stroke="#fffdf0" stroke-width="16" fill="none"/>
+        <path d="M35 510L475 405 540 500" stroke="#faf8ed" stroke-width="10" fill="none"/>
+        <g fill="#91ae89" opacity=".65"><circle cx="93" cy="83" r="31"/><circle cx="132" cy="77" r="28"/><circle cx="118" cy="111" r="29"/><circle cx="485" cy="485" r="21"/></g>
+        <g font-family="sans-serif" font-size="11" fill="#85918a" letter-spacing="2"><text x="74" y="159">みどり公園</text><text x="370" y="221">霞町</text><text x="388" y="524">南通り</text></g>
+        <g fill="#9585b1" stroke="#f6f1fc" stroke-width="2"><path d="M181 270a8 8 0 1 1 16 0c0 6-8 13-8 13s-8-7-8-13z"/><path d="M391 138a8 8 0 1 1 16 0c0 6-8 13-8 13s-8-7-8-13z"/><path d="M443 437a8 8 0 1 1 16 0c0 6-8 13-8 13s-8-7-8-13z"/></g>
+      </svg>
+      <div class="site-heading" aria-hidden="true">どこかの風景共有サイト / 全国猫地図図鑑</div>
+      <div class="site-menu" aria-hidden="true"><i></i>MENU</div>
+      <p class="map-caption">架空地図 / デザイン比較用</p>
+
+      <article class="scenery-window" aria-labelledby="windowName">
+        <header class="window-titlebar" title="空いている部分をクリックすると折りたたみ / 復帰">
+          <span class="app-icon" aria-hidden="true"></span>
+          <h2 id="windowName" class="window-name">どこかの風景</h2>
+          <div class="window-controls" aria-label="ウィンドウ操作">
+            <button type="button" class="window-control is-minimize" aria-label="最小化" aria-expanded="true" aria-controls="windowBody"></button>
+            <button type="button" class="window-control is-maximize" aria-label="最大化 / 復元" aria-expanded="true" aria-controls="windowBody"></button>
+            <button type="button" class="window-control is-close" aria-label="閉じる（タイトルバーを残す）" aria-expanded="true" aria-controls="windowBody"></button>
+          </div>
+        </header>
+        <div class="window-content" id="windowBody">
+          <p class="scenery-count"><span><span class="count-label">登録された風景</span><span class="count-caption">SCENERY ARCHIVE</span></span><span class="count-value"><strong>27</strong><small>件</small></span></p>
+          <section aria-labelledby="filterHeading">
+            <h3 class="filter-heading" id="filterHeading">表示するもの</h3>
+            <div class="filter-actions"><button type="button" data-select="all">すべて表示</button><button type="button" data-select="none">すべて非表示</button></div>
+            <div class="category-list">
+              <label class="category-option"><input type="checkbox" value="cat" checked><span class="checkbox" aria-hidden="true"></span><span>ねこ</span><span class="category-code" aria-hidden="true">01</span></label>
+              <label class="category-option"><input type="checkbox" value="interesting" checked><span class="checkbox" aria-hidden="true"></span><span>気になった景色</span><span class="category-code" aria-hidden="true">02</span></label>
+              <label class="category-option"><input type="checkbox" value="mysterious" checked><span class="checkbox" aria-hidden="true"></span><span>不思議・おもしろい景色</span><span class="category-code" aria-hidden="true">03</span></label>
+              <label class="category-option"><input type="checkbox" value="eerie" checked><span class="checkbox" aria-hidden="true"></span><span>不気味</span><span class="category-code" aria-hidden="true">04</span></label>
+              <label class="category-option"><input type="checkbox" value="other" checked><span class="checkbox" aria-hidden="true"></span><span>その他</span><span class="category-code" aria-hidden="true">05</span></label>
+            </div>
+          </section>
+        </div>
+        <footer class="window-status"><span role="status"><span class="status-dot" aria-hidden="true"></span><span id="filterStatus">5 / 5 種類を表示</span></span><span class="status-code" aria-hidden="true">MAP VIEW</span></footer>
+      </article>
+    </div>
+  </main>
+  <footer class="preview-note"><p>3案共通：基準幅440px・サンプル27件。同じ背景 / 画面設定のまま、上のリンクで比較できます。</p><p>チェック・一括切替・折りたたみを試せます。地図・件数はサンプルです。本番データへの接続や保存は行いません。</p></footer>
+  <script>
+    // プレビュー内だけの状態。実サイトのスクリプト・localStorageは使用しない。
+    const stage = document.getElementById('stage');
+    const viewportSelect = document.getElementById('viewportSelect');
+    const backgroundSelect = document.getElementById('backgroundSelect');
+    const params = new URLSearchParams(location.search);
+    if (['responsive', 'landscape', 'portrait'].includes(params.get('viewport'))) viewportSelect.value = params.get('viewport');
+    if (['map', 'light', 'dark'].includes(params.get('background'))) backgroundSelect.value = params.get('background');
+    function updatePreview() {
+      stage.dataset.viewport = viewportSelect.value;
+      stage.dataset.background = backgroundSelect.value;
+      document.querySelectorAll('.design-nav a').forEach(link => {
+        const url = new URL(link.href);
+        url.searchParams.set('viewport', viewportSelect.value);
+        url.searchParams.set('background', backgroundSelect.value);
+        link.href = url.href;
+      });
+    }
+    viewportSelect.addEventListener('change', updatePreview);
+    backgroundSelect.addEventListener('change', updatePreview);
+    updatePreview();
+    const checkboxes = [...document.querySelectorAll('.category-option input')];
+    function updateFilters() {
+      document.getElementById('filterStatus').textContent = `${checkboxes.filter(input => input.checked).length} / 5 種類を表示`;
+    }
+    checkboxes.forEach(input => input.addEventListener('change', updateFilters));
+    document.querySelectorAll('[data-select]').forEach(button => button.addEventListener('click', () => {
+      checkboxes.forEach(input => { input.checked = button.dataset.select === 'all'; });
+      updateFilters();
+    }));
+    const card = document.querySelector('.scenery-window');
+    function setCollapsed(collapsed) {
+      card.classList.toggle('is-collapsed', collapsed);
+      card.querySelectorAll('.window-control').forEach(button => button.setAttribute('aria-expanded', String(!collapsed)));
+    }
+    document.querySelector('.window-titlebar').addEventListener('click', event => {
+      if (!event.target.closest('button')) setCollapsed(!card.classList.contains('is-collapsed'));
+    });
+    document.querySelectorAll('.window-control').forEach(button => button.addEventListener('click', event => {
+      event.stopPropagation();
+      setCollapsed(button.classList.contains('is-maximize') ? !card.classList.contains('is-collapsed') : true);
+    }));
+  </script>
+</body>
+</html>
