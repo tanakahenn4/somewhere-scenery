@@ -1952,6 +1952,53 @@ background:
   #sceneryDetailCard.scenery-window-frame .map-overview-actions button { padding-inline: 8px; }
 }
 </style>
+<style id="sceneryWindowTabsTheme">
+#sceneryDetailCard[data-window-mode="map"] .window-name { display: none; }
+#sceneryWindowTabs {
+  position: absolute; left: 0; top: 5px; height: 30px;
+  width: calc(100% - 110px); display: flex; align-items: stretch;
+}
+#sceneryWindowTabs[hidden] { display: none; }
+#sceneryWindowTabs [role="tab"] {
+  position: relative; isolation: isolate; min-width: 0; margin: 0;
+  padding: 0 16px; border: 0; border-radius: 0;
+  background: transparent; color: #644d81; cursor: pointer;
+  font: 320 16px/normal "Segoe UI", "Yu Gothic UI", sans-serif;
+  letter-spacing: .02em; white-space: nowrap;
+  clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 100%, 0 100%);
+}
+#sceneryOverviewTab { flex: 1; text-align: left; }
+#scenerySettingsTab { flex: 0 0 76px; text-align: left; }
+#sceneryWindowTabs [aria-selected="true"] { color: #fff9ff; background: #290e4d; }
+#sceneryWindowTabs [aria-selected="true"]::before {
+  content: ""; position: absolute; inset: 2px; z-index: -1;
+  background: #4432b7;
+  clip-path: polygon(0 0, calc(100% - 23px) 0, 100% 100%, 0 100%);
+}
+#sceneryWindowTabs [role="tab"]:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+#sceneryWindowSettings { color: #211c1c; }
+#sceneryWindowSettings fieldset { margin: 0; padding: 12px; border: 1px solid #aa94bf; }
+#sceneryWindowSettings legend { padding: 0 4px; font-size: 16px; }
+#sceneryWindowSettings label { display: flex; align-items: center; gap: 8px; padding: 5px 0; cursor: pointer; }
+#sceneryWindowSettings input { margin: 0; accent-color: #4432b7; }
+#sceneryWindowSettings button {
+  margin-top: 12px; padding: 6px 14px; color: #654b79; background: #e9ddef;
+  border: 1px solid #bda6cf; box-shadow: inset 1px 1px #fff7ff, inset -1px -1px #d8c6e5;
+  font: inherit; cursor: pointer;
+}
+@media (orientation: landscape) and (max-height: 600px) and (hover: none) and (pointer: coarse) {
+  #sceneryWindowTabs { top: 2px; height: 17px; width: calc(100% - 78px); }
+  #sceneryWindowTabs [role="tab"] {
+    padding: 0 4px; font-size: 11px;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 100%, 0 100%);
+  }
+  #scenerySettingsTab { flex-basis: 36px; }
+  #sceneryWindowTabs [aria-selected="true"]::before {
+    inset: 1px; clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 100%, 0 100%);
+  }
+  #sceneryWindowSettings { padding: 8px 10px; font-size: 12px; }
+}
+</style>
 </head>
 
 <body>
@@ -1968,13 +2015,17 @@ background:
       <section id="sceneryDetailCard" class="scenery-window scenery-window-frame" aria-label="風景の詳細" aria-live="polite" hidden>
         <header class="window-titlebar">
           <span id="sceneryDetailWindowName" class="window-name">メモ帳</span>
+          <div id="sceneryWindowTabs" role="tablist" aria-label="ウィンドウの内容" hidden>
+            <button id="sceneryOverviewTab" type="button" role="tab" aria-selected="true" aria-controls="sceneryMapOverview" data-scenery-tab="overview">どこかの風景</button>
+            <button id="scenerySettingsTab" type="button" role="tab" aria-selected="false" aria-controls="sceneryWindowSettings" tabindex="-1" data-scenery-tab="settings">設定</button>
+          </div>
           <div class="window-controls" aria-label="ウィンドウ操作">
             <button id="sceneryDetailMinimizeButton" class="window-control is-minimize" type="button" aria-label="最小化"></button>
             <button id="sceneryDetailMaximizeButton" class="window-control is-maximize" type="button" aria-label="最大化"></button>
             <button id="sceneryDetailCloseButton" class="window-control is-close" type="button" aria-label="詳細カードを収納" title="詳細カードを収納"></button>
           </div>
         </header>
-        <div id="sceneryMapOverview" class="window-content map-overview-content" hidden>
+        <div id="sceneryMapOverview" class="window-content map-overview-content" role="tabpanel" aria-labelledby="sceneryOverviewTab" hidden>
           <p class="map-overview-count"><span class="map-overview-count-label">登録された風景</span><strong id="registeredSceneryCount">0</strong></p>
           <section class="map-overview-filters" aria-labelledby="mapOverviewFiltersTitle">
             <h2 id="mapOverviewFiltersTitle">表示するもの</h2>
@@ -1988,6 +2039,14 @@ background:
             <label><input type="checkbox" value="creepy" data-marker-category checked>不気味</label>
             <label><input type="checkbox" value="other" data-marker-category checked>その他</label>
           </section>
+        </div>
+        <div id="sceneryWindowSettings" class="window-content" role="tabpanel" aria-labelledby="scenerySettingsTab" hidden>
+          <fieldset>
+            <legend>地図の種類</legend>
+            <label><input type="radio" name="windowMapType" data-map-type value="roadmap">地図</label>
+            <label><input type="radio" name="windowMapType" data-map-type value="satellite">航空写真</label>
+          </fieldset>
+          <button type="button" data-fullscreen-toggle title="全画面表示" aria-label="全画面表示">全画面表示</button>
         </div>
         <div class="window-content scenery-detail-content">
           <header class="post-header">
@@ -2081,10 +2140,10 @@ background:
           <h2>設定</h2>
           <fieldset id="mapTypeSettings">
             <legend>地図の種類</legend>
-            <label><input type="radio" name="mapType" value="roadmap">地図</label>
-            <label><input type="radio" name="mapType" value="satellite">航空写真</label>
+            <label><input type="radio" name="mapType" data-map-type value="roadmap">地図</label>
+            <label><input type="radio" name="mapType" data-map-type value="satellite">航空写真</label>
           </fieldset>
-          <button id="fullscreenButton" type="button" title="全画面表示" aria-label="全画面表示">全画面表示</button>
+          <button id="fullscreenButton" data-fullscreen-toggle type="button" title="全画面表示" aria-label="全画面表示">全画面表示</button>
         </section>
 
         <section class="sidePanelPage" data-side-panel-page="about" hidden>
@@ -2231,6 +2290,7 @@ let activeSceneryDetailPano = null;
 let activeSceneryDetailData = null;
 let activeSceneryDetailMarker = null;
 let sceneryDetailCollapsedByUser = false;
+let sceneryWindowTab = "overview";
 let pendingPanoramaViewListener = null;
 let mapToastTimer = null;
 const STORAGE_KEY = "catsmap_markers";
@@ -2414,6 +2474,7 @@ function initMap() {
   setupRandomViewButton();
   setupStreetViewExitShortcut();
   setupSceneryDetailCardToggle();
+  setupSceneryWindowTabs();
   showMapOverviewWindow();
 
     panorama.addListener('pov_changed', () => {
@@ -2564,7 +2625,7 @@ function setupLayerMenu() {
 }
 
 function setupMapTypeSettings() {
-  const options = document.querySelectorAll('input[name="mapType"]');
+  const options = document.querySelectorAll('input[data-map-type]');
 
   const updateSelection = () => {
     const currentMapType = map.getMapTypeId();
@@ -2603,11 +2664,41 @@ function getCreatedAtMillis(createdAt) {
 
 function setSceneryWindowContentMode(mode) {
   const isMapMode = mode === "map";
+  document.getElementById("sceneryDetailCard").dataset.windowMode = mode;
+  document.getElementById("sceneryWindowTabs").hidden = !isMapMode;
   document.getElementById("sceneryDetailWindowName").textContent =
     isMapMode ? "どこかの風景" : "メモ帳";
-  document.getElementById("sceneryMapOverview").hidden = !isMapMode;
+  document.getElementById("sceneryMapOverview").hidden = !isMapMode || sceneryWindowTab !== "overview";
+  document.getElementById("sceneryWindowSettings").hidden = !isMapMode || sceneryWindowTab !== "settings";
   document.querySelector("#sceneryDetailCard .scenery-detail-content").hidden = isMapMode;
   document.querySelector("#sceneryDetailCard .scenery-detail-footer").hidden = isMapMode;
+}
+
+function setupSceneryWindowTabs() {
+  const tabs = [...document.querySelectorAll("[data-scenery-tab]")];
+  const selectTab = tab => {
+    sceneryWindowTab = tab.dataset.sceneryTab;
+    tabs.forEach(item => {
+      const selected = item === tab;
+      item.setAttribute("aria-selected", String(selected));
+      item.tabIndex = selected ? 0 : -1;
+    });
+    setSceneryWindowContentMode(document.getElementById("sceneryDetailCard").dataset.windowMode || "map");
+  };
+  tabs.forEach((tab, index) => {
+    tab.addEventListener("click", event => {
+      event.stopPropagation();
+      selectTab(tab);
+    });
+    tab.addEventListener("keydown", event => {
+      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const target = event.key === "Home" ? tabs[0] : event.key === "End" ? tabs[tabs.length - 1] : tabs[(index + 1) % tabs.length];
+      selectTab(target);
+      target.focus();
+    });
+  });
 }
 
 function updateRegisteredSceneryCount() {
@@ -3477,10 +3568,10 @@ function getSearchResultZoom(types = []) {
 
 function setupFullscreenButton() {
   const app = document.getElementById("app");
-  const button = document.getElementById("fullscreenButton");
-  if (!app || !button) return;
+  const buttons = document.querySelectorAll("[data-fullscreen-toggle]");
+  if (!app || !buttons.length) return;
 
-  button.addEventListener("click", async () => {
+  const toggleFullscreen = async () => {
     try {
       if (document.fullscreenElement === app) {
         await document.exitFullscreen();
@@ -3490,13 +3581,16 @@ function setupFullscreenButton() {
     } catch (e) {
       console.warn("全画面表示の切り替えに失敗しました:", e);
     }
-  });
+  };
+  buttons.forEach(button => button.addEventListener("click", toggleFullscreen));
 
   document.addEventListener("fullscreenchange", () => {
     const isFullscreen = document.fullscreenElement === app;
+    buttons.forEach(button => {
     button.textContent = isFullscreen ? "全画面を終了" : "全画面表示";
     button.title = isFullscreen ? "全画面を終了" : "全画面表示";
     button.setAttribute("aria-label", button.title);
+    });
 
     setTimeout(() => {
       const center = map && map.getCenter ? map.getCenter() : null;
