@@ -1821,13 +1821,15 @@ background:
 <style id="sceneryWindowFrameTheme">
 /* フレーム版プレビューの外観。旧デザインは上に保存し、機能のDOM/JSは共用する。 */
 #sceneryDetailCardViewport { --detail-window-width: 500px; }
+/* ウィンドウ外側の薄い影を親要素で切り取らない。 */
+#sceneryDetailCardViewport:has(#sceneryDetailCard.scenery-window-frame) { overflow: visible; }
 #sceneryDetailCard.scenery-window-frame {
   isolation: isolate;
   padding: 0 6px 6px 5px;
   background: #82709e;
   border: 0;
   border-radius: 2px;
-  box-shadow: none;
+  box-shadow: 7px 8px 14px rgba(45, 30, 60, 0.12);
 }
 #sceneryDetailCard.scenery-window-frame::before {
   content: ""; position: absolute; inset: 2px; z-index: -1;
