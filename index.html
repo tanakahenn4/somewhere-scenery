@@ -1861,6 +1861,7 @@ background:
   width: min(330px, calc(100% - 110px)); height: 30px;
   display: flex; align-items: center; padding: 0 16px; margin: 0;
   color: #fff9ff; background: var(--window-tab-edge);
+  border-radius: 5px 0 0 0;
   clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 100%, 0 100%);
   font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
   font-size: 16px; font-weight: 320; letter-spacing: .02em;
@@ -1869,6 +1870,7 @@ background:
 #sceneryDetailCard.scenery-window-frame .window-name::before {
   content: ""; position: absolute; inset: 2px; z-index: -1;
   background: var(--window-tab-active); pointer-events: none;
+  border-radius: 3px 0 0 0;
   clip-path: polygon(0 0, calc(100% - 23px) 0, 100% 100%, 0 100%);
 }
 #sceneryDetailCard.scenery-window-frame .window-controls { gap: 5px; margin-left: auto; }
@@ -1994,6 +1996,7 @@ background:
   }
   #sceneryDetailCard.scenery-window-frame .window-name::before {
     inset: 1px; clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 100%, 0 100%);
+    border-top-left-radius: 4px;
   }
   #sceneryDetailCard.scenery-window-frame .window-controls { gap: 3px; }
   #sceneryDetailCard.scenery-window-frame .window-control { width: 22px; min-width: 22px; height: 18px; min-height: 18px; }
@@ -2024,6 +2027,8 @@ background:
   clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 100%, 0 100%);
 }
 #sceneryOverviewTab { flex: 0 1 auto; text-align: left; z-index: 1; }
+#sceneryWindowTabs #sceneryOverviewTab { border-radius: 5px 0 0 0; }
+#sceneryWindowTabs #sceneryOverviewTab::before { border-radius: 3px 0 0 0; }
 #scenerySettingsTab { flex: 0 1 auto; text-align: left; }
 #sceneryWindowTabs [aria-selected="true"] { color: #fff9ff; background: var(--window-tab-edge); }
 #sceneryWindowTabs [role="tab"][aria-selected="true"] { padding-right: 208px; }
@@ -2063,6 +2068,7 @@ background:
   #sceneryWindowTabs [role="tab"]::before {
     inset: 1px; clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 100%, 0 100%);
   }
+  #sceneryWindowTabs #sceneryOverviewTab::before { border-top-left-radius: 4px; }
   #sceneryWindowTabs #scenerySettingsTab {
     clip-path: polygon(-8px 0, calc(100% - 8px) 0, 100% 100%, 0 100%);
   }
