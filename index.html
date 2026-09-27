@@ -1824,9 +1824,19 @@ background:
 /* ウィンドウ外側の薄い影を親要素で切り取らない。 */
 #sceneryDetailCardViewport:has(#sceneryDetailCard.scenery-window-frame) { overflow: visible; }
 #sceneryDetailCard.scenery-window-frame {
+  --window-surface: #e3cffc;
+  --window-text: #1a1139;
+  --window-tab-active: #4432b7;
+  --window-tab-edge: #290e4d;
+  --window-tab-inactive: #e9dcf4;
+  --window-button-surface: #e9ddef;
+  --window-button-text: #654b79;
+  --window-button-border: #bda6cf;
+  --window-panel-edge: #aa94bf;
+  --window-accent: #a38bc7;
   isolation: isolate;
   padding: 0 6px 6px 5px;
-  background: #c0a6fc;
+  background: #2b1c4d;
   border: 0;
   border-radius: 2px;
   box-shadow: 7px 8px 14px rgba(45, 30, 60, 0.12);
@@ -1850,7 +1860,7 @@ background:
   position: absolute; isolation: isolate; left: 0; top: 5px;
   width: min(330px, calc(100% - 110px)); height: 30px;
   display: flex; align-items: center; padding: 0 16px; margin: 0;
-  color: #fff9ff; background: #290e4d;
+  color: #fff9ff; background: var(--window-tab-edge);
   clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 100%, 0 100%);
   font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
   font-size: 16px; font-weight: 320; letter-spacing: .02em;
@@ -1858,13 +1868,13 @@ background:
 }
 #sceneryDetailCard.scenery-window-frame .window-name::before {
   content: ""; position: absolute; inset: 2px; z-index: -1;
-  background: #4432b7; pointer-events: none;
+  background: var(--window-tab-active); pointer-events: none;
   clip-path: polygon(0 0, calc(100% - 23px) 0, 100% 100%, 0 100%);
 }
 #sceneryDetailCard.scenery-window-frame .window-controls { gap: 5px; margin-left: auto; }
 #sceneryDetailCard.scenery-window-frame .window-control {
   width: 29px; min-width: 29px; height: 25px; min-height: 25px;
-  color: #644d81; background: #e9dcf4; border: 1px solid #ad95c7;
+  color: #644d81; background: var(--window-tab-inactive); border: 1px solid #ad95c7;
   box-shadow: inset 1px 1px #fff4ff, inset -1px -1px #c6b1dd; border-radius: 1px;
 }
 #sceneryDetailCard.scenery-window-frame .window-control.is-close {
@@ -1883,11 +1893,12 @@ background:
 }
 #sceneryDetailCard.scenery-window-frame .is-close::after { transform: rotate(-45deg); }
 #sceneryDetailCard.scenery-window-frame .window-content {
-  border: 2px solid; border-color: #aa94bf #f8edff #f8edff #aa94bf;
+  color: var(--window-text); background: var(--window-surface);
+  border: 2px solid; border-color: var(--window-panel-edge) #f8edff #f8edff var(--window-panel-edge);
   box-shadow: inset 1px 1px #e1d3e6;
 }
 #sceneryDetailCard.scenery-window-frame .map-overview-content {
-  padding: 21px 22px 20px; color: #1a1139; background: #e3cffc; line-height: normal;
+  padding: 21px 22px 20px; color: var(--window-text); background: var(--window-surface); line-height: normal;
 }
 #sceneryDetailCard.scenery-window-frame .map-overview-count {
   display: flex; align-items: center; justify-content: space-between;
@@ -1905,12 +1916,12 @@ background:
 }
 #sceneryDetailCard.scenery-window-frame .map-overview-filters h2 {
   margin: -19px 0 12px 1px; font-size: 17px; font-weight: 400;
-  letter-spacing: .06em; color: #1a1139; line-height: normal;
+  letter-spacing: .06em; color: var(--window-text); line-height: normal;
 }
 #sceneryDetailCard.scenery-window-frame .map-overview-actions { gap: 8px; margin-bottom: 14px; }
 #sceneryDetailCard.scenery-window-frame .map-overview-actions button {
-  min-height: 31px; padding: 5px 14px; color: #654b79; background: #e9ddef;
-  border: 1px solid #bda6cf; box-shadow: inset 1px 1px #fff7ff, inset -1px -1px #d8c6e5;
+  min-height: 31px; padding: 5px 14px; color: var(--window-button-text); background: var(--window-button-surface);
+  border: 1px solid var(--window-button-border); box-shadow: inset 1px 1px #fff7ff, inset -1px -1px #d8c6e5;
   font: 400 12px/normal "Segoe UI", "Yu Gothic UI", sans-serif; border-radius: 1px;
 }
 #sceneryDetailCard.scenery-window-frame .map-overview-actions button:last-child { background: #f8eff7; }
@@ -1923,10 +1934,47 @@ background:
   left: 3px; border: 1px solid #9276b9;
   box-shadow: inset 1px 1px #c2addc, 1px 1px #fff;
 }
-#sceneryDetailCard.scenery-window-frame .map-overview-filters label:has(input:checked)::before { background: #a38bc7; }
+#sceneryDetailCard.scenery-window-frame .map-overview-filters label:has(input:checked)::before { background: var(--window-accent); }
 #sceneryDetailCard.scenery-window-frame .map-overview-filters label::after {
   left: 9px; width: 4px; height: 8px; border-color: #fffaff; border-width: 0 2px 2px 0;
 }
+/* Street Viewも地図概要のパレットを共用。寸法とスクロール構造は既存のまま。 */
+#sceneryDetailCard.scenery-window-frame #sceneryDetailTitle,
+#sceneryDetailCard.scenery-window-frame #sceneryDetailMemo,
+#sceneryDetailCard.scenery-window-frame #sceneryDetailDate { color: var(--window-text); }
+#sceneryDetailCard.scenery-window-frame[data-detail-state="registered"] .scenery-detail-content:hover {
+  background-color: #eee2f4;
+}
+#sceneryDetailCard.scenery-window-frame .window-footer {
+  background: var(--window-tab-inactive); border-top-color: var(--window-panel-edge);
+}
+#sceneryDetailCard.scenery-window-frame #sceneryDetailActions button {
+  color: var(--window-button-text); background: var(--window-button-surface);
+  border-color: var(--window-button-border);
+}
+#sceneryDetailCard.scenery-window-frame #sceneryDetailActions button:hover {
+  border-color: var(--window-accent);
+  box-shadow: inset 0 -2px 0 #d8c6e5;
+}
+#sceneryDetailCard.scenery-window-frame #sceneryDetailLikeButton.is-liked {
+  color: var(--window-tab-active); background: var(--window-tab-inactive);
+  border-color: var(--window-accent);
+}
+#sceneryDetailCard.scenery-window-frame #sceneryDetailDeleteButton {
+  color: #835b79 !important;
+}
+#sceneryDetailCard.scenery-window-frame #sceneryDetailDeleteButton:hover {
+  border-color: #bb99b8 !important;
+  box-shadow: inset 0 -2px 0 #efd2e4 !important;
+}
+#sceneryDetailCard.scenery-window-frame .post-body {
+  scrollbar-color: var(--window-accent) var(--window-surface);
+}
+#sceneryDetailCard.scenery-window-frame .post-body::-webkit-scrollbar-track { background: var(--window-surface); }
+#sceneryDetailCard.scenery-window-frame .post-body::-webkit-scrollbar-thumb {
+  background: var(--window-accent); border-color: var(--window-surface);
+}
+#sceneryDetailCard.scenery-window-frame .post-body::-webkit-scrollbar-thumb:hover { background: #9276b9; }
 /* 狭い画面だけは、実データの件数・操作部を枠内に収める。 */
 @media (max-width: 520px) {
   #sceneryDetailCard.scenery-window-frame .map-overview-content { padding: 14px 10px; }
@@ -1971,13 +2019,13 @@ background:
 }
 #sceneryOverviewTab { flex: 0 1 auto; text-align: left; z-index: 1; }
 #scenerySettingsTab { flex: 0 1 auto; text-align: left; }
-#sceneryWindowTabs [aria-selected="true"] { color: #fff9ff; background: #290e4d; }
+#sceneryWindowTabs [aria-selected="true"] { color: #fff9ff; background: var(--window-tab-edge); }
 #sceneryWindowTabs [role="tab"]::before {
   content: ""; position: absolute; inset: 2px; z-index: -1;
-  background: #e9dcf4;
+  background: var(--window-tab-inactive);
   clip-path: polygon(0 0, calc(100% - 23px) 0, 100% 100%, 0 100%);
 }
-#sceneryWindowTabs [aria-selected="true"]::before { background: #4432b7; }
+#sceneryWindowTabs [aria-selected="true"]::before { background: var(--window-tab-active); }
 /* 設定の色面だけを前タブの斜め端まで延ばし、文字とタブ幅は維持する。 */
 #sceneryWindowTabs #scenerySettingsTab {
   margin-left: -2px;
