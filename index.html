@@ -135,7 +135,7 @@
   }
 
   #randomViewCard:hover,
-  #randomViewCard:focus-within {
+  #randomViewCard.is-keyboard-focused {
     transform: translate(-50%, 0);
   }
 
@@ -166,7 +166,7 @@
     width: 432px;
     height: 220px;
     padding: 8px;
-    border-radius: 8px;
+    border-radius: 19px;
     color: #ffd0ee;
     background: #203eb3;
   }
@@ -177,7 +177,7 @@
     height: 100%;
     padding: 0 9px 8px;
     border: 1px solid #ec9fd7;
-    border-radius: 6px;
+    border-radius: 13px;
     background: linear-gradient(135deg, #1735a7, #192995 65%, #293bb0);
   }
 
@@ -1783,14 +1783,12 @@ background:
     --random-card-visible-height: 76px;
   }
 
-  #randomViewCard:hover,
-  #randomViewCard:focus-within {
+  #randomViewCard:hover {
     transform: translate(-50%, calc(100% - var(--random-card-visible-height)));
   }
 
   #randomViewCard.is-touch-expanded,
-  #randomViewCard.is-touch-expanded:hover,
-  #randomViewCard.is-touch-expanded:focus-within {
+  #randomViewCard.is-touch-expanded:hover {
     transform: translate(-50%, 0);
   }
 
@@ -1982,14 +1980,12 @@ background:
     touch-action: none;
   }
 
-  #randomViewCard:hover,
-  #randomViewCard:focus-within {
+  #randomViewCard:hover {
     transform: translate(-50%, calc(100% - var(--random-card-visible-height)));
   }
 
   #randomViewCard.is-touch-expanded,
-  #randomViewCard.is-touch-expanded:hover,
-  #randomViewCard.is-touch-expanded:focus-within {
+  #randomViewCard.is-touch-expanded:hover {
     transform: translate(-50%, 0);
   }
 
@@ -3480,6 +3476,27 @@ function setupRandomViewButton() {
   let activeTouchPointerId = null;
   let suppressNextClick = false;
   let suppressClickTimer = null;
+  let keyboardInteraction = false;
+
+  document.addEventListener("keydown", event => {
+    if (["Shift", "Control", "Alt", "Meta"].includes(event.key)) return;
+    keyboardInteraction = true;
+    if (card.contains(document.activeElement)) {
+      card.classList.add("is-keyboard-focused");
+    }
+  }, true);
+
+  card.addEventListener("focusin", () => {
+    if (keyboardInteraction) card.classList.add("is-keyboard-focused");
+  });
+
+  card.addEventListener("focusout", () => {
+    requestAnimationFrame(() => {
+      if (!card.contains(document.activeElement)) {
+        card.classList.remove("is-keyboard-focused");
+      }
+    });
+  });
 
   button.addEventListener("pointerdown", event => {
     if (!landscapeTouchMedia.matches || event.pointerType === "mouse" || !event.isPrimary) return;
@@ -3519,6 +3536,8 @@ function setupRandomViewButton() {
   updatePanoramaHistoryControls();
 
   document.addEventListener("pointerdown", event => {
+    keyboardInteraction = false;
+    card.classList.remove("is-keyboard-focused");
     if (!touchOnlyMedia.matches || !card.classList.contains("is-touch-expanded")) return;
     if (!card.contains(event.target)) card.classList.remove("is-touch-expanded");
   });
