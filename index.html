@@ -118,43 +118,212 @@
     background: #1a73e8;
   }
 
-  #randomViewButton {
+  #randomViewCard {
     --random-card-visible-height: 68px;
+    --random-card-scale: 1;
     position: fixed;
     left: calc(50% + clamp(100px, 24vw, 475px));
     bottom: 34px;
     z-index: 1001;
     display: block;
-    width: clamp(278px, 89.5vw, 487px);
-    padding: 0;
+    width: min(432px, calc(100vw - 24px));
+    height: 220px;
     margin: 0;
-    line-height: 0;
-    background: transparent;
-    border: 0;
-    cursor: pointer;
     transform: translate(-50%, calc(100% - var(--random-card-visible-height)));
     transform-origin: center bottom;
     transition: transform 0.28s ease-out;
   }
 
-  #randomViewButton:hover,
-  #randomViewButton:focus-visible {
+  #randomViewCard:hover,
+  #randomViewCard:focus-within {
     transform: translate(-50%, 0);
+  }
+
+  #randomViewCard #scenery-card-integrated,
+  #randomViewCard #scenery-card-integrated * {
+    box-sizing: border-box;
+  }
+
+  #randomViewCard #scenery-card-integrated {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 432px;
+    height: 220px;
+    color: #ffd0ee;
+    font-family: system-ui, sans-serif;
+    transform: scale(var(--random-card-scale));
+    transform-origin: top left;
+  }
+
+  #randomViewCard .ticket-scale-box {
+    position: relative;
+    width: 432px;
+    height: 220px;
+  }
+
+  #randomViewCard .ticket {
+    position: relative;
+    width: 432px;
+    height: 220px;
+    padding: 8px;
+    border-radius: 8px;
+    color: #ffd0ee;
+    background: #203eb3;
+  }
+
+  #randomViewCard .face {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 0 9px 8px;
+    border: 1px solid #ec9fd7;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #1735a7, #192995 65%, #293bb0);
+  }
+
+  #randomViewCard button {
+    color: inherit;
+    font: inherit;
+  }
+
+  #randomViewButton.jump {
+    flex: 0 0 auto;
+    width: 100%;
+    padding: 0 3px 9px;
+    margin: 0;
+    border: 0;
+    color: inherit;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
   }
 
   #randomViewButton:focus-visible {
     outline: 2px solid rgba(255, 255, 255, 0.9);
-    outline-offset: 3px;
+    outline-offset: 2px;
   }
 
-  #randomViewButtonImage {
+  #randomViewCard .topline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+    min-height: 30px;
+    border-bottom: 1px solid #e99fce;
+    font: 500 10px ui-monospace, monospace;
+  }
+
+  #randomViewCard .mark {
     display: block;
-    width: 100%;
-    height: auto;
-    pointer-events: none;
+    width: fit-content;
+    margin: 7px 0 0 auto;
+    letter-spacing: 0.16em;
+    font-size: 12px;
+    text-align: right;
   }
 
-  #randomViewButton.is-tapping #randomViewButtonImage {
+  #randomViewCard strong {
+    display: block;
+    width: fit-content;
+    margin: 4px 0 6px;
+    font-size: 24px;
+  }
+
+  #randomViewCard .subtitle {
+    display: inline-block;
+    width: fit-content;
+    font: 600 11px ui-monospace, monospace;
+    letter-spacing: 0.10em;
+  }
+
+  #randomViewCard .topline span,
+  #randomViewCard strong,
+  #randomViewCard .subtitle,
+  #randomViewCard .mark {
+    white-space: nowrap;
+  }
+
+  #randomViewHistoryControls.footer {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: minmax(12px, 1fr) auto auto;
+    gap: 7px;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid #e99fce;
+  }
+
+  #randomViewCard .barcode {
+    position: relative;
+    display: block;
+    width: 259px;
+    height: 40px;
+    overflow: hidden;
+    translate: 5px 1px;
+  }
+
+  #randomViewCard .barcode-clip {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 6px;
+    right: 80px;
+    overflow: hidden;
+  }
+
+  #randomViewCard .barcode-track {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    width: max-content;
+    height: 64px;
+    transform: translate(-6px, -1px);
+    transform-origin: top left;
+  }
+
+  #randomViewCard .barcode-bar {
+    flex: 0 0 auto;
+    display: block;
+    height: 40px;
+    background: #edacd7;
+  }
+
+  #randomViewCard .history {
+    min-height: 44px;
+    padding: 0 8px;
+    margin: 0;
+    border: 1px solid #eab0dc;
+    border-radius: 4px;
+    color: inherit;
+    background: #293fa4;
+    white-space: nowrap;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  #randomViewCard button:enabled:hover {
+    background: #4056b6;
+  }
+
+  #randomViewCard .history:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+
+  #randomViewCard .history:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  #randomViewCard .topline span:first-child { font-size: 15px; translate: 6px 1px; }
+  #randomViewCard .topline span:last-child { font-size: 14px; translate: 0 1px; }
+  #randomViewCard .mark { font-size: 12px; translate: 0 0; }
+  #randomViewCard strong { font-size: 35px; translate: 7px 3px; }
+  #randomViewCard .subtitle { font-size: 20px; translate: 167px 5px; }
+
+  #randomViewCard.is-tapping .ticket {
     animation: random-view-card-tap 190ms ease-out;
   }
 
@@ -1561,7 +1730,7 @@ background:
     --side-navigation-width: 42px;
   }
 
-  #randomViewButton {
+  #randomViewCard {
     left: 50%;
     width: min(89vw, 363px);
     bottom: 66px;
@@ -1610,12 +1779,30 @@ background:
 }
 
 @media (hover: none) {
-  #randomViewButton {
+  #randomViewCard {
     --random-card-visible-height: 76px;
   }
 
-  #randomViewButton:focus-visible {
+  #randomViewCard:hover,
+  #randomViewCard:focus-within {
+    transform: translate(-50%, calc(100% - var(--random-card-visible-height)));
+  }
+
+  #randomViewCard.is-touch-expanded,
+  #randomViewCard.is-touch-expanded:hover,
+  #randomViewCard.is-touch-expanded:focus-within {
     transform: translate(-50%, 0);
+  }
+
+  #randomViewHistoryControls .history {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.16s ease-out;
+  }
+
+  #randomViewCard.is-touch-expanded #randomViewHistoryControls .history {
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 
@@ -1787,7 +1974,7 @@ background:
     min-height: 25px;
   }
 
-  #randomViewButton {
+  #randomViewCard {
     --random-card-visible-height: 21px;
     left: 50%;
     bottom: 34px;
@@ -1795,15 +1982,23 @@ background:
     touch-action: none;
   }
 
-  #randomViewButton:hover,
-  #randomViewButton:focus-visible {
+  #randomViewCard:hover,
+  #randomViewCard:focus-within {
     transform: translate(-50%, calc(100% - var(--random-card-visible-height)));
   }
 
-  #randomViewButton.is-touch-expanded,
-  #randomViewButton.is-touch-expanded:hover,
-  #randomViewButton.is-touch-expanded:focus-visible {
+  #randomViewCard.is-touch-expanded,
+  #randomViewCard.is-touch-expanded:hover,
+  #randomViewCard.is-touch-expanded:focus-within {
     transform: translate(-50%, 0);
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #randomViewCard,
+  #randomViewHistoryControls .history {
+    transition: none;
   }
 }
 
@@ -2359,9 +2554,27 @@ background:
   </form>
 </div>
 
-<button id="randomViewButton" type="button" aria-label="どこかの風景へランダム移動">
-  <img id="randomViewButtonImage" src="images/random-view-card-v2-200kb.webp" alt="">
-</button>
+<div id="randomViewCard" role="group" aria-label="どこかの風景 ICカード">
+  <div id="scenery-card-integrated">
+    <div class="ticket-scale-box">
+      <div class="ticket">
+        <div class="face">
+          <button id="randomViewButton" class="jump" type="button" aria-label="どこかの風景へランダム移動">
+            <span class="topline" aria-hidden="true"><span>◀ DESTINATION: SOMEWHERE UNKNOWN</span><span>No. 0017</span></span>
+            <span class="mark" aria-hidden="true">IC CARD</span>
+            <strong>どこかの風景へランダム移動</strong>
+            <span class="subtitle" aria-hidden="true">RANDOM VIEW ACCESS</span>
+          </button>
+          <nav id="randomViewHistoryControls" class="footer" aria-label="風景の移動履歴">
+            <span class="barcode" aria-hidden="true"><span class="barcode-clip"><span class="barcode-track"></span></span></span>
+            <button id="randomViewHistoryBack" class="history" type="button" disabled>◀ 戻る</button>
+            <button id="randomViewHistoryForward" class="history" type="button" disabled>進む ▶</button>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="controls">
   <!-- JSON系を上に -->
@@ -2401,6 +2614,9 @@ let activeSceneryDetailMarker = null;
 let sceneryDetailCollapsedByUser = false;
 let sceneryWindowTab = "overview";
 let pendingPanoramaViewListener = null;
+let pendingPanoramaViewTimer = null;
+let cancelPendingPanoramaView = null;
+let panoramaHistoryNavigationPending = false;
 let mapToastTimer = null;
 const STORAGE_KEY = "catsmap_markers";
 const LIKED_MARKER_IDS_STORAGE_KEY = "somewhere_scenery_liked_marker_ids_v1";
@@ -2423,6 +2639,8 @@ const MAP_MARKER_TITLE_MAX_SIZE = 18;
 const MAP_MARKER_TITLE_MIN_SIZE = 11.5;
 const visibleMarkerCategories = new Set(markerCategories);
 let sceneryListMode = "latest";
+let panoramaViewHistory = [];
+let panoramaViewHistoryIndex = -1;
 
 function parseLikedMarkerIds(rawValue) {
   if (!rawValue) return [];
@@ -2672,9 +2890,12 @@ async function searchAddressOrPano() {
       const streetViewService = new google.maps.StreetViewService();
       const { data } = await streetViewService.getPanorama({ pano: input });
       if (data && data.location && data.location.pano) {
-        panorama.setPano(data.location.pano);
-        panorama.setPov({ heading: 0, pitch: 0, zoom: 1 });
-        panorama.setVisible(true);
+        showPanorama({
+          pano: data.location.pano,
+          heading: 0,
+          pitch: 0,
+          zoom: 1
+        });
         return;
       }
     } catch (e) {
@@ -3050,8 +3271,205 @@ function showSavedSceneryView(jsonData, marker = null) {
   return true;
 }
 
+function getPanoramaHistoryLabel(entry) {
+  const detailData = entry?.detailData;
+  if (typeof detailData?.title === "string" && detailData.title.trim()) {
+    return detailData.title.trim();
+  }
+  if (typeof detailData?.locationName === "string" && detailData.locationName.trim()) {
+    return detailData.locationName.trim();
+  }
+  return "Street View";
+}
+
+function getPanoramaHistoryKey(data = {}) {
+  const numberOrNull = value => {
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.round(number * 1000) / 1000 : null;
+  };
+  if (data.mapView) {
+    return JSON.stringify({
+      map: true,
+      lat: numberOrNull(data.mapView.lat),
+      lng: numberOrNull(data.mapView.lng),
+      zoom: numberOrNull(data.mapView.zoom)
+    });
+  }
+  return JSON.stringify({
+    pano: typeof data.pano === "string" ? data.pano : null,
+    lat: numberOrNull(data.lat),
+    lng: numberOrNull(data.lng),
+    heading: numberOrNull(data.heading),
+    pitch: numberOrNull(data.pitch),
+    zoom: numberOrNull(data.zoom)
+  });
+}
+
+function updatePanoramaHistoryControls() {
+  const backButton = document.getElementById("randomViewHistoryBack");
+  const forwardButton = document.getElementById("randomViewHistoryForward");
+  if (!backButton || !forwardButton) return;
+
+  const backEntry = panoramaViewHistory[panoramaViewHistoryIndex - 1];
+  const forwardEntry = panoramaViewHistory[panoramaViewHistoryIndex + 1];
+  backButton.disabled = panoramaHistoryNavigationPending || !backEntry;
+  forwardButton.disabled = panoramaHistoryNavigationPending || !forwardEntry;
+  backButton.title = backEntry
+    ? `前の風景「${getPanoramaHistoryLabel(backEntry)}」へ戻る`
+    : "戻れる風景はありません";
+  forwardButton.title = forwardEntry
+    ? `次の風景「${getPanoramaHistoryLabel(forwardEntry)}」へ進む`
+    : "進める風景はありません";
+  backButton.setAttribute("aria-label", backButton.title);
+  forwardButton.setAttribute("aria-label", forwardButton.title);
+}
+
+function recordPanoramaView(data, detailData = null, detailMarker = null) {
+  const entry = {
+    view: {
+      ...data,
+      ...(data.mapView ? { mapView: { ...data.mapView } } : {})
+    },
+    detailData,
+    detailMarker,
+    key: getPanoramaHistoryKey(data)
+  };
+  const currentEntry = panoramaViewHistory[panoramaViewHistoryIndex];
+  if (currentEntry?.key === entry.key) {
+    currentEntry.detailData = detailData || currentEntry.detailData;
+    currentEntry.detailMarker = detailMarker || currentEntry.detailMarker;
+    updatePanoramaHistoryControls();
+    return;
+  }
+
+  panoramaViewHistory.splice(panoramaViewHistoryIndex + 1);
+  panoramaViewHistory.push(entry);
+  panoramaViewHistoryIndex = panoramaViewHistory.length - 1;
+  updatePanoramaHistoryControls();
+}
+
+function navigatePanoramaHistory(step) {
+  if (panoramaHistoryNavigationPending) return;
+  const nextIndex = panoramaViewHistoryIndex + step;
+  const entry = panoramaViewHistory[nextIndex];
+  if (!entry) return;
+
+  panoramaHistoryNavigationPending = true;
+  updatePanoramaHistoryControls();
+
+  const finishNavigation = succeeded => {
+    if (succeeded) panoramaViewHistoryIndex = nextIndex;
+    panoramaHistoryNavigationPending = false;
+    updatePanoramaHistoryControls();
+  };
+
+  if (entry.view.mapView) {
+    showMapHistoryView(entry.view.mapView, () => finishNavigation(true));
+    return;
+  }
+
+  showPanorama(entry.view, entry.detailData, entry.detailMarker, {
+    recordHistory: false,
+    onSuccess: () => finishNavigation(true),
+    onFailure: () => finishNavigation(false)
+  });
+}
+
+function showMapHistoryView(mapView, onComplete) {
+  const applyMapView = () => {
+    showMapOverviewWindow();
+    map.setCenter({ lat: mapView.lat, lng: mapView.lng });
+    map.setZoom(mapView.zoom);
+    updateMarkerIconSizes();
+    onComplete?.();
+  };
+
+  runAfterPanoramaHidden(applyMapView);
+}
+
+function runAfterPanoramaHidden(callback) {
+  if (panorama && panorama.getVisible()) {
+    const listener = panorama.addListener("visible_changed", () => {
+      if (panorama.getVisible()) return;
+      listener.remove();
+      callback();
+    });
+    panorama.setVisible(false);
+  } else {
+    callback();
+  }
+}
+
+function recordCurrentMapView(detailData = null, detailMarker = null) {
+  const center = map.getCenter();
+  if (!center) return;
+  recordPanoramaView({
+    mapView: {
+      lat: center.lat(),
+      lng: center.lng(),
+      zoom: map.getZoom()
+    }
+  }, detailData, detailMarker);
+}
+
+function setupRandomViewCardAppearance() {
+  const card = document.getElementById("randomViewCard");
+  if (!card || card.dataset.appearanceReady === "true") return;
+  card.dataset.appearanceReady = "true";
+
+  const barcodeTrack = card.querySelector(".barcode-track");
+  const BASE_CARD_WIDTH = 432;
+  const BASE_CARD_HEIGHT = 220;
+
+  const createSeededRandom = seed => {
+    let state = seed >>> 0;
+    return () => {
+      state = (state + 0x6d2b79f5) >>> 0;
+      let value = state;
+      value = Math.imul(value ^ (value >>> 15), value | 1);
+      value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+      return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+    };
+  };
+
+  const populateBarcode = (container, seed, density) => {
+    const random = createSeededRandom(seed);
+    const fragment = document.createDocumentFragment();
+    let occupiedWidth = 0;
+    while (occupiedWidth < 800) {
+      const widthRoll = random();
+      const width = widthRoll < 0.55 ? 1 : widthRoll < 0.88 ? 2 : 3;
+      const gapRoll = random();
+      const baseGap = gapRoll < 0.7 ? 1 : gapRoll < 0.95 ? 2 : 3;
+      const gap = baseGap * (100 / density);
+      const bar = document.createElement("i");
+      bar.className = "barcode-bar";
+      bar.style.width = width + "px";
+      bar.style.marginRight = gap.toFixed(3) + "px";
+      fragment.append(bar);
+      occupiedWidth += width + gap;
+    }
+    container.replaceChildren(fragment);
+  };
+
+  const fitRandomViewCard = () => {
+    const scale = Math.min(1, card.clientWidth / BASE_CARD_WIDTH);
+    card.style.setProperty("--random-card-scale", scale);
+    card.style.height = (BASE_CARD_HEIGHT * scale) + "px";
+  };
+
+  populateBarcode(barcodeTrack, 3513401049, 45);
+  new ResizeObserver(fitRandomViewCard).observe(card);
+  fitRandomViewCard();
+}
+
 function setupRandomViewButton() {
+  setupRandomViewCardAppearance();
+  const card = document.getElementById("randomViewCard");
   const button = document.getElementById("randomViewButton");
+  const backButton = document.getElementById("randomViewHistoryBack");
+  const forwardButton = document.getElementById("randomViewHistoryForward");
+  const touchOnlyMedia = window.matchMedia("(hover: none) and (pointer: coarse)");
   const landscapeTouchMedia = window.matchMedia(
     "(orientation: landscape) and (max-height: 600px) and (hover: none) and (pointer: coarse)"
   );
@@ -3080,7 +3498,7 @@ function setupRandomViewButton() {
     const isDownwardSwipe = deltaY >= SWIPE_DOWN_THRESHOLD && deltaY > Math.abs(deltaX);
     if (!isDownwardSwipe) return;
 
-    button.classList.remove("is-touch-expanded");
+    card.classList.remove("is-touch-expanded");
     suppressNextClick = true;
     clearTimeout(suppressClickTimer);
     suppressClickTimer = setTimeout(() => {
@@ -3093,31 +3511,40 @@ function setupRandomViewButton() {
   });
 
   landscapeTouchMedia.addEventListener?.("change", event => {
-    if (!event.matches) button.classList.remove("is-touch-expanded");
+    if (!event.matches) card.classList.remove("is-touch-expanded");
+  });
+
+  backButton.addEventListener("click", () => navigatePanoramaHistory(-1));
+  forwardButton.addEventListener("click", () => navigatePanoramaHistory(1));
+  updatePanoramaHistoryControls();
+
+  document.addEventListener("pointerdown", event => {
+    if (!touchOnlyMedia.matches || !card.classList.contains("is-touch-expanded")) return;
+    if (!card.contains(event.target)) card.classList.remove("is-touch-expanded");
   });
 
   button.addEventListener("click", () => {
-    if (landscapeTouchMedia.matches) {
+    if (touchOnlyMedia.matches) {
       if (suppressNextClick) {
         suppressNextClick = false;
         clearTimeout(suppressClickTimer);
         return;
       }
 
-      if (!button.classList.contains("is-touch-expanded")) {
-        button.classList.add("is-touch-expanded");
+      if (!card.classList.contains("is-touch-expanded")) {
+        card.classList.add("is-touch-expanded");
         return;
       }
     }
 
     if (isMoving) return;
     isMoving = true;
-    button.classList.remove("is-tapping");
-    void button.offsetWidth;
-    button.classList.add("is-tapping");
+    card.classList.remove("is-tapping");
+    void card.offsetWidth;
+    card.classList.add("is-tapping");
 
     setTimeout(() => {
-      button.classList.remove("is-tapping");
+      card.classList.remove("is-tapping");
       isMoving = false;
 
       const candidates = markers
@@ -3209,11 +3636,15 @@ function renderSceneryList() {
 
     button.addEventListener("click", () => {
       if (!showSavedSceneryView(jsonData, marker)) {
-        showMapOverviewWindow();
         const position = marker.getPosition();
         if (position) {
-          if (panorama && panorama.getVisible()) panorama.setVisible(false);
-          map.panTo(position);
+          runAfterPanoramaHidden(() => {
+            showMapOverviewWindow();
+            map.panTo(position);
+            google.maps.event.addListenerOnce(map, "idle", () => {
+              recordCurrentMapView(jsonData, marker);
+            });
+          });
         }
       }
     });
@@ -3651,15 +4082,18 @@ function showSearchResults(places) {
     button.className = "search-result-button";
     button.textContent = `${name} — ${address}`;
     button.addEventListener("click", () => {
-      if (panorama.getVisible()) panorama.setVisible(false);
+      runAfterPanoramaHidden(() => {
+        if (place.viewport) {
+          map.fitBounds(place.viewport);
+        } else {
+          map.setCenter(place.location);
+          map.setZoom(getSearchResultZoom(place.types));
+        }
 
-      if (place.viewport) {
-        map.fitBounds(place.viewport);
-      } else {
-        map.setCenter(place.location);
-        map.setZoom(getSearchResultZoom(place.types));
-      }
-
+        google.maps.event.addListenerOnce(map, "idle", () => {
+          recordCurrentMapView({ title: name, locationName: address });
+        });
+      });
       clearSearchResults();
     });
     container.appendChild(button);
@@ -3944,45 +4378,88 @@ function setupStreetViewExitShortcut() {
   }, true);
 }
 
-function showPanorama(data, detailData = null, detailMarker = null) {
-  if (detailData) showSceneryDetailCard(detailData, detailMarker);
-  else hideSceneryDetailCard();
+function showPanorama(data, detailData = null, detailMarker = null, options = {}) {
+  cancelPendingPanoramaView?.();
   resetZoomOnEnter = false;
-
-  if (pendingPanoramaViewListener) {
-    pendingPanoramaViewListener.remove();
-    pendingPanoramaViewListener = null;
-  }
 
   const applySavedView = () => {
     panorama.setPov({
-      heading: data.heading,
-      pitch: data.pitch
+      heading: Number.isFinite(Number(data.heading)) ? Number(data.heading) : 0,
+      pitch: Number.isFinite(Number(data.pitch)) ? Number(data.pitch) : 0
     });
-    panorama.setZoom(data.zoom);
+    panorama.setZoom(Number.isFinite(Number(data.zoom)) ? Number(data.zoom) : 1);
+  };
+
+  const clearPendingRequest = () => {
+    pendingPanoramaViewListener?.remove();
+    pendingPanoramaViewListener = null;
+    if (pendingPanoramaViewTimer !== null) {
+      clearTimeout(pendingPanoramaViewTimer);
+      pendingPanoramaViewTimer = null;
+    }
+    cancelPendingPanoramaView = null;
+  };
+
+  const finishSuccess = () => {
+    clearPendingRequest();
+    panorama.setVisible(true);
+    applySavedView();
+    if (detailData) showSceneryDetailCard(detailData, detailMarker);
+    else hideSceneryDetailCard();
+    if (options.recordHistory !== false) {
+      recordPanoramaView(data, detailData, detailMarker);
+    }
+    updateMarkerIconSizes();
+    options.onSuccess?.();
+  };
+
+  const finishFailure = ({ cancelled = false } = {}) => {
+    clearPendingRequest();
+    options.onFailure?.();
+    if (!cancelled) showMapToast("Street Viewを表示できませんでした");
+  };
+
+  const waitForPanoramaChange = (eventName, isExpectedView) => {
+    pendingPanoramaViewListener = panorama.addListener(eventName, () => {
+      if (!isExpectedView()) return;
+      finishSuccess();
+    });
+    pendingPanoramaViewTimer = setTimeout(() => finishFailure(), 5000);
+    cancelPendingPanoramaView = () => finishFailure({ cancelled: true });
   };
 
   if (data.pano) {
     if (panorama.getPano() === data.pano) {
-      panorama.setVisible(true);
-      applySavedView();
+      finishSuccess();
     } else {
-      pendingPanoramaViewListener = panorama.addListener("pano_changed", () => {
-        if (panorama.getPano() !== data.pano) return;
-        pendingPanoramaViewListener.remove();
-        pendingPanoramaViewListener = null;
-        applySavedView();
-      });
-      panorama.setPano(data.pano);
-      panorama.setVisible(true);
+      try {
+        waitForPanoramaChange("pano_changed", () => panorama.getPano() === data.pano);
+        panorama.setPano(data.pano);
+        panorama.setVisible(true);
+      } catch (error) {
+        console.warn("Street View表示エラー:", error);
+        finishFailure();
+      }
     }
   } else {
-    panorama.setPosition({ lat: data.lat, lng: data.lng });
-    panorama.setVisible(true);
-    applySavedView();
+    try {
+      const targetPosition = { lat: Number(data.lat), lng: Number(data.lng) };
+      const currentPosition = panorama.getPosition();
+      const alreadyAtTarget = currentPosition
+        && Math.abs(currentPosition.lat() - targetPosition.lat) < 1e-7
+        && Math.abs(currentPosition.lng() - targetPosition.lng) < 1e-7;
+      if (alreadyAtTarget) {
+        finishSuccess();
+      } else {
+        waitForPanoramaChange("position_changed", () => Boolean(panorama.getPosition()));
+        panorama.setPosition(targetPosition);
+        panorama.setVisible(true);
+      }
+    } catch (error) {
+      console.warn("Street View表示エラー:", error);
+      finishFailure();
+    }
   }
-
-  updateMarkerIconSizes();
 }
 
 async function loadSavedMarkers() {
@@ -4012,6 +4489,7 @@ async function loadSavedMarkers() {
 
 
 
+setupRandomViewCardAppearance();
 </script>
 
 <script async

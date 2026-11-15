@@ -1,0 +1,1025 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ICカード エディター — 比例拡大・縮小版</title>
+<style>
+  * { box-sizing:border-box }
+  body { margin:0; font:15px system-ui,sans-serif; color:#ececff; background:#151525 }
+  main { max-width:860px; margin:auto; padding:24px 16px }
+  h1 { font-size:23px; margin:0 0 12px }
+  p { margin:0 0 16px; color:#c5c5dc }
+  .mode-switch { display:flex; gap:8px; margin:0 0 12px }
+  .mode-switch .action { padding:7px 12px }
+  .mode-switch .is-active { border-color:#aaa4ff; background:#413795 }
+  .editor-stage { position:relative; display:grid; place-items:center; overflow:hidden; padding:36px 12px; min-height:310px; border:1px solid #494960; border-radius:12px; background:#202033 radial-gradient(#44445b 1px,transparent 1px) 0 0/14px 14px }
+  #card-scale-box { position:relative; flex:none }
+  #scenery-card-integrated { width:432px; transform-origin:top left; will-change:transform }
+  #selection { position:absolute; z-index:2; border:1px solid #abf7ff; pointer-events:none }
+  #selection[hidden] { display:none }
+  #resize { position:absolute; right:-8px; bottom:-8px; width:16px; height:16px; padding:0; background:#abf7ff; border:1px solid #12182d; border-radius:2px; cursor:nwse-resize; pointer-events:auto; touch-action:none }
+  #resize[hidden] { display:none }
+  .settings { display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin-top:15px }
+  label { display:grid; gap:4px }
+  input,select,.action { font:inherit; color:inherit; background:#29293f; border:1px solid #62627c; border-radius:6px; padding:8px }
+  input[type=number] { width:85px }
+  #barcode-seed { width:132px }
+  input[type=range] { width:170px; padding:0 }
+  .action { cursor:pointer }
+  .action:disabled { opacity:.45; cursor:not-allowed }
+  .primary { background:#413795 }
+  #scale-status { align-self:center; min-width:92px; color:#abf7ff; font-variant-numeric:tabular-nums }
+  #preset-status { flex-basis:100%; min-height:1.4em; color:#abf7ff }
+  #preset-status[data-state="error"] { color:#ffb4c8 }
+
+  #scenery-card-integrated .ticket { box-sizing:border-box; position:relative; width:432px; height:203px; padding:8px; border-radius:12px; background:#203eb3; color:#ffd0ee }
+  #scenery-card-integrated .face { display:flex; flex-direction:column; height:100%; padding:0 9px 8px; border:1px solid #ec9fd7; border-radius:8px; background:linear-gradient(135deg,#1735a7,#192995 65%,#293bb0) }
+  #scenery-card-integrated button { font:inherit; color:inherit }
+  #scenery-card-integrated .jump { flex:0 0 auto; width:100%; padding:0 3px 9px; background:transparent; border:0; text-align:left }
+  #scenery-card-integrated .topline { display:flex; justify-content:space-between; align-items:center; gap:4px; min-height:30px; border-bottom:1px solid #e99fce; font:500 10px ui-monospace,monospace }
+  #scenery-card-integrated .mark { display:block; width:fit-content; margin:7px 0 0 auto; letter-spacing:.16em; font-size:12px; text-align:right }
+  #scenery-card-integrated strong { display:block; width:fit-content; margin:4px 0 6px; font-size:24px }
+  #scenery-card-integrated .subtitle { display:inline-block; width:fit-content; font:600 11px ui-monospace,monospace; letter-spacing:.10em }
+  #scenery-card-integrated .topline span,
+  #scenery-card-integrated strong,
+  #scenery-card-integrated .subtitle,
+  #scenery-card-integrated .mark { white-space:nowrap }
+  #scenery-card-integrated .footer { flex:0 0 auto; display:grid; grid-template-columns:minmax(12px,1fr) auto auto; gap:7px; align-items:center; margin-top:auto; padding-top:8px; border-top:1px solid #e99fce }
+  #scenery-card-integrated .barcode { position:relative; display:block; width:266px; height:22px; overflow:hidden }
+  #scenery-card-integrated .barcode-clip { position:absolute; inset:0; overflow:hidden }
+  #scenery-card-integrated .barcode-track { position:absolute; top:0; left:0; display:flex; width:max-content; height:64px; transform-origin:top left }
+  #scenery-card-integrated .barcode-bar { flex:0 0 auto; display:block; height:40px; background:#edacd7 }
+  #scenery-card-integrated .history { min-height:44px; padding:0 8px; border:1px solid #eab0dc; border-radius:4px; background:#293fa4; white-space:nowrap; font-size:13px }
+  #scenery-card-integrated button:enabled:hover { background:#4056b6 }
+  #scenery-card-integrated button:disabled { opacity:.55 }
+  #scenery-card-integrated [data-edit] { width:fit-content; cursor:grab; touch-action:none; user-select:none }
+  #scenery-card-integrated.is-preview [data-edit] { cursor:default; touch-action:auto; user-select:auto }
+</style>
+<main>
+  <h1>ICカード エディター</h1>
+  <p>432px幅を基準に編集します。文字をドラッグして移動し、選択枠の右下を斜めにドラッグして拡大・縮小できます。</p>
+  <div class="mode-switch" role="group" aria-label="カード表示モード">
+    <button class="action mode-button is-active" data-editor-mode="edit" type="button" aria-pressed="true">編集モード</button>
+    <button class="action mode-button" data-editor-mode="preview" type="button" aria-pressed="false">プレビューモード</button>
+  </div>
+  <div class="editor-stage">
+    <div id="card-scale-box">
+      <div id="scenery-card-integrated">
+        <div class="ticket">
+          <div class="face">
+            <button class="jump" type="button" aria-label="どこかの風景へランダム移動">
+              <span class="topline" aria-hidden="true"><span>◀ DESTINATION: SOMEWHERE UNKNOWN</span><span>No. 0017</span></span>
+              <span class="mark" aria-hidden="true">IC CARD</span>
+              <strong>どこかの風景へランダム移動</strong>
+              <span class="subtitle" aria-hidden="true">RANDOM VIEW ACCESS</span>
+            </button>
+            <div class="footer">
+              <span class="barcode" aria-hidden="true"><span class="barcode-clip"><span class="barcode-track"></span></span></span>
+              <button class="history" data-step="-1" type="button">◀ 戻る</button>
+              <button class="history" data-step="1" type="button" disabled>進む ▶</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="selection"><button id="resize" type="button" aria-label="文字サイズを変更"></button></div>
+  </div>
+  <div class="settings">
+    <label>編集する要素<select id="target"></select></label>
+    <label>サイズ（px）<input id="size" type="number" min="8" max="64"></label>
+    <label>横（px）<input id="x" type="number"></label>
+    <label>縦（px）<input id="y" type="number"></label>
+    <label>外枠の角丸（px）<input id="ticket-radius" type="number" min="0" max="32" step="1" value="12"></label>
+    <label>内枠の角丸（px）<input id="face-radius" type="number" min="0" max="32" step="1" value="8"></label>
+    <label>カードの高さ（px）<input id="card-height" type="number" min="203" max="864" step="1" value="203"></label>
+    <label>高さスライダー<input id="card-height-range" type="range" min="203" max="864" step="1" value="203"></label>
+    <output id="aspect-ratio" aria-live="polite"></output>
+    <label>バーコード seed<input id="barcode-seed" type="number" min="0" max="4294967295" step="1" value="170017"></label>
+    <button class="action" id="regenerate-barcode" type="button">バーコード再生成</button>
+    <label>バーコード密度（%）<input id="barcode-density" type="number" min="30" max="120" step="5" value="80"></label>
+    <label>バーコード横幅（px）<input id="barcode-width" type="number" min="20" max="266" step="1" value="266"></label>
+    <label>バーコード縦幅（px）<input id="barcode-height" type="number" min="4" max="40" step="1" value="22"></label>
+    <label>バーコード横トリム（px）<input id="barcode-trim-x" type="number" min="0" max="512" step="1" value="0"></label>
+    <label>バーコード縦トリム（px）<input id="barcode-trim-y" type="number" min="-40" max="40" step="1" value="0"></label>
+    <label>バーコード左余白（px）<input id="barcode-padding-left" type="number" min="0" max="80" step="1" value="0"></label>
+    <label>バーコード右余白（px）<input id="barcode-padding-right" type="number" min="0" max="80" step="1" value="0"></label>
+    <label>表示倍率
+      <select id="scale-mode">
+        <option value="auto">自動</option>
+        <option value="1">100%</option>
+        <option value="0.75">75%</option>
+        <option value="0.5">50%</option>
+      </select>
+    </label>
+    <output id="scale-status" aria-live="polite"></output>
+    <button class="action" id="undo" type="button" disabled>↶ 元に戻す</button>
+    <button class="action" id="redo" type="button" disabled>↷ やり直す</button>
+    <button class="action" id="reset" type="button">初期配置に戻す</button>
+    <button class="action primary" id="save" type="button">HTMLを書き出す</button>
+    <button class="action" id="save-preset" type="button">プリセットを書き出す</button>
+    <button class="action" id="load-preset" type="button">プリセットを読み込む</button>
+    <input id="preset-file" type="file" accept="application/json,.json" hidden>
+    <output id="preset-status" aria-live="polite"></output>
+  </div>
+</main>
+<script>
+const BASE_WIDTH = 432;
+const BASE_HEIGHT = 203;
+const MIN_CARD_HEIGHT = 203;
+const MAX_CARD_HEIGHT = 864;
+const stage = document.querySelector('.editor-stage');
+const cardScaleBox = document.querySelector('#card-scale-box');
+const card = document.querySelector('#scenery-card-integrated');
+const ticket = card.querySelector('.ticket');
+const face = card.querySelector('.face');
+const selection = document.querySelector('#selection');
+const handle = document.querySelector('#resize');
+const target = document.querySelector('#target');
+const scaleMode = document.querySelector('#scale-mode');
+const scaleStatus = document.querySelector('#scale-status');
+const undoButton = document.querySelector('#undo');
+const redoButton = document.querySelector('#redo');
+const presetFile = document.querySelector('#preset-file');
+const presetStatus = document.querySelector('#preset-status');
+const cardHeightInput = document.querySelector('#card-height');
+const cardHeightRange = document.querySelector('#card-height-range');
+const aspectRatio = document.querySelector('#aspect-ratio');
+const barcode = card.querySelector('.barcode');
+const barcodeClip = barcode.querySelector('.barcode-clip');
+const barcodeTrack = barcode.querySelector('.barcode-track');
+const barcodeSeedInput = document.querySelector('#barcode-seed');
+const regenerateBarcodeButton = document.querySelector('#regenerate-barcode');
+const barcodeInputs = {
+  density:document.querySelector('#barcode-density'),
+  width:document.querySelector('#barcode-width'),
+  height:document.querySelector('#barcode-height'),
+  trimX:document.querySelector('#barcode-trim-x'),
+  trimY:document.querySelector('#barcode-trim-y'),
+  paddingLeft:document.querySelector('#barcode-padding-left'),
+  paddingRight:document.querySelector('#barcode-padding-right')
+};
+const modeButtons = [...document.querySelectorAll('[data-editor-mode]')];
+const radiusInputs = {
+  ticket:document.querySelector('#ticket-radius'),
+  face:document.querySelector('#face-radius')
+};
+const fields = ['size', 'x', 'y'].map(id => document.getElementById(id));
+const PRESET_FORMAT = 'scenery-card-editor-preset';
+const PRESET_VERSION = 6;
+const MAX_PRESET_BYTES = 256 * 1024;
+const HISTORY_LIMIT = 100;
+const DEFAULT_BARCODE_SEED = 170017;
+const MAX_BARCODE_SEED = 0xffffffff;
+const DEFAULT_BARCODE_DENSITY = 80;
+const BARCODE_DENSITY_MIN = 30;
+const BARCODE_DENSITY_MAX = 120;
+const BARCODE_WIDTH_MIN = 20;
+const BARCODE_WIDTH_MAX = 266;
+const BARCODE_HEIGHT_MIN = 4;
+const BARCODE_HEIGHT_MAX = 40;
+const BARCODE_TRIM_X_MIN = 0;
+const BARCODE_TRIM_X_MAX = 512;
+const BARCODE_TRIM_Y_MIN = -40;
+const BARCODE_TRIM_Y_MAX = 40;
+const BARCODE_PADDING_MIN = 0;
+const BARCODE_PADDING_MAX = 80;
+const textDefinitions = [
+  {key:'destination', label:'行き先の英字', selector:'.topline span:first-child', fontSize:10},
+  {key:'cardNumber', label:'カード番号', selector:'.topline span:last-child', fontSize:10},
+  {key:'cardType', label:'IC CARD', selector:'.mark', fontSize:12},
+  {key:'heading', label:'中央の見出し', selector:'strong', fontSize:24},
+  {key:'subtitle', label:'英語の副題', selector:'.subtitle', fontSize:11}
+];
+const elements = textDefinitions.map(({selector}) => card.querySelector(selector));
+const editDefinitions = [
+  ...textDefinitions.map(definition => ({...definition, type:'text'})),
+  {key:'barcode', label:'バーコード', selector:'.barcode', type:'barcode'}
+];
+const editableElements = editDefinitions.map(({selector}) => card.querySelector(selector));
+
+function createDefaultDesignSettings() {
+  return {
+    text:Object.fromEntries(textDefinitions.map(({key, fontSize}) => [
+      key,
+      {fontSize, x:0, y:0}
+    ])),
+    radii:{ticket:12, face:8},
+    dimensions:{height:BASE_HEIGHT},
+    barcode:{
+      seed:DEFAULT_BARCODE_SEED,
+      density:DEFAULT_BARCODE_DENSITY,
+      width:266,
+      height:22,
+      trimX:0,
+      trimY:0,
+      paddingLeft:0,
+      paddingRight:0,
+      x:0,
+      y:0
+    },
+    extensions:{}
+  };
+}
+
+let designSettings = createDefaultDesignSettings();
+let selected = 3;
+let gesture;
+let displayScale = 1;
+let observedStageWidth = 0;
+let undoStack = [];
+let redoStack = [];
+let historyTransaction;
+let renderedBarcodeKey;
+let editorMode = 'edit';
+
+function getEditableState(index = selected) {
+  const definition = editDefinitions[index];
+  return definition.type === 'barcode'
+    ? designSettings.barcode
+    : designSettings.text[definition.key];
+}
+
+function cloneDesignSettings(settings = designSettings) {
+  return structuredClone(settings);
+}
+
+function sameDesignSettings(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+function updateHistoryButtons() {
+  const hasPendingChange = Boolean(
+    historyTransaction && !sameDesignSettings(historyTransaction, designSettings)
+  );
+  undoButton.disabled = undoStack.length === 0 && !hasPendingChange;
+  redoButton.disabled = redoStack.length === 0 || hasPendingChange;
+  undoButton.title = undoButton.disabled ? '元に戻せる操作はありません' : '元に戻す（Ctrl / Command + Z）';
+  redoButton.title = redoButton.disabled ? 'やり直せる操作はありません' : 'やり直す（Ctrl / Command + Y）';
+}
+
+function commitSnapshot(before) {
+  if (!before || sameDesignSettings(before, designSettings)) {
+    updateHistoryButtons();
+    return false;
+  }
+  undoStack.push(cloneDesignSettings(before));
+  if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+  redoStack = [];
+  updateHistoryButtons();
+  return true;
+}
+
+function beginHistoryTransaction() {
+  if (!historyTransaction) historyTransaction = cloneDesignSettings();
+}
+
+function commitHistoryTransaction() {
+  if (!historyTransaction) return false;
+  const before = historyTransaction;
+  historyTransaction = undefined;
+  return commitSnapshot(before);
+}
+
+function applyHistorySnapshot(snapshot) {
+  designSettings = cloneDesignSettings(snapshot);
+  render();
+}
+
+function undoDesignEdit() {
+  commitHistoryTransaction();
+  const previous = undoStack.pop();
+  if (!previous) {
+    updateHistoryButtons();
+    return false;
+  }
+  redoStack.push(cloneDesignSettings());
+  applyHistorySnapshot(previous);
+  updateHistoryButtons();
+  return true;
+}
+
+function redoDesignEdit() {
+  commitHistoryTransaction();
+  const next = redoStack.pop();
+  if (!next) {
+    updateHistoryButtons();
+    return false;
+  }
+  undoStack.push(cloneDesignSettings());
+  if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+  applyHistorySnapshot(next);
+  updateHistoryButtons();
+  return true;
+}
+
+function getStageAvailableWidth() {
+  const style = getComputedStyle(stage);
+  return stage.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+}
+
+function syncScaleBox() {
+  cardScaleBox.style.width = (BASE_WIDTH * displayScale) + 'px';
+  cardScaleBox.style.height = (card.offsetHeight * displayScale) + 'px';
+}
+
+function positionSelection() {
+  const rect = editableElements[selected].getBoundingClientRect();
+  const parent = stage.getBoundingClientRect();
+  selection.style.left = (rect.left - parent.left - stage.clientLeft) + 'px';
+  selection.style.top = (rect.top - parent.top - stage.clientTop) + 'px';
+  selection.style.width = rect.width + 'px';
+  selection.style.height = rect.height + 'px';
+}
+
+function setEditorMode(mode) {
+  if (mode !== 'edit' && mode !== 'preview') return;
+  editorMode = mode;
+  const isPreview = editorMode === 'preview';
+  card.classList.toggle('is-preview', isPreview);
+  selection.hidden = isPreview;
+  modeButtons.forEach(button => {
+    const isActive = button.dataset.editorMode === editorMode;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', String(isActive));
+  });
+  if (!isPreview) positionSelection();
+}
+
+function createSeededRandom(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function populateBarcode(container, seed, density) {
+  const random = createSeededRandom(seed);
+  const fragment = document.createDocumentFragment();
+  let occupiedWidth = 0;
+  while (occupiedWidth < 800) {
+    const widthRoll = random();
+    const width = widthRoll < 0.55 ? 1 : widthRoll < 0.88 ? 2 : 3;
+    const gapRoll = random();
+    const baseGap = gapRoll < 0.7 ? 1 : gapRoll < 0.95 ? 2 : 3;
+    const gap = baseGap * (100 / density);
+    const bar = document.createElement('i');
+    bar.className = 'barcode-bar';
+    bar.style.width = width + 'px';
+    bar.style.marginRight = gap.toFixed(3) + 'px';
+    fragment.append(bar);
+    occupiedWidth += width + gap;
+  }
+  container.replaceChildren(fragment);
+}
+
+function fitBarcodePaddingToWidth(changedKey) {
+  const settings = designSettings.barcode;
+  const available = Math.max(0, settings.width - 1);
+  if (settings.paddingLeft + settings.paddingRight <= available) return;
+  if (changedKey === 'paddingLeft') {
+    settings.paddingLeft = Math.max(0, available - settings.paddingRight);
+    return;
+  }
+  settings.paddingLeft = Math.min(settings.paddingLeft, available);
+  settings.paddingRight = Math.max(0, available - settings.paddingLeft);
+}
+
+function renderBarcode() {
+  const {
+    seed,
+    density,
+    width,
+    height,
+    trimX,
+    trimY,
+    paddingLeft,
+    paddingRight,
+    x,
+    y
+  } = designSettings.barcode;
+  barcode.style.width = width + 'px';
+  barcode.style.height = height + 'px';
+  barcode.style.translate = x + 'px ' + y + 'px';
+  barcodeClip.style.left = paddingLeft + 'px';
+  barcodeClip.style.right = paddingRight + 'px';
+  barcodeTrack.style.transform = 'translate(' + (-trimX) + 'px,' + (-trimY) + 'px)';
+  barcodeSeedInput.value = seed;
+  barcodeInputs.density.value = density;
+  barcodeInputs.width.value = width;
+  barcodeInputs.height.value = height;
+  barcodeInputs.trimX.value = trimX;
+  barcodeInputs.trimY.value = trimY;
+  barcodeInputs.paddingLeft.value = paddingLeft;
+  barcodeInputs.paddingRight.value = paddingRight;
+  const barcodeKey = seed + ':' + density;
+  if (renderedBarcodeKey === barcodeKey) return;
+  populateBarcode(barcodeTrack, seed, density);
+  renderedBarcodeKey = barcodeKey;
+}
+
+function render() {
+  elements.forEach((element, index) => {
+    const {fontSize, x, y} = designSettings.text[textDefinitions[index].key];
+    element.style.fontSize = fontSize + 'px';
+    element.style.translate = x + 'px ' + y + 'px';
+  });
+  const definition = editDefinitions[selected];
+  const state = getEditableState();
+  fields[0].disabled = definition.type === 'barcode';
+  fields[0].value = definition.type === 'barcode' ? '' : state.fontSize;
+  fields[1].value = state.x;
+  fields[2].value = state.y;
+  handle.hidden = definition.type === 'barcode';
+  ticket.style.borderRadius = designSettings.radii.ticket + 'px';
+  face.style.borderRadius = designSettings.radii.face + 'px';
+  radiusInputs.ticket.value = designSettings.radii.ticket;
+  radiusInputs.face.value = designSettings.radii.face;
+  ticket.style.height = designSettings.dimensions.height + 'px';
+  cardHeightInput.value = designSettings.dimensions.height;
+  cardHeightRange.value = designSettings.dimensions.height;
+  aspectRatio.value = BASE_WIDTH + ' × ' + designSettings.dimensions.height +
+    '（' + (BASE_WIDTH / designSettings.dimensions.height).toFixed(2) + ':1）';
+  renderBarcode();
+  target.value = selected;
+  syncScaleBox();
+  if (editorMode === 'edit') positionSelection();
+}
+
+function updateDisplayScale() {
+  const fitScale = Math.min(1, Math.max(0.1, getStageAvailableWidth() / BASE_WIDTH));
+  const requestedScale = scaleMode.value === 'auto' ? 1 : Number(scaleMode.value);
+  displayScale = Math.min(requestedScale, fitScale);
+  card.style.transform = 'scale(' + displayScale + ')';
+  const percentage = Math.round(displayScale * 100);
+  const isLimited = scaleMode.value !== 'auto' && displayScale < requestedScale;
+  scaleStatus.value = '実表示 ' + percentage + '%' + (isLimited ? '（幅に合わせて制限）' : '');
+  render();
+}
+
+function start(event, index, resize) {
+  if (editorMode !== 'edit' || !event.isPrimary || event.button !== 0) return;
+  const definition = editDefinitions[index];
+  if (resize && definition.type !== 'text') return;
+  event.preventDefault();
+  commitHistoryTransaction();
+  selected = index;
+  render();
+  const state = getEditableState(index);
+  gesture = {
+    id:event.pointerId,
+    x:event.clientX,
+    y:event.clientY,
+    resize,
+    before:cloneDesignSettings(),
+    scale:displayScale,
+    startX:state.x,
+    startY:state.y,
+    size:definition.type === 'text' ? state.fontSize : 0
+  };
+  event.currentTarget.setPointerCapture(event.pointerId);
+}
+
+function move(event) {
+  if (editorMode !== 'edit' || !gesture || gesture.id !== event.pointerId) return;
+  const dx = (event.clientX - gesture.x) / gesture.scale;
+  const dy = (event.clientY - gesture.y) / gesture.scale;
+  const state = getEditableState();
+  if (gesture.resize) {
+    state.fontSize = Math.max(8, Math.min(64, Math.round(gesture.size + (dx + dy) / 6)));
+  } else {
+    state.x = Math.round(gesture.startX + dx);
+    state.y = Math.round(gesture.startY + dy);
+  }
+  render();
+}
+
+function customPositionCss() {
+  const textCss = textDefinitions.map(({key, selector}) => {
+    const {fontSize, x, y} = designSettings.text[key];
+    return '#scenery-card-integrated ' + selector +
+      ' { font-size:' + fontSize + 'px;translate:' + x + 'px ' + y + 'px; }';
+  }).join('\n');
+  const {x, y} = designSettings.barcode;
+  return textCss + '\n#scenery-card-integrated .barcode' +
+    ' { translate:' + x + 'px ' + y + 'px; }';
+}
+
+function buildExportHtml() {
+  const customCss = customPositionCss();
+  return `<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>どこかの風景 — ICカードのデザイン案</title>
+<style>
+  * { box-sizing:border-box; }
+  body { max-width:736px; margin:24px auto; padding:0 12px; background:#111; }
+  #scenery-card-integrated button:enabled { cursor:pointer; }
+  #scenery-card-integrated .view { position:relative; overflow:hidden; display:grid; align-content:start; gap:14px; min-height:290px; padding:16px; border-radius:12px; background:linear-gradient(#87c5d2,#c4d9ca 62%,#677b49 63%,#4c633e); color:#142b39; font-family:system-ui,sans-serif; }
+  #scenery-card-integrated output { justify-self:start; display:inline-block; padding:6px 10px; border-radius:5px; background:#e9eff3; font-size:13px; }
+  #scenery-card-integrated .ticket-scale-box { position:relative; justify-self:center; width:min(432px,100%); }
+  #scenery-card-integrated .ticket { position:absolute; inset:0 auto auto 0; width:432px; height:${designSettings.dimensions.height}px; padding:8px; border-radius:${designSettings.radii.ticket}px; background:#203eb3; color:#ffd0ee; transform:scale(var(--card-scale,1)); transform-origin:top left; }
+  #scenery-card-integrated .face { display:flex; flex-direction:column; height:100%; padding:0 9px 8px; border:1px solid #ec9fd7; border-radius:${designSettings.radii.face}px; background:linear-gradient(135deg,#1735a7,#192995 65%,#293bb0); }
+  #scenery-card-integrated button { color:inherit; font:inherit; }
+  #scenery-card-integrated .jump { flex:0 0 auto; width:100%; padding:0 3px 9px; border:0; background:transparent; text-align:left; }
+  #scenery-card-integrated .topline { display:flex; justify-content:space-between; align-items:center; gap:4px; min-height:30px; border-bottom:1px solid #e99fce; font:500 10px ui-monospace,monospace; }
+  #scenery-card-integrated .mark { display:block; width:fit-content; margin:7px 0 0 auto; letter-spacing:.16em; font-size:12px; text-align:right; }
+  #scenery-card-integrated strong { display:block; width:fit-content; margin:4px 0 6px; font-size:24px; }
+  #scenery-card-integrated .subtitle { display:inline-block; width:fit-content; font:600 11px ui-monospace,monospace; letter-spacing:.10em; }
+  #scenery-card-integrated .topline span, #scenery-card-integrated strong, #scenery-card-integrated .subtitle, #scenery-card-integrated .mark { white-space:nowrap; }
+  #scenery-card-integrated .footer { flex:0 0 auto; display:grid; grid-template-columns:minmax(12px,1fr) auto auto; gap:7px; align-items:center; margin-top:auto; padding-top:8px; border-top:1px solid #e99fce; }
+  #scenery-card-integrated .barcode { position:relative; display:block; width:${designSettings.barcode.width}px; height:${designSettings.barcode.height}px; overflow:hidden; }
+  #scenery-card-integrated .barcode-clip { position:absolute; top:0; bottom:0; left:${designSettings.barcode.paddingLeft}px; right:${designSettings.barcode.paddingRight}px; overflow:hidden; }
+  #scenery-card-integrated .barcode-track { position:absolute; top:0; left:0; display:flex; width:max-content; height:64px; transform:translate(${0 - designSettings.barcode.trimX}px,${0 - designSettings.barcode.trimY}px); transform-origin:top left; }
+  #scenery-card-integrated .barcode-bar { flex:0 0 auto; display:block; height:40px; background:#edacd7; }
+  #scenery-card-integrated .history { min-height:44px; padding:0 8px; border:1px solid #eab0dc; border-radius:4px; background:#293fa4; white-space:nowrap; font-size:13px; }
+  #scenery-card-integrated button:enabled:hover { background:#4056b6; }
+  #scenery-card-integrated button:disabled { opacity:.55; }
+${customCss}
+</style>
+</head>
+<body>
+<div id="scenery-card-integrated">
+  <div class="view">
+    <output aria-live="polite">サンプル地点 · 朽ちた螺旋階段</output>
+    <div class="ticket-scale-box">
+      <div class="ticket">
+        <div class="face">
+          <button class="jump" type="button" aria-label="どこかの風景へランダム移動">
+            <span class="topline" aria-hidden="true"><span>◀ DESTINATION: SOMEWHERE UNKNOWN</span><span>No. 0017</span></span>
+            <span class="mark" aria-hidden="true">IC CARD</span>
+            <strong>どこかの風景へランダム移動</strong>
+            <span class="subtitle" aria-hidden="true">RANDOM VIEW ACCESS</span>
+          </button>
+          <div class="footer">
+            <span class="barcode" aria-hidden="true"><span class="barcode-clip"><span class="barcode-track"></span></span></span>
+            <button class="history" data-step="-1" type="button">◀ 戻る</button>
+            <button class="history" data-step="1" type="button" disabled>進む ▶</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  const root = document.getElementById('scenery-card-integrated');
+  const box = root.querySelector('.ticket-scale-box');
+  const ticket = root.querySelector('.ticket');
+  const back = root.querySelector('[data-step="-1"]');
+  const forward = root.querySelector('[data-step="1"]');
+  const output = root.querySelector('output');
+  const places = ['駅ねこ', '朽ちた螺旋階段', '壁画', '池のそばの道'];
+  const history = places.slice(0, 2);
+  let index = 1;
+  function createSeededRandom(seed) {
+    let state = seed >>> 0;
+    return () => {
+      state = (state + 0x6d2b79f5) >>> 0;
+      let value = state;
+      value = Math.imul(value ^ (value >>> 15), value | 1);
+      value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+      return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function populateBarcode(container, seed, density) {
+    const random = createSeededRandom(seed);
+    const fragment = document.createDocumentFragment();
+    let occupiedWidth = 0;
+    while (occupiedWidth < 800) {
+      const widthRoll = random();
+      const width = widthRoll < 0.55 ? 1 : widthRoll < 0.88 ? 2 : 3;
+      const gapRoll = random();
+      const baseGap = gapRoll < 0.7 ? 1 : gapRoll < 0.95 ? 2 : 3;
+      const gap = baseGap * (100 / density);
+      const bar = document.createElement('i');
+      bar.className = 'barcode-bar';
+      bar.style.width = width + 'px';
+      bar.style.marginRight = gap.toFixed(3) + 'px';
+      fragment.append(bar);
+      occupiedWidth += width + gap;
+    }
+    container.replaceChildren(fragment);
+  }
+  function fitCard() {
+    const scale = Math.min(1, box.clientWidth / 432);
+    box.style.setProperty('--card-scale', scale);
+    box.style.height = (ticket.offsetHeight * scale) + 'px';
+  }
+  function render() {
+    back.disabled = index === 0;
+    forward.disabled = index === history.length - 1;
+    output.textContent = 'サンプル地点 · ' + history[index];
+  }
+  back.addEventListener('click', () => { index--; render(); });
+  forward.addEventListener('click', () => { index++; render(); });
+  root.querySelector('.jump').addEventListener('click', () => {
+    const candidates = places.filter(place => place !== history[index]);
+    const destination = candidates[Math.floor(Math.random() * candidates.length)];
+    history.splice(index + 1, history.length - index - 1, destination);
+    index++;
+    render();
+  });
+  populateBarcode(
+    root.querySelector('.barcode-track'),
+    ${designSettings.barcode.seed},
+    ${designSettings.barcode.density}
+  );
+  new ResizeObserver(fitCard).observe(box);
+  fitCard();
+})();
+<\/script>
+</body>
+</html>
+`;
+}
+
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function validateNumber(value, label, min, max, integer = false) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new Error(label + 'は数値で指定してください。');
+  }
+  if (value < min || value > max || (integer && !Number.isInteger(value))) {
+    throw new Error(label + 'の値が許容範囲外です。');
+  }
+  return value;
+}
+
+function validatePreset(rawPreset) {
+  if (!isPlainObject(rawPreset) || rawPreset.format !== PRESET_FORMAT) {
+    throw new Error('ICカードエディターのプリセットではありません。');
+  }
+  if (![1, 2, 3, 4, 5, PRESET_VERSION].includes(rawPreset.version)) {
+    throw new Error('未対応のプリセットバージョンです。');
+  }
+  if (!isPlainObject(rawPreset.design) || !isPlainObject(rawPreset.design.text)) {
+    throw new Error('デザイン設定の形式が正しくありません。');
+  }
+
+  const text = {};
+  textDefinitions.forEach(({key, label}) => {
+    const source = rawPreset.design.text[key];
+    if (!isPlainObject(source)) {
+      throw new Error(label + 'の設定がありません。');
+    }
+    text[key] = {
+      fontSize:validateNumber(source.fontSize, label + 'のフォントサイズ', 8, 64),
+      x:validateNumber(source.x, label + 'のX位置', -4096, 4096),
+      y:validateNumber(source.y, label + 'のY位置', -4096, 4096)
+    };
+  });
+
+  const radii = rawPreset.design.radii;
+  if (!isPlainObject(radii)) {
+    throw new Error('角丸設定の形式が正しくありません。');
+  }
+  const extensions = rawPreset.design.extensions ?? {};
+  if (!isPlainObject(extensions)) {
+    throw new Error('拡張設定の形式が正しくありません。');
+  }
+
+  let height = BASE_HEIGHT;
+  if (rawPreset.version >= 2) {
+    if (!isPlainObject(rawPreset.design.dimensions)) {
+      throw new Error('カード寸法の形式が正しくありません。');
+    }
+    height = validateNumber(
+      rawPreset.design.dimensions.height,
+      'カードの高さ',
+      MIN_CARD_HEIGHT,
+      MAX_CARD_HEIGHT,
+      true
+    );
+  }
+
+  const barcodeSettings = {
+    seed:DEFAULT_BARCODE_SEED,
+    density:100,
+    width:266,
+    height:22,
+    trimX:0,
+    trimY:0,
+    paddingLeft:0,
+    paddingRight:0,
+    x:0,
+    y:0
+  };
+  if (rawPreset.version >= 3) {
+    if (!isPlainObject(rawPreset.design.barcode)) {
+      throw new Error('バーコード設定の形式が正しくありません。');
+    }
+    barcodeSettings.seed = validateNumber(
+      rawPreset.design.barcode.seed,
+      'バーコードseed',
+      0,
+      MAX_BARCODE_SEED,
+      true
+    );
+  }
+  if (rawPreset.version >= 4) {
+    barcodeSettings.width = validateNumber(
+      rawPreset.design.barcode.width,
+      'バーコード横幅',
+      BARCODE_WIDTH_MIN,
+      BARCODE_WIDTH_MAX,
+      true
+    );
+    barcodeSettings.height = validateNumber(
+      rawPreset.design.barcode.height,
+      'バーコード縦幅',
+      BARCODE_HEIGHT_MIN,
+      BARCODE_HEIGHT_MAX,
+      true
+    );
+    barcodeSettings.trimX = validateNumber(
+      rawPreset.design.barcode.trimX,
+      'バーコード横トリム',
+      BARCODE_TRIM_X_MIN,
+      BARCODE_TRIM_X_MAX,
+      true
+    );
+    barcodeSettings.trimY = validateNumber(
+      rawPreset.design.barcode.trimY,
+      'バーコード縦トリム',
+      BARCODE_TRIM_Y_MIN,
+      BARCODE_TRIM_Y_MAX,
+      true
+    );
+  }
+  if (rawPreset.version >= 5) {
+    barcodeSettings.paddingLeft = validateNumber(
+      rawPreset.design.barcode.paddingLeft,
+      'バーコード左余白',
+      BARCODE_PADDING_MIN,
+      BARCODE_PADDING_MAX,
+      true
+    );
+    barcodeSettings.paddingRight = validateNumber(
+      rawPreset.design.barcode.paddingRight,
+      'バーコード右余白',
+      BARCODE_PADDING_MIN,
+      BARCODE_PADDING_MAX,
+      true
+    );
+    barcodeSettings.x = validateNumber(
+      rawPreset.design.barcode.x,
+      'バーコードのX位置',
+      -4096,
+      4096
+    );
+    barcodeSettings.y = validateNumber(
+      rawPreset.design.barcode.y,
+      'バーコードのY位置',
+      -4096,
+      4096
+    );
+    if (barcodeSettings.paddingLeft + barcodeSettings.paddingRight >= barcodeSettings.width) {
+      throw new Error('バーコード左右余白の合計を横幅より小さくしてください。');
+    }
+  }
+  if (rawPreset.version >= 6) {
+    barcodeSettings.density = validateNumber(
+      rawPreset.design.barcode.density,
+      'バーコード密度',
+      BARCODE_DENSITY_MIN,
+      BARCODE_DENSITY_MAX,
+      true
+    );
+  }
+
+  return {
+    text,
+    radii:{
+      ticket:validateNumber(radii.ticket, '外枠の角丸', 0, 32, true),
+      face:validateNumber(radii.face, '内枠の角丸', 0, 32, true)
+    },
+    dimensions:{height},
+    barcode:barcodeSettings,
+    extensions:JSON.parse(JSON.stringify(extensions))
+  };
+}
+
+function buildPresetJson() {
+  return JSON.stringify({
+    format:PRESET_FORMAT,
+    version:PRESET_VERSION,
+    design:designSettings
+  }, null, 2) + '\n';
+}
+
+function downloadTextFile(contents, type, filename) {
+  const url = URL.createObjectURL(new Blob([contents], {type}));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function setPresetStatus(message, isError = false) {
+  presetStatus.value = message;
+  presetStatus.dataset.state = isError ? 'error' : 'success';
+}
+
+function readFileAsText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener('load', () => resolve(String(reader.result)));
+    reader.addEventListener('error', () => reject(new Error('ファイルを読み込めませんでした。')));
+    reader.readAsText(file);
+  });
+}
+
+function bindTransactionalInput(input, update) {
+  const begin = () => {
+    if (!historyTransaction) beginHistoryTransaction();
+  };
+  input.addEventListener('focus', begin);
+  input.addEventListener('pointerdown', begin);
+  input.addEventListener('input', () => {
+    begin();
+    if (update()) {
+      render();
+      updateHistoryButtons();
+    }
+  });
+  input.addEventListener('pointerup', commitHistoryTransaction);
+  input.addEventListener('blur', commitHistoryTransaction);
+}
+
+modeButtons.forEach(button => {
+  button.addEventListener('click', () => setEditorMode(button.dataset.editorMode));
+});
+editableElements.forEach((element, index) => {
+  element.dataset.edit = '';
+  target.add(new Option(editDefinitions[index].label, index));
+  element.addEventListener('pointerdown', event => start(event, index, false));
+});
+handle.addEventListener('pointerdown', event => start(event, selected, true));
+stage.addEventListener('pointermove', move);
+for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+  stage.addEventListener(type, event => {
+    if (gesture?.id !== event.pointerId) return;
+    const before = gesture.before;
+    gesture = undefined;
+    commitSnapshot(before);
+  });
+}
+target.addEventListener('change', () => {
+  commitHistoryTransaction();
+  selected = Number(target.value);
+  render();
+});
+fields.forEach(field => bindTransactionalInput(field, () => {
+  const number = field.valueAsNumber;
+  if (!Number.isFinite(number)) return false;
+  const definition = editDefinitions[selected];
+  const state = getEditableState();
+  if (field.id === 'size') {
+    if (definition.type !== 'text') return false;
+    state.fontSize = Math.max(8, Math.min(64, number));
+  }
+  else state[field.id] = number;
+  return true;
+}));
+Object.entries(radiusInputs).forEach(([key, input]) => {
+  bindTransactionalInput(input, () => {
+    if (!Number.isFinite(input.valueAsNumber)) return false;
+    designSettings.radii[key] = Math.max(0, Math.min(32, Math.round(input.valueAsNumber)));
+    return true;
+  });
+});
+[cardHeightInput, cardHeightRange].forEach(input => {
+  bindTransactionalInput(input, () => {
+    if (!Number.isFinite(input.valueAsNumber)) return false;
+    designSettings.dimensions.height = Math.max(
+      MIN_CARD_HEIGHT,
+      Math.min(MAX_CARD_HEIGHT, Math.round(input.valueAsNumber))
+    );
+    return true;
+  });
+});
+bindTransactionalInput(barcodeSeedInput, () => {
+  if (!Number.isFinite(barcodeSeedInput.valueAsNumber)) return false;
+  designSettings.barcode.seed = Math.max(
+    0,
+    Math.min(MAX_BARCODE_SEED, Math.round(barcodeSeedInput.valueAsNumber))
+  );
+  return true;
+});
+const barcodeInputLimits = {
+  density:[BARCODE_DENSITY_MIN, BARCODE_DENSITY_MAX],
+  width:[BARCODE_WIDTH_MIN, BARCODE_WIDTH_MAX],
+  height:[BARCODE_HEIGHT_MIN, BARCODE_HEIGHT_MAX],
+  trimX:[BARCODE_TRIM_X_MIN, BARCODE_TRIM_X_MAX],
+  trimY:[BARCODE_TRIM_Y_MIN, BARCODE_TRIM_Y_MAX],
+  paddingLeft:[BARCODE_PADDING_MIN, BARCODE_PADDING_MAX],
+  paddingRight:[BARCODE_PADDING_MIN, BARCODE_PADDING_MAX]
+};
+Object.entries(barcodeInputs).forEach(([key, input]) => {
+  bindTransactionalInput(input, () => {
+    if (!Number.isFinite(input.valueAsNumber)) return false;
+    const [min, max] = barcodeInputLimits[key];
+    designSettings.barcode[key] = Math.max(
+      min,
+      Math.min(max, Math.round(input.valueAsNumber))
+    );
+    fitBarcodePaddingToWidth(key);
+    return true;
+  });
+});
+scaleMode.addEventListener('change', () => {
+  commitHistoryTransaction();
+  updateDisplayScale();
+});
+undoButton.addEventListener('click', undoDesignEdit);
+redoButton.addEventListener('click', redoDesignEdit);
+regenerateBarcodeButton.addEventListener('click', () => {
+  commitHistoryTransaction();
+  const before = cloneDesignSettings();
+  const values = new Uint32Array(1);
+  crypto.getRandomValues(values);
+  designSettings.barcode.seed = values[0] === designSettings.barcode.seed
+    ? (values[0] + 1) >>> 0
+    : values[0];
+  commitSnapshot(before);
+  render();
+});
+document.querySelector('#reset').addEventListener('click', () => {
+  commitHistoryTransaction();
+  const before = cloneDesignSettings();
+  designSettings = createDefaultDesignSettings();
+  commitSnapshot(before);
+  setPresetStatus('初期設定に戻しました。');
+  render();
+});
+document.querySelector('#save').addEventListener('click', () => {
+  commitHistoryTransaction();
+  downloadTextFile(buildExportHtml(), 'text/html', 'scenery-card-custom.html');
+});
+document.querySelector('#save-preset').addEventListener('click', () => {
+  commitHistoryTransaction();
+  downloadTextFile(buildPresetJson(), 'application/json', 'scenery-card-preset.json');
+  setPresetStatus('プリセットを書き出しました。');
+});
+document.querySelector('#load-preset').addEventListener('click', () => presetFile.click());
+presetFile.addEventListener('change', async () => {
+  const file = presetFile.files?.[0];
+  if (!file) return;
+
+  try {
+    if (file.size > MAX_PRESET_BYTES) {
+      throw new Error('プリセットファイルが大きすぎます。');
+    }
+    let parsed;
+    try {
+      parsed = JSON.parse(await readFileAsText(file));
+    } catch (error) {
+      if (error instanceof SyntaxError) throw new Error('JSONの形式が正しくありません。');
+      throw error;
+    }
+    const candidate = validatePreset(parsed);
+    commitHistoryTransaction();
+    const before = cloneDesignSettings();
+    designSettings = candidate;
+    commitSnapshot(before);
+    render();
+    setPresetStatus(file.name + ' を読み込みました。');
+  } catch (error) {
+    setPresetStatus('読み込みに失敗しました：' + error.message, true);
+  } finally {
+    presetFile.value = '';
+  }
+});
+
+document.addEventListener('keydown', event => {
+  if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+  const active = document.activeElement;
+  if (active?.matches('input, textarea, [contenteditable="true"]')) return;
+
+  const key = event.key.toLowerCase();
+  const redo = key === 'y' || (key === 'z' && event.shiftKey);
+  const undo = key === 'z' && !event.shiftKey;
+  if (undo && undoDesignEdit()) event.preventDefault();
+  else if (redo && redoDesignEdit()) event.preventDefault();
+});
+
+new ResizeObserver(entries => {
+  const width = entries[0].contentRect.width;
+  if (Math.abs(width - observedStageWidth) < 0.5) return;
+  observedStageWidth = width;
+  updateDisplayScale();
+}).observe(stage);
+updateHistoryButtons();
+setEditorMode('edit');
+updateDisplayScale();
+</script>
+</html>

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>どこかの風景 — ICカードのデザイン案</title>
+<style>
+  body { max-width: 736px; margin: 24px auto; padding: 0 12px; background: #111; }
+  #scenery-card-integrated button:enabled { cursor: pointer; }
+</style>
+</head>
+<body>
+<!-- デザイン検討用。地点と履歴はサンプル。既存サイトに組み込む際は、現行の地図・Street Viewの処理へ接続する。 -->
+<div id="scenery-card-integrated">
+  <style>
+    #scenery-card-integrated .view { box-sizing:border-box; position:relative; overflow:hidden; min-height:290px; border-radius:12px; background:linear-gradient(#87c5d2,#c4d9ca 62%,#677b49 63%,#4c633e); font-family:system-ui,sans-serif; padding:16px; color:#142b39; }
+    #scenery-card-integrated output { display:inline-block; background:#e9eff3; padding:6px 10px; border-radius:5px; font-size:13px; }
+    #scenery-card-integrated .ticket { box-sizing:border-box; position:absolute; bottom:0; left:50%; width:min(432px,calc(100% - 20px)); padding:8px; border-radius:16px 16px 5px 5px; background:#203eb3; color:#ffd0ee; transform:translate(-50%,0); transition:transform .22s ease; }
+    #scenery-card-integrated .ticket:hover, #scenery-card-integrated .ticket:has(:focus-visible) { transform:translate(-50%,0); }
+    #scenery-card-integrated[data-preview] .ticket { transform:translate(-50%,0); }
+    #scenery-card-integrated .face { padding:0 9px 8px; border:1px solid #ec9fd7; border-radius:11px 11px 3px 3px; background:linear-gradient(135deg,#1735a7,#192995 65%,#293bb0); }
+    #scenery-card-integrated button { font:inherit; color:inherit; }
+    #scenery-card-integrated .jump { background:transparent; border:0; text-align:left; width:100%; padding:0 3px 9px; }
+    #scenery-card-integrated .topline { display:flex; justify-content:space-between; align-items:center; gap:4px; min-height:30px; border-bottom:1px solid #e99fce; font:500 10px ui-monospace,monospace; }
+    #scenery-card-integrated .mark { display:block; text-align:right; margin-top:7px; letter-spacing:.16em; font-size:12px; }
+    #scenery-card-integrated strong { display:block; margin:4px 0 6px; font-size:clamp(15px,4vw,24px); }
+    #scenery-card-integrated .subtitle { font:600 11px ui-monospace,monospace; letter-spacing:.10em; }
+    #scenery-card-integrated .footer { display:grid; grid-template-columns:minmax(12px,1fr) auto auto; gap:7px; align-items:center; border-top:1px solid #e99fce; padding-top:8px; }
+    #scenery-card-integrated .barcode { height:22px; background:repeating-linear-gradient(90deg,#edacd7 0 2px,transparent 2px 4px,#edacd7 4px 5px,transparent 5px 8px); }
+    #scenery-card-integrated .history { min-height:44px; padding:0 8px; border:1px solid #eab0dc; border-radius:4px; background:#293fa4; white-space:nowrap; font-size:13px; }
+    #scenery-card-integrated button:enabled:hover { background:#4056b6; }
+    #scenery-card-integrated button:disabled { opacity:.55; }
+    @media (prefers-reduced-motion:reduce) { #scenery-card-integrated .ticket { transition:none; } }
+  </style>
+  <div class="view">
+    <output aria-live="polite">サンプル地点 · 朽ちた螺旋階段</output>
+    <div class="ticket">
+      <div class="face">
+        <button class="jump" type="button" aria-label="どこかの風景へランダム移動">
+          <span class="topline" aria-hidden="true"><span>◀ DESTINATION: SOMEWHERE UNKNOWN</span><span>No. 0017</span></span>
+          <span class="mark" aria-hidden="true">IC CARD</span>
+          <strong>どこかの風景へランダム移動</strong>
+          <span class="subtitle" aria-hidden="true">RANDOM VIEW ACCESS</span>
+        </button>
+        <div class="footer">
+          <span class="barcode" aria-hidden="true"></span>
+          <button class="history" data-step="-1" type="button">◀ 戻る</button>
+          <button class="history" data-step="1" type="button" disabled>進む ▶</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (() => {
+      const root = document.getElementById('scenery-card-integrated');
+      const back = root.querySelector('[data-step="-1"]');
+      const forward = root.querySelector('[data-step="1"]');
+      const output = root.querySelector('output');
+      const places = ['駅ねこ', '朽ちた螺旋階段', '壁画', '池のそばの道'];
+      const history = places.slice(0, 2);
+      let index = 1;
+      function render() {
+        back.disabled = index === 0;
+        forward.disabled = index === history.length - 1;
+        output.textContent = 'サンプル地点 · ' + history[index];
+      }
+      back.addEventListener('click', () => { index--; render(); });
+      forward.addEventListener('click', () => { index++; render(); });
+      root.querySelector('.jump').addEventListener('click', () => {
+        const candidates = places.filter(place => place !== history[index]);
+        const destination = candidates[Math.floor(Math.random() * candidates.length)];
+        history.splice(index + 1, history.length - index - 1, destination);
+        index++;
+        render();
+      });
+    })();
+  </script>
+</div>
+
+</body>
+</html>
