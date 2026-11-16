@@ -2358,6 +2358,11 @@ background:
             <label><input type="radio" name="windowMapType" data-map-type value="roadmap">地図</label>
             <label><input type="radio" name="windowMapType" data-map-type value="satellite">航空写真</label>
           </fieldset>
+          <fieldset>
+            <legend>地図の配色（テスト）</legend>
+            <label><input type="radio" name="windowMapPalette" data-map-palette-mode value="normal" checked>通常配色</label>
+            <label><input type="radio" name="windowMapPalette" data-map-palette-mode value="yumekawa">テスト配色</label>
+          </fieldset>
           <button type="button" data-fullscreen-toggle title="全画面表示" aria-label="全画面表示">全画面表示</button>
         </div>
         <div class="window-content scenery-detail-content">
@@ -2640,6 +2645,34 @@ const markerIconUrls = {
   creepy: "icons/creepy.png",
   other: "icons/other.png"
 };
+
+// 地図配色の一時検証用。通常配色の設定とは分離し、このブロックと
+// setupMapPaletteExperiment() の呼び出しを削除すれば実験前の状態に戻せる。
+const YUMEKAWA_MAP_PALETTE = Object.freeze({
+  water: "#8f0000",
+  land: "#330000",
+  forest: "#2b00ff",
+  park: "#c4e7d6",
+  road: "#9310fe",
+  building: "#a50303",
+  label: "#000000",
+  boundary: "#a6fe76",
+  river: "#43fec6"
+});
+
+const YUMEKAWA_TEST_MAP_STYLES = Object.freeze([
+  { elementType: "labels.text.fill", stylers: [{ color: YUMEKAWA_MAP_PALETTE.label }] },
+  { featureType: "landscape", elementType: "geometry", stylers: [{ color: YUMEKAWA_MAP_PALETTE.land }] },
+  { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: YUMEKAWA_MAP_PALETTE.forest }] },
+  { featureType: "landscape.man_made", elementType: "geometry", stylers: [{ color: YUMEKAWA_MAP_PALETTE.building }] },
+  { featureType: "poi.business", elementType: "geometry", stylers: [{ color: YUMEKAWA_MAP_PALETTE.building }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: YUMEKAWA_MAP_PALETTE.park }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: YUMEKAWA_MAP_PALETTE.road }] },
+  { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: YUMEKAWA_MAP_PALETTE.boundary }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: YUMEKAWA_MAP_PALETTE.water }] },
+  // 従来のスタイル指定では河川だけを分離できないため、水域ラベル色として近似する。
+  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: YUMEKAWA_MAP_PALETTE.river }] }
+]);
 const MARKER_TITLE_LABEL_WIDTH = 320;
 const MARKER_TITLE_LABEL_GAP = 6;
 const MAP_MARKER_MAX_ZOOM = 9;
@@ -2808,6 +2841,7 @@ function initMap() {
   setupSidePanel();
   setupSceneryListTabs();
   setupMapTypeSettings();
+  setupMapPaletteExperiment();
   setupRandomViewButton();
   setupStreetViewExitShortcut();
   setupSceneryDetailCardToggle();
@@ -2987,6 +3021,25 @@ function setupMapTypeSettings() {
 
   map.addListener("maptypeid_changed", updateSelection);
   updateSelection();
+}
+
+function setupMapPaletteExperiment() {
+  const options = document.querySelectorAll('input[data-map-palette-mode]');
+  const originalStyles = map.get("styles") ?? null;
+
+  options.forEach(option => {
+    option.addEventListener("change", () => {
+      if (!option.checked) return;
+      map.setOptions({
+        styles: option.value === "yumekawa" ? YUMEKAWA_TEST_MAP_STYLES : originalStyles
+      });
+    });
+  });
+
+  // 初期状態では setOptions() を呼ばず、サイト本来の配色をそのまま維持する。
+  options.forEach(option => {
+    option.checked = option.value === "normal";
+  });
 }
 
 function getCreatedAtMillis(createdAt) {
