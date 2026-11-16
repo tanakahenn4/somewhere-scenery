@@ -2624,6 +2624,7 @@ let sceneryWindowTab = "overview";
 let pendingPanoramaViewListener = null;
 let pendingPanoramaViewTimer = null;
 let cancelPendingPanoramaView = null;
+let isCommittingPanoramaView = false;
 let panoramaHistoryNavigationPending = false;
 let mapToastTimer = null;
 const STORAGE_KEY = "catsmap_markers";
@@ -3126,6 +3127,17 @@ function showSceneryDetailCard(jsonData = {}, marker = null) {
   card.hidden = false;
 }
 
+function showRegisteredSceneryArrival(jsonData, marker = null) {
+  resetSceneryDetailWindowPosition();
+  sceneryDetailCollapsedByUser = false;
+  showSceneryDetailCard(jsonData, marker);
+}
+
+function findRegisteredSceneryMarker(panoId) {
+  if (!panoId) return null;
+  return markers.find(marker => marker.jsonData?.pano === panoId) || null;
+}
+
 function showEmptySceneryDetailCard(currentPano) {
   const card = document.getElementById("sceneryDetailCard");
   const titleElement = document.getElementById("sceneryDetailTitle");
@@ -3158,9 +3170,7 @@ function syncSceneryDetailForCurrentPano() {
   const currentPano = panorama?.getPano();
   if (!panorama?.getVisible() || !currentPano) return;
 
-  const matchingMarker = markers.find(marker =>
-    marker.jsonData?.pano === currentPano
-  );
+  const matchingMarker = findRegisteredSceneryMarker(currentPano);
   const card = document.getElementById("sceneryDetailCard");
   const detailState = matchingMarker ? "registered" : "empty";
 
@@ -3171,7 +3181,11 @@ function syncSceneryDetailForCurrentPano() {
   ) return;
 
   if (matchingMarker) {
-    showSceneryDetailCard(matchingMarker.jsonData, matchingMarker);
+    if (pendingPanoramaViewListener || isCommittingPanoramaView) {
+      showSceneryDetailCard(matchingMarker.jsonData, matchingMarker);
+    } else {
+      showRegisteredSceneryArrival(matchingMarker.jsonData, matchingMarker);
+    }
   } else {
     showEmptySceneryDetailCard(currentPano);
   }
@@ -4583,15 +4597,26 @@ function showPanorama(data, detailData = null, detailMarker = null, options = {}
   };
 
   const finishSuccess = () => {
-    clearPendingRequest();
-    panorama.setVisible(true);
-    applySavedView();
-    if (detailData) showSceneryDetailCard(detailData, detailMarker);
-    else hideSceneryDetailCard();
-    if (options.recordHistory !== false) {
-      recordPanoramaView(data, detailData, detailMarker);
+    isCommittingPanoramaView = true;
+    try {
+      clearPendingRequest();
+      panorama.setVisible(true);
+      applySavedView();
+      const matchingMarker = findRegisteredSceneryMarker(panorama.getPano());
+      if (matchingMarker) {
+        showRegisteredSceneryArrival(matchingMarker.jsonData, matchingMarker);
+      } else if (detailData) {
+        showRegisteredSceneryArrival(detailData, detailMarker);
+      } else {
+        hideSceneryDetailCard();
+      }
+      if (options.recordHistory !== false) {
+        recordPanoramaView(data, detailData, detailMarker);
+      }
+      updateMarkerIconSizes();
+    } finally {
+      isCommittingPanoramaView = false;
     }
-    updateMarkerIconSizes();
     options.onSuccess?.();
   };
 
@@ -4661,6 +4686,7 @@ async function loadSavedMarkers() {
     addMarker(jsonData, false, snapshot.id);
   });
   renderSceneryList();
+  syncSceneryDetailForCurrentPano();
 
   if (snap.size) {
     console.log(`🐾 ${snap.size} 件の猫をFirestoreから復元しました`);
