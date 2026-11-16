@@ -843,6 +843,7 @@ background:
     height: 1px;
     margin: 0;
     overflow: hidden;
+    accent-color: #7145d4;
     opacity: 0;
     pointer-events: none;
   }
@@ -874,7 +875,7 @@ background:
   }
 
   #sceneryDetailCard .map-overview-filters label:has(input[data-marker-category]:checked)::before {
-    background: #8d83d2;
+    background: #7145d4;
   }
 
   #sceneryDetailCard .map-overview-filters label:has(input[data-marker-category]:checked)::after {
@@ -2152,7 +2153,7 @@ background:
   left: 3px; border: 1px solid #9276b9;
   box-shadow: inset 1px 1px #c2addc, 1px 1px #fff;
 }
-#sceneryDetailCard.scenery-window-frame .map-overview-filters label:has(input:checked)::before { background: var(--window-accent); }
+#sceneryDetailCard.scenery-window-frame .map-overview-filters label:has(input[data-marker-category]:checked)::before { background: #7145d4; }
 #sceneryDetailCard.scenery-window-frame .map-overview-filters label::after {
   left: 9px; width: 4px; height: 8px; border-color: #fffaff; border-width: 0 2px 2px 0;
 }
