@@ -244,9 +244,9 @@
 
   #randomViewButton.jump {
     flex: 0 0 auto;
-    width: 100%;
-    padding: 0 3px 9px;
-    margin: 0;
+    width: calc(100% - 6px);
+    padding: 0 0 9px;
+    margin: 0 3px;
     border: 0;
     color: inherit;
     background: transparent;
@@ -265,6 +265,7 @@
     align-items: center;
     gap: 4px;
     min-height: 30px;
+    margin: 0 3px;
     border-bottom: 1px solid #e99fce;
     font: 500 10px ui-monospace, monospace;
   }
@@ -2641,8 +2642,8 @@ background:
     <div class="ticket-scale-box">
       <div class="ticket">
         <div class="face">
+          <span class="topline" aria-hidden="true"><span>◀ DESTINATION: SOMEWHERE UNKNOWN</span><span>No. 0017</span></span>
           <button id="randomViewButton" class="jump" type="button" aria-label="どこかの風景へランダム移動">
-            <span class="topline" aria-hidden="true"><span>◀ DESTINATION: SOMEWHERE UNKNOWN</span><span>No. 0017</span></span>
             <span class="mark" aria-hidden="true">IC CARD</span>
             <strong>どこかの風景へランダム移動</strong>
             <span class="subtitle" aria-hidden="true">RANDOM VIEW ACCESS</span>
