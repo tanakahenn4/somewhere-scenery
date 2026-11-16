@@ -55,6 +55,56 @@
   #map {
     width: calc(100% - var(--side-navigation-width));
     height: 100%;
+    position: relative;
+    z-index: 0;
+  }
+
+  /*
+    地図の移動レイヤーから独立した固定SVG。Google公式UIの位置だけを
+    evenoddパスでくり抜き、ズーム・パン中も地図表示範囲へ安定して重ねる。
+  */
+  #mapColorFilterOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 999;
+    width: calc(100% - var(--side-navigation-width));
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  #mapColorFilterOverlayPath {
+    fill: #7f40dd;
+    fill-opacity: 0.08;
+  }
+
+  body.site-color-filter-street-view #mapColorFilterOverlay {
+    visibility: hidden;
+  }
+
+  .site-color-filter-host-relative { position: relative; }
+  .site-color-filter-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 2147483000;
+    border-radius: inherit;
+    background: #7f40dd;
+    opacity: 0.08;
+    pointer-events: none;
+  }
+
+  /* Street View映像は変更せず、classic Markerが生成する画像だけを着色する。 */
+  body.site-color-filter-street-view #map img[alt="🐈 猫発見！"] {
+    filter: url(#siteColorFilterMarkerTint) !important;
+  }
+
+  .site-color-filter-definitions {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
   }
 
   #mapToast {
@@ -2315,12 +2365,25 @@ background:
 
 <body>
 
+<svg class="site-color-filter-definitions" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="siteColorFilterMarkerTint" color-interpolation-filters="sRGB">
+      <feFlood flood-color="#7f40dd" flood-opacity="0.08" result="markerTintColor"></feFlood>
+      <feComposite in="markerTintColor" in2="SourceAlpha" operator="in" result="markerTint"></feComposite>
+      <feComposite in="markerTint" in2="SourceGraphic" operator="over"></feComposite>
+    </filter>
+  </defs>
+</svg>
+
 <div id="app">
 <header id="topBar">
   <div id="siteTitle">どこかの風景共有サイト / 全国猫地図図鑑</div>
 </header>
 <div id="mapContainer">
   <div id="map"></div>
+  <svg id="mapColorFilterOverlay" aria-hidden="true" focusable="false" preserveAspectRatio="none">
+    <path id="mapColorFilterOverlayPath" fill-rule="evenodd"></path>
+  </svg>
   <div id="mapToast" role="status" aria-live="polite" aria-atomic="true"></div>
   <div id="sceneryDetailCardViewport">
     <div id="sceneryDetailCardShadow">
@@ -2357,11 +2420,6 @@ background:
             <legend>地図の種類</legend>
             <label><input type="radio" name="windowMapType" data-map-type value="roadmap">地図</label>
             <label><input type="radio" name="windowMapType" data-map-type value="satellite">航空写真</label>
-          </fieldset>
-          <fieldset>
-            <legend>地図の配色（テスト）</legend>
-            <label><input type="radio" name="windowMapPalette" data-map-palette-mode value="normal" checked>通常配色</label>
-            <label><input type="radio" name="windowMapPalette" data-map-palette-mode value="yumekawa">テスト配色</label>
           </fieldset>
           <button type="button" data-fullscreen-toggle title="全画面表示" aria-label="全画面表示">全画面表示</button>
         </div>
@@ -2646,33 +2704,22 @@ const markerIconUrls = {
   other: "icons/other.png"
 };
 
-// 地図配色の一時検証用。通常配色の設定とは分離し、このブロックと
-// setupMapPaletteExperiment() の呼び出しを削除すれば実験前の状態に戻せる。
-const YUMEKAWA_MAP_PALETTE = Object.freeze({
-  water: "#8f0000",
-  land: "#330000",
-  forest: "#2b00ff",
-  park: "#c4e7d6",
-  road: "#9310fe",
-  building: "#a50303",
-  label: "#000000",
-  boundary: "#a6fe76",
-  river: "#43fec6"
-});
-
-const YUMEKAWA_TEST_MAP_STYLES = Object.freeze([
-  { elementType: "labels.text.fill", stylers: [{ color: YUMEKAWA_MAP_PALETTE.label }] },
-  { featureType: "landscape", elementType: "geometry", stylers: [{ color: YUMEKAWA_MAP_PALETTE.land }] },
-  { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: YUMEKAWA_MAP_PALETTE.forest }] },
-  { featureType: "landscape.man_made", elementType: "geometry", stylers: [{ color: YUMEKAWA_MAP_PALETTE.building }] },
-  { featureType: "poi.business", elementType: "geometry", stylers: [{ color: YUMEKAWA_MAP_PALETTE.building }] },
-  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: YUMEKAWA_MAP_PALETTE.park }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: YUMEKAWA_MAP_PALETTE.road }] },
-  { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: YUMEKAWA_MAP_PALETTE.boundary }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: YUMEKAWA_MAP_PALETTE.water }] },
-  // 従来のスタイル指定では河川だけを分離できないため、水域ラベル色として近似する。
-  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: YUMEKAWA_MAP_PALETTE.river }] }
+const SITE_COLOR_FILTER_HOST_IDS = Object.freeze([
+  "topBar",
+  "mapToast",
+  "sceneryDetailCard",
+  "sidePanel",
+  "sideNavigationRail",
+  "randomViewCard",
+  "controls",
+  "searchResults",
+  "compass-container",
+  "registrationDialog",
+  "markerManagementDialog"
 ]);
+let mapColorFilterResizeObserver = null;
+let mapColorFilterMutationObserver = null;
+let mapColorFilterMaskFrame = null;
 const MARKER_TITLE_LABEL_WIDTH = 320;
 const MARKER_TITLE_LABEL_GAP = 6;
 const MAP_MARKER_MAX_ZOOM = 9;
@@ -2841,7 +2888,7 @@ function initMap() {
   setupSidePanel();
   setupSceneryListTabs();
   setupMapTypeSettings();
-  setupMapPaletteExperiment();
+  setupSiteColorFilter();
   setupRandomViewButton();
   setupStreetViewExitShortcut();
   setupSceneryDetailCardToggle();
@@ -2870,6 +2917,7 @@ function initMap() {
   });
 
   panorama.addListener("visible_changed", () => {
+    updateSiteColorFilterMode();
     if (panorama.getVisible()) {
    if (resetZoomOnEnter) {
     panorama.setPov({ heading: 0, pitch: 0, zoom: 1 });
@@ -3023,23 +3071,95 @@ function setupMapTypeSettings() {
   updateSelection();
 }
 
-function setupMapPaletteExperiment() {
-  const options = document.querySelectorAll('input[data-map-palette-mode]');
-  const originalStyles = map.get("styles") ?? null;
+function setupSiteColorFilter() {
+  SITE_COLOR_FILTER_HOST_IDS.forEach(id => {
+    const host = document.getElementById(id);
+    if (!host || host.querySelector(":scope > .site-color-filter-layer")) return;
+    if (window.getComputedStyle(host).position === "static") {
+      host.classList.add("site-color-filter-host-relative");
+    }
+    const layer = document.createElement("span");
+    layer.className = "site-color-filter-layer";
+    layer.setAttribute("aria-hidden", "true");
+    host.appendChild(layer);
+  });
 
-  options.forEach(option => {
-    option.addEventListener("change", () => {
-      if (!option.checked) return;
-      map.setOptions({
-        styles: option.value === "yumekawa" ? YUMEKAWA_TEST_MAP_STYLES : originalStyles
-      });
+  setupMapColorFilterOverlay();
+  updateSiteColorFilterMode();
+}
+
+function setupMapColorFilterOverlay() {
+  const mapElement = document.getElementById("map");
+  const overlay = document.getElementById("mapColorFilterOverlay");
+  if (!mapElement || !overlay || mapColorFilterResizeObserver) return;
+
+  const scheduleMaskUpdate = () => {
+    if (mapColorFilterMaskFrame !== null) return;
+    mapColorFilterMaskFrame = requestAnimationFrame(() => {
+      mapColorFilterMaskFrame = null;
+      updateMapColorFilterMask();
     });
+  };
+
+  mapColorFilterResizeObserver = new ResizeObserver(scheduleMaskUpdate);
+  mapColorFilterResizeObserver.observe(mapElement);
+
+  mapColorFilterMutationObserver = new MutationObserver(scheduleMaskUpdate);
+  mapColorFilterMutationObserver.observe(mapElement, {
+    childList: true,
+    subtree: true
   });
 
-  // 初期状態では setOptions() を呼ばず、サイト本来の配色をそのまま維持する。
-  options.forEach(option => {
-    option.checked = option.value === "normal";
+  window.addEventListener("resize", scheduleMaskUpdate);
+  map.addListener("idle", scheduleMaskUpdate);
+  scheduleMaskUpdate();
+}
+
+function updateMapColorFilterMask() {
+  const mapElement = document.getElementById("map");
+  const overlay = document.getElementById("mapColorFilterOverlay");
+  const path = document.getElementById("mapColorFilterOverlayPath");
+  if (!mapElement || !overlay || !path) return;
+
+  const mapRect = mapElement.getBoundingClientRect();
+  const width = Math.max(0, Math.round(mapRect.width));
+  const height = Math.max(0, Math.round(mapRect.height));
+  overlay.setAttribute("viewBox", `0 0 ${width} ${height}`);
+
+  const officialElements = mapElement.querySelectorAll([
+    ".gm-style-cc",
+    ".gm-bundled-control",
+    ".gm-svpc",
+    ".gm-control-active",
+    "a[href*='google.com/maps']",
+    "a[href*='maps.google.com']"
+  ].join(","));
+  const protectedRects = [];
+
+  officialElements.forEach(element => {
+    const rect = element.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    const margin = 2;
+    const left = Math.max(0, Math.floor(rect.left - mapRect.left - margin));
+    const top = Math.max(0, Math.floor(rect.top - mapRect.top - margin));
+    const right = Math.min(width, Math.ceil(rect.right - mapRect.left + margin));
+    const bottom = Math.min(height, Math.ceil(rect.bottom - mapRect.top + margin));
+    if (right <= left || bottom <= top) return;
+    protectedRects.push({ left, top, right, bottom });
   });
+
+  const outerPath = `M0 0H${width}V${height}H0Z`;
+  const holePaths = protectedRects.map(rect =>
+    `M${rect.left} ${rect.top}H${rect.right}V${rect.bottom}H${rect.left}Z`
+  );
+  path.setAttribute("d", [outerPath, ...holePaths].join(""));
+}
+
+function updateSiteColorFilterMode() {
+  document.body.classList.toggle(
+    "site-color-filter-street-view",
+    Boolean(panorama?.getVisible())
+  );
 }
 
 function getCreatedAtMillis(createdAt) {
