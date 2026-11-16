@@ -371,6 +371,11 @@
     transition: right 0.25s ease, width 0.25s ease;
   }
 
+  #sceneryDetailCardViewport.is-dragging {
+    transition: none;
+    user-select: none;
+  }
+
   #mapContainer:has(#sidePanel.is-open) #sceneryDetailCardViewport {
     right: calc(var(--side-navigation-width) + var(--side-panel-width) + 12px);
   }
@@ -599,19 +604,20 @@ background:
     right: calc(var(--side-navigation-width) + 12px);
     z-index: 1001;
     width: var(--detail-window-width);
-    max-width: max(0px, calc(100% - var(--side-navigation-width) - var(--side-panel-width) - 36px));
+    max-width: max(0px, calc(100% - var(--side-navigation-width) - 24px));
     overflow: hidden;
     transition: right 0.25s ease, width 0.25s ease;
   }
 
   #mapContainer:has(#sidePanel.is-open) #sceneryDetailCardViewport {
     right: calc(var(--side-navigation-width) + var(--side-panel-width) + 12px);
+    max-width: max(0px, calc(100% - var(--side-navigation-width) - var(--side-panel-width) - 24px));
   }
 
   #sceneryDetailCardShadow {
     position: relative;
     width: var(--detail-window-width);
-    max-width: max(0px, calc(100vw - var(--side-navigation-width) - var(--side-panel-width) - 36px));
+    max-width: 100%;
   }
 
   #sceneryDetailCard.scenery-window {
@@ -661,9 +667,14 @@ background:
     color: #ffffff;
     background: linear-gradient(180deg, #7b4fae, #7b4fae);
     border-bottom: 1px solid #090b0f;
-    cursor: pointer;
+    cursor: grab;
     transition: filter 0.16s ease;
+    touch-action: none;
     user-select: none;
+  }
+
+  #sceneryDetailCardViewport.is-dragging .window-titlebar {
+    cursor: grabbing;
   }
 
   #sceneryDetailCard .window-titlebar:hover {
@@ -2608,6 +2619,7 @@ let activeSceneryDetailPano = null;
 let activeSceneryDetailData = null;
 let activeSceneryDetailMarker = null;
 let sceneryDetailCollapsedByUser = false;
+let sceneryDetailWindowPano = null;
 let sceneryWindowTab = "overview";
 let pendingPanoramaViewListener = null;
 let pendingPanoramaViewTimer = null;
@@ -2813,6 +2825,11 @@ function initMap() {
   });
 
   panorama.addListener("pano_changed", () => {
+    const currentPano = panorama.getPano();
+    if (currentPano && currentPano !== sceneryDetailWindowPano) {
+      sceneryDetailWindowPano = currentPano;
+      resetSceneryDetailWindowPosition();
+    }
     syncSceneryDetailForCurrentPano();
   });
 
@@ -3035,12 +3052,11 @@ function showMapOverviewWindow() {
   activeSceneryDetailPano = null;
   activeSceneryDetailData = null;
   activeSceneryDetailMarker = null;
-  sceneryDetailCollapsedByUser = false;
   const card = document.getElementById("sceneryDetailCard");
   card.dataset.detailState = "map";
   setSceneryWindowContentMode("map");
   updateRegisteredSceneryCount();
-  card.classList.remove("is-collapsed");
+  card.classList.toggle("is-collapsed", sceneryDetailCollapsedByUser);
   card.hidden = false;
 }
 
@@ -3106,8 +3122,7 @@ function showSceneryDetailCard(jsonData = {}, marker = null) {
     updateSceneryLikeButton();
   }
 
-  sceneryDetailCollapsedByUser = false;
-  card.classList.remove("is-collapsed");
+  card.classList.toggle("is-collapsed", sceneryDetailCollapsedByUser);
   card.hidden = false;
 }
 
@@ -3172,17 +3187,102 @@ function hideSceneryDetailCard() {
   card.hidden = true;
 }
 
+function resetSceneryDetailWindowPosition() {
+  const viewport = document.getElementById("sceneryDetailCardViewport");
+  if (!viewport) return;
+  viewport.classList.remove("is-dragging");
+  viewport.style.removeProperty("left");
+  viewport.style.removeProperty("top");
+  viewport.style.removeProperty("right");
+  delete viewport.dataset.dragPosition;
+  viewport.dispatchEvent(new Event("scenery-window-position-reset"));
+}
+
 function setupSceneryDetailCardToggle() {
+  const viewport = document.getElementById("sceneryDetailCardViewport");
+  const mapContainer = document.getElementById("mapContainer");
+  const mapElement = document.getElementById("map");
+  const sidePanel = document.getElementById("sidePanel");
   const card = document.getElementById("sceneryDetailCard");
   const content = card.querySelector(".scenery-detail-content");
   const titlebar = card.querySelector(".window-titlebar");
   const minimizeButton = document.getElementById("sceneryDetailMinimizeButton");
   const maximizeButton = document.getElementById("sceneryDetailMaximizeButton");
   const closeButton = document.getElementById("sceneryDetailCloseButton");
+  const DRAG_THRESHOLD = 6;
+  let activePointerId = null;
+  let pointerStartX = 0;
+  let pointerStartY = 0;
+  let windowStartLeft = 0;
+  let windowStartTop = 0;
+  let isDragging = false;
+  let suppressTitlebarClick = false;
+
+  const getDragBounds = () => {
+    const containerRect = mapContainer.getBoundingClientRect();
+    const mapRect = mapElement.getBoundingClientRect();
+    const viewportRect = viewport.getBoundingClientRect();
+    let usableRight = Math.min(
+      containerRect.width,
+      mapRect.right - containerRect.left
+    );
+
+    if (sidePanel.classList.contains("is-open")) {
+      const panelRect = sidePanel.getBoundingClientRect();
+      usableRight = Math.min(usableRight, panelRect.left - containerRect.left);
+    }
+
+    return {
+      containerRect,
+      maxLeft: Math.max(0, usableRight - Math.min(viewportRect.width, usableRight)),
+      maxTop: Math.max(
+        0,
+        containerRect.height - Math.min(viewportRect.height, containerRect.height)
+      )
+    };
+  };
+
+  const setDraggedPosition = (left, top) => {
+    const bounds = getDragBounds();
+    const clampedLeft = Math.min(Math.max(left, 0), bounds.maxLeft);
+    const clampedTop = Math.min(Math.max(top, 0), bounds.maxTop);
+    viewport.style.left = `${Math.round(clampedLeft)}px`;
+    viewport.style.top = `${Math.round(clampedTop)}px`;
+    viewport.style.right = "auto";
+    viewport.dataset.dragPosition = "custom";
+  };
+
+  const constrainDraggedPosition = () => {
+    if (viewport.dataset.dragPosition !== "custom" || card.hidden) return;
+    const containerRect = mapContainer.getBoundingClientRect();
+    const viewportRect = viewport.getBoundingClientRect();
+    setDraggedPosition(
+      viewportRect.left - containerRect.left,
+      viewportRect.top - containerRect.top
+    );
+  };
+
+  const finishDrag = event => {
+    if (event.pointerId !== activePointerId) return;
+    if (titlebar.hasPointerCapture?.(event.pointerId)) {
+      titlebar.releasePointerCapture(event.pointerId);
+    }
+    if (isDragging) {
+      event.preventDefault();
+      suppressTitlebarClick = true;
+      constrainDraggedPosition();
+      setTimeout(() => {
+        suppressTitlebarClick = false;
+      }, 0);
+    }
+    viewport.classList.remove("is-dragging");
+    activePointerId = null;
+    isDragging = false;
+  };
 
   const setCollapsedFromUser = isCollapsed => {
     card.classList.toggle("is-collapsed", isCollapsed);
-    if (panorama?.getVisible()) sceneryDetailCollapsedByUser = isCollapsed;
+    sceneryDetailCollapsedByUser = isCollapsed;
   };
 
   const collapseWindow = event => {
@@ -3197,9 +3297,70 @@ function setupSceneryDetailCardToggle() {
     setCollapsedFromUser(!card.classList.contains("is-collapsed"));
   });
 
-  titlebar.addEventListener("click", () => {
+  titlebar.addEventListener("pointerdown", event => {
+    if (
+      event.button !== 0 ||
+      event.target.closest("button, a, input, select, textarea, [contenteditable='true']")
+    ) return;
+
+    const containerRect = mapContainer.getBoundingClientRect();
+    const viewportRect = viewport.getBoundingClientRect();
+    activePointerId = event.pointerId;
+    pointerStartX = event.clientX;
+    pointerStartY = event.clientY;
+    windowStartLeft = viewportRect.left - containerRect.left;
+    windowStartTop = viewportRect.top - containerRect.top;
+    isDragging = false;
+    suppressTitlebarClick = false;
+    titlebar.setPointerCapture?.(event.pointerId);
+  });
+
+  titlebar.addEventListener("pointermove", event => {
+    if (event.pointerId !== activePointerId) return;
+    const deltaX = event.clientX - pointerStartX;
+    const deltaY = event.clientY - pointerStartY;
+
+    if (!isDragging) {
+      if (Math.hypot(deltaX, deltaY) < DRAG_THRESHOLD) return;
+      isDragging = true;
+      viewport.classList.add("is-dragging");
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    setDraggedPosition(windowStartLeft + deltaX, windowStartTop + deltaY);
+  });
+
+  titlebar.addEventListener("pointerup", finishDrag);
+  titlebar.addEventListener("pointercancel", event => {
+    if (event.pointerId !== activePointerId) return;
+    suppressTitlebarClick = false;
+    finishDrag(event);
+  });
+
+  titlebar.addEventListener("click", event => {
+    if (suppressTitlebarClick) {
+      event.preventDefault();
+      event.stopPropagation();
+      suppressTitlebarClick = false;
+      return;
+    }
     setCollapsedFromUser(!card.classList.contains("is-collapsed"));
   });
+
+  viewport.addEventListener("scenery-window-position-reset", () => {
+    activePointerId = null;
+    isDragging = false;
+    suppressTitlebarClick = false;
+  });
+
+  new ResizeObserver(constrainDraggedPosition).observe(mapContainer);
+  new ResizeObserver(constrainDraggedPosition).observe(viewport);
+  new MutationObserver(() => {
+    requestAnimationFrame(constrainDraggedPosition);
+    setTimeout(constrainDraggedPosition, 280);
+  }).observe(sidePanel, { attributes: true, attributeFilter: ["class"] });
+  window.addEventListener("resize", constrainDraggedPosition);
 
   content.addEventListener("click", () => {
     if (card.dataset.detailState !== "registered" || !activeSceneryDetailData) return;
@@ -3373,6 +3534,7 @@ function navigatePanoramaHistory(step) {
 
 function showMapHistoryView(mapView, onComplete) {
   const applyMapView = () => {
+    resetSceneryDetailWindowPosition();
     showMapOverviewWindow();
     map.setCenter({ lat: mapView.lat, lng: mapView.lng });
     map.setZoom(mapView.zoom);
@@ -3399,6 +3561,7 @@ function runAfterPanoramaHidden(callback) {
 function recordCurrentMapView(detailData = null, detailMarker = null) {
   const center = map.getCenter();
   if (!center) return;
+  resetSceneryDetailWindowPosition();
   recordPanoramaView({
     mapView: {
       lat: center.lat(),
