@@ -83,6 +83,11 @@
     visibility: hidden;
   }
 
+  body.site-color-filter-disabled #mapColorFilterOverlay,
+  body.site-color-filter-disabled .site-color-filter-layer {
+    visibility: hidden;
+  }
+
   .site-color-filter-host-relative { position: relative; }
   .site-color-filter-layer {
     position: absolute;
@@ -95,7 +100,8 @@
   }
 
   /* Street View映像は変更せず、classic Markerが生成する画像だけを着色する。 */
-  body.site-color-filter-street-view #map img[alt="🐈 猫発見！"] {
+  body:not(.site-color-filter-disabled).site-color-filter-street-view
+  #map img[alt="🐈 猫発見！"] {
     filter: url(#siteColorFilterMarkerTint) !important;
   }
 
@@ -2332,6 +2338,7 @@ background:
 }
 #sceneryWindowSettings { color: #211c1c; }
 #sceneryWindowSettings fieldset { margin: 0; padding: 12px; border: 1px solid #aa94bf; }
+#sceneryWindowSettings > fieldset + fieldset { margin-top: 10px; }
 #sceneryWindowSettings legend { padding: 0 4px; font-size: 16px; }
 #sceneryWindowSettings label { display: flex; align-items: center; gap: 8px; padding: 5px 0; cursor: pointer; }
 #sceneryWindowSettings input { margin: 0; accent-color: #4432b7; }
@@ -2420,6 +2427,10 @@ background:
             <legend>地図の種類</legend>
             <label><input type="radio" name="windowMapType" data-map-type value="roadmap">地図</label>
             <label><input type="radio" name="windowMapType" data-map-type value="satellite">航空写真</label>
+          </fieldset>
+          <fieldset>
+            <legend>全体カラーフィルター</legend>
+            <label><input type="checkbox" data-site-color-filter-enabled checked>フィルターON/OFF</label>
           </fieldset>
           <button type="button" data-fullscreen-toggle title="全画面表示" aria-label="全画面表示">全画面表示</button>
         </div>
@@ -3072,6 +3083,8 @@ function setupMapTypeSettings() {
 }
 
 function setupSiteColorFilter() {
+  const enabledInput = document.querySelector("[data-site-color-filter-enabled]");
+
   SITE_COLOR_FILTER_HOST_IDS.forEach(id => {
     const host = document.getElementById(id);
     if (!host || host.querySelector(":scope > .site-color-filter-layer")) return;
@@ -3086,6 +3099,18 @@ function setupSiteColorFilter() {
 
   setupMapColorFilterOverlay();
   updateSiteColorFilterMode();
+
+  const updateEnabledState = () => {
+    const enabled = enabledInput?.checked !== false;
+    document.body.classList.toggle("site-color-filter-disabled", !enabled);
+    if (enabled) updateMapColorFilterMask();
+  };
+
+  if (enabledInput) {
+    enabledInput.checked = true;
+    enabledInput.addEventListener("change", updateEnabledState);
+  }
+  updateEnabledState();
 }
 
 function setupMapColorFilterOverlay() {
